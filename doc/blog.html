@@ -121,6 +121,8 @@ Error message and password prompt
 
 <li>$:/core</li>
 
+<li>$:/DefaultTiddlers</li>
+
 <li>$:/isEncrypted</li>
 
 <li>$:/language</li>
@@ -135,6 +137,8 @@ Error message and password prompt
 
 <li>$:/state/showeditpreview</li>
 
+<li>$:/state/tab-1749438307</li>
+
 <li>$:/state/tab/moresidebar-401116514</li>
 
 <li>$:/state/tab/sidebar--1835078512</li>
@@ -143,11 +147,15 @@ Error message and password prompt
 
 <li>$:/temp/info-plugin</li>
 
+<li>$:/temp/NewTagName</li>
+
 <li>$:/themes/tiddlywiki/snowwhite</li>
 
 <li>$:/themes/tiddlywiki/vanilla</li>
 
 <li>Hello World</li>
+
+<li>Notizen nach Gespräch am 09.04.</li>
 
 </ul>
 </p>
@@ -5371,6 +5379,9 @@ Error message and password prompt
     }
 }</pre>
 </div>
+<div created="20150410165657477" modified="20150410165718658" title="$:/DefaultTiddlers">
+<pre>[list[$:/StoryList]]</pre>
+</div>
 <div title="$:/isEncrypted">
 <pre>no</pre>
 </div>
@@ -7721,16 +7732,19 @@ Error message and password prompt
 <div created="20150408132247093" modified="20150408132255733" title="$:/SiteTitle">
 <pre>core.relational.usage</pre>
 </div>
-<div modified="20150408134035885" title="$:/state/showeditpreview">
-<pre>yes</pre>
+<div modified="20150410164623250" title="$:/state/showeditpreview">
+<pre>no</pre>
+</div>
+<div modified="20150410165653942" title="$:/state/tab-1749438307">
+<pre>$:/core/ui/ControlPanel/Info</pre>
 </div>
 <div modified="20150408134916920" title="$:/state/tab/moresidebar-401116514">
 <pre>$:/core/ui/MoreSideBar/Shadows</pre>
 </div>
-<div modified="20150408134918256" title="$:/state/tab/sidebar--1835078512">
-<pre>$:/core/ui/SideBar/Tools</pre>
+<div modified="20150410165714722" title="$:/state/tab/sidebar--1835078512">
+<pre>$:/core/ui/SideBar/Recent</pre>
 </div>
-<div list="[[Hello World]]" title="$:/StoryList">
+<div list="[[Notizen nach Gespräch am 09.04.]] $:/ControlPanel [[Hello World]]" title="$:/StoryList">
 <pre></pre>
 </div>
 <div plugin-type="info" title="$:/temp/info-plugin" type="application/json">
@@ -7746,6 +7760,9 @@ Error message and password prompt
         }
     }
 }</pre>
+</div>
+<div created="20150410164543574" modified="20150416120436226" title="$:/temp/NewTagName">
+<pre></pre>
 </div>
 <div author="JeremyRuston" core-version="&gt;=5.0.0" dependents="$:/themes/tiddlywiki/vanilla" description="A clean theme that emphasises individual tiddlers" name="Snow White" plugin-type="theme" title="$:/themes/tiddlywiki/snowwhite" type="application/json" version="5.1.7">
 <pre>{
@@ -7824,8 +7841,17 @@ Error message and password prompt
     }
 }</pre>
 </div>
-<div created="20150408133352983" modified="20150408135319936" title="Hello World">
-<pre>Dieses TiddlyWiki wird als Notiz-Sammlung, Planungsplattform und Präsentation für Ergebnisse verwendet. </pre>
+<div created="20150410165537134" modified="20150410165629798" title="Hello World">
+<pre>Dieses TiddlyWiki wird als Blog für das Entwicklungsprojekt von Sören Gutzeit verwendet.</pre>
+</div>
+<div created="20150410164515853" modified="20150417102558331" tags="notiz notizen renz Dataset Wikidata Incanter" title="Notizen nach Gespräch am 09.04.">
+<pre>Eine vergleichbare Implementierung für core.relational soll Dataset von Incanter sein. Diesbezüglich wären Recherchen nötig, um Unterschiede sowie Vor- und Nachteile aufzufinden.
+Sofern dies geschehen ist, wäre es Ratsam, die Beispiele aus Baders Master-Thesis in Dataset darzustellen, um den Code zu vergleichen. Gegebenenfalls beide Implementierungen mit großen Datenmengen testen.
+
+Eine weitere Aufgabe ist die Schnittstelle von WikiData für code.relational zu verwenden. Beispielsweise um Relationen von Personen darzustellen.
+
+http://incanter.org/docs/data-sorcery-light-new.pdf
+https://github.com/incanter/incanter</pre>
 </div>
 
 </div>

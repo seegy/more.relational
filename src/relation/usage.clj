@@ -10,8 +10,11 @@
 
 (count (:addressID people))
 
-(join people addresses)
+(count (join people addresses))
+(map #(print (:name %)) (join people addresses)) ; 2x nil
 
+
+(map #( if (not (nil? %)) (print  %)) (join people addresses))
 
 
 

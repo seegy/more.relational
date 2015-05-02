@@ -154,3 +154,39 @@ p
 ;nope
 
 ;;--------------------------------------------------------------------------
+
+
+
+
+;---------------------------------------------------------------------------------------------------------
+; ######################### LARGE DATA TEST! #############################################################
+;---------------------------------------------------------------------------------------------------------
+
+(def file "resources/employees.clj")
+
+(def insertCljEmployees  (first (map #(read-string (str "[" % "]"))  (let [rdr (clojure.java.io/reader file)]
+          (line-seq rdr)))))
+(count insertCljEmployees)
+
+(def employees (dataset [:emp_no :birth_date :first_name :last_name :gender :hire_date] insertCljEmployees))
+
+(length  employees)
+
+(sel employees :cols [:emp_no])
+
+
+
+
+(def file "resources/salaries.clj")
+(def insertCljSalaries  (first (map #(read-string (str "[" % "]"))  (let [rdr (clojure.java.io/reader file)]
+          (line-seq rdr)))))
+(count insertCljSalaries)
+
+(def salaries (dataset [:emp_no :salary :from_date :to_date ] insertCljSalaries))
+salaries
+
+
+(sel
+ ($where {:gender {:fn  #(= % "M")}}
+         ($join [:emp_no :emp_no] employees salaries))
+ :cols [:first_name])

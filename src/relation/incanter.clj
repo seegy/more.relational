@@ -1,6 +1,7 @@
 (ns relation.incanter
  (:use [incanter core stats charts io])
-   (:use [clojure.repl]))
+   (:use [clojure.repl])
+  (require [wikidata.connector :as wiki]))
 
 
 ;------- Examples of incanter
@@ -190,3 +191,20 @@ salaries
  ($where {:gender {:fn  #(= % "M")}}
          ($join [:emp_no :emp_no] employees salaries))
  :cols [:first_name])
+
+
+;---------------------------------------------------------------------------------------------------------
+; ################################ WIKI DATA #############################################################
+;---------------------------------------------------------------------------------------------------------
+
+(def persons (dataset [:id :name :description :gender :birth_date ] (wiki/searchFor "Usain Bolt" 20)))
+
+ (print (dataset [:id :name :description :gender :birth_date ] (wiki/searchFor "Usain Bolt" 20)))
+
+ (defn createPersonView [name limit]
+   (let [data (wiki/searchFor name limit)
+         persons (dataset [:id :name :description :gender :birth_date ] data)]
+     (print persons)
+     persons))
+
+ (createPersonView "Michael Jackson" 10)

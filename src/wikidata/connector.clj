@@ -79,11 +79,11 @@
                          (get attr)
                          (get "en")
                          (get "value")))]
-    (reduce #(conj %1 [ %2
+   (filter #(not (nil?(nth % 3))) (reduce #(conj %1 [ %2
                         (getValue %2 "labels")
                         (getValue %2 "descriptions")
                         (getGender (get result %2))
-                        (getBirthDate (get result %2))]) [] (keys result))))
+                        (getBirthDate (get result %2))]) [] (keys result)))))
   ([title]
    (searchFor title 20)))
 

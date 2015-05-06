@@ -114,7 +114,7 @@
 ;---------------------------------------------------------------------------------------------------------
 
 (def persons (rel [:id :name :description :gender :birth_date ] #{}))
-(def person-var (relvar persons {:key :id}))
+(def persons-var (relvar persons {:key :id}))
 
 (defn toPersonMap[row]
   {:id (nth row 0)
@@ -123,6 +123,38 @@
     :gender (nth row 3)
     :birth_date(nth row 4)})
 
-(map #(insert! person-var (toPersonMap %))  (wiki/searchFor "Angela Merkel" 20))
+(map #(insert! persons-var (toPersonMap %))  (wiki/searchFor "Usain Bolt" 20))
+(print-relation (deref persons-var))
 
-(print-relation (deref person-var))
+
+
+
+
+(let [persons2 (rel [:id :name :description :gender :birth_date ] #{})
+        persons2-var (relvar persons2 {:key :id})
+        toPersonMap (fn[row]
+                      {:id (nth row 0)
+                       :name  (nth row 1)
+                       :description (nth row 2)
+                       :gender (nth row 3)
+                       :birth_date(nth row 4)})]
+    (map #(insert! persons2-var (toPersonMap %))  (wiki/searchFor "Usain Bolt" 10))
+    (print-relation (deref persons2-var)))
+
+
+
+(defn createPersonView [name limit]
+  (let [persons2 (rel [:id :name :description :gender :birth_date ] #{})
+        persons2-var (relvar persons2 {:key :id})
+        toPersonMap (fn[row]
+                      {:id (nth row 0)
+                       :name  (nth row 1)
+                       :description (nth row 2)
+                       :gender (nth row 3)
+                       :birth_date(nth row 4)})]
+    (map #(insert! persons2-var (toPersonMap %))  (wiki/searchFor name limit))
+    persons2-var))
+
+
+(createPersonView "" 20)
+(print-relation (deref (createPersonView "Usain Bolt" 20)))

@@ -2,6 +2,7 @@
   (:require [clojure.data.json :as json]))
 
 ;; https://www.mediawiki.org/wiki/Wikibase/API
+; http://www.wikidata.org/wiki/Special:ListProperties
 ;
 (def baseURL "https://wikidata.org/w/api.php?")
 
@@ -63,21 +64,28 @@
                                     (get "value")
                                     (get "time"))))
 
-(defn searchFor [title]
-  (let [ids (reduce #(conj  %1 (get %2 "id")) [] (get (searchEntities title) "search"))
-        connectedIDs (if (empty? ids ) "" (reduce #(str %1 "|" %2)  ids ))
-        result (get (entitiesByIds connectedIDs) "entities")
-        getValue (fn[id attr]
-                  (-> result
-                       (get  id)
-                       (get attr)
-                       (get "en")
-                       (get "value")))]
-  (reduce #(conj %1 [ %2
-                      (getValue %2 "labels")
-                      (getValue %2 "descriptions")
-                      (getGender (get result %2))
-                      (getBirthDate (get result %2))]) [] (keys result))))
+(defn searchFor
+  ([title limit]
+    (let [
+          searchEntities (fn [searchWord]
+                           (let [params (conj defaultParams ["search" searchWord] ["action" "wbsearchentities"] ["limit" limit])]
+                             (getEntities params)))
+          ids (reduce #(conj  %1 (get %2 "id")) [] (get (searchEntities title) "search"))
+          connectedIDs (if (empty? ids ) "" (reduce #(str %1 "|" %2)  ids ))
+          result (get (entitiesByIds connectedIDs) "entities")
+          getValue (fn[id attr]
+                    (-> result
+                         (get  id)
+                         (get attr)
+                         (get "en")
+                         (get "value")))]
+    (reduce #(conj %1 [ %2
+                        (getValue %2 "labels")
+                        (getValue %2 "descriptions")
+                        (getGender (get result %2))
+                        (getBirthDate (get result %2))]) [] (keys result))))
+  ([title]
+   (searchFor title 20)))
 
 
-(searchFor "Michael Jackson")
+(searchFor "Michael Jackson" 20)

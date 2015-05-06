@@ -1,6 +1,7 @@
 (ns relation.usage
   (:use core.relational)
-   (:use [clojure.repl]))
+   (:use [clojure.repl])
+   (require [wikidata.connector :as wiki]))
 
 
 (def people (rel [:id :name :aID] #{[1 "Arthur" 2], [2 "Betty" 1], [3 "Charlie" 1]}))
@@ -105,3 +106,23 @@
 (count (join (deref employees-var) (deref salaries-var)))
 
 
+
+
+
+;---------------------------------------------------------------------------------------------------------
+; ################################ WIKI DATA #############################################################
+;---------------------------------------------------------------------------------------------------------
+
+(def persons (rel [:id :name :description :gender :birth_date ] #{}))
+(def person-var (relvar persons {:key :id}))
+
+(defn toPersonMap[row]
+  {:id (nth row 0)
+   :name  (nth row 1)
+    :description (nth row 2)
+    :gender (nth row 3)
+    :birth_date(nth row 4)})
+
+(map #(insert! person-var (toPersonMap %))  (wiki/searchFor "Angela Merkel" 20))
+
+(print-relation (deref person-var))

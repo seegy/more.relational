@@ -6,16 +6,16 @@
 (def baseURL "https://wikidata.org/w/api.php?")
 
 (def defaultParams [["sites" "enwiki"],
-                    ["props" "descriptions|labels"],
+                    ["props" "descriptions|labels|claims"],
                     ["language" "en"],
                     ["format" "json"]])
 
 (defn replaceSpace [string]
-  (clojure.string/replace string #" " "_"))
+  (clojure.string/replace string #" " "%20"))
 
 
 (defn buildParamString [paramList]
-  (let [replaceSpace (fn[string] (clojure.string/replace string #" " "_"))]
+  (let [replaceSpace (fn[string] (clojure.string/replace string #" " "%20"))]
   (reduce #(str %1 "&" %2) (map #(str (first %) "=" (replaceSpace (second %))) paramList))))
 
 
@@ -28,7 +28,7 @@
     (getEntities params)))
 
 (defn searchEntities[searchWord]
-  (let [params (conj defaultParams ["search" searchWord] ["action" "wbsearchentities"])]
+  (let [params (conj defaultParams ["search" searchWord] ["action" "wbsearchentities"] ["limit" 20])]
     (getEntities params)))
 
 
@@ -36,14 +36,48 @@
   (let [params  (conj defaultParams  ["ids" id] ["action" "wbgetentities"])]
     (getEntities params)))
 
+(def getGender (fn[entity]
+                    (let [genders {6581097 "male",
+                                   6581072 "female",
+                                   1052281 "transgender female",
+                                   2449503 "transgender male",
+                                   44148 "male animal",
+                                   43445 "female animal"}]
+                           (get genders
+                                (-> entity
+                                    (get  "claims")
+                                    (get "P21")
+                                    (first )
+                                    (get "mainsnak")
+                                    (get "datavalue")
+                                    (get "value")
+                                    (get "numeric-id"))))))
+
+(def getBirthDate (fn[entity]
+                            (-> entity
+                                    (get  "claims")
+                                    (get "P569")
+                                    (first )
+                                    (get "mainsnak")
+                                    (get "datavalue")
+                                    (get "value")
+                                    (get "time"))))
+
 (defn searchFor [title]
   (let [ids (reduce #(conj  %1 (get %2 "id")) [] (get (searchEntities title) "search"))
-        connectedIDs (reduce #(str %1 "|" %2) ids)
+        connectedIDs (if (empty? ids ) "" (reduce #(str %1 "|" %2)  ids ))
         result (get (entitiesByIds connectedIDs) "entities")
         getValue (fn[id attr]
-                   (get (get (get (get result id) attr) "en") "value"))]
+                  (-> result
+                       (get  id)
+                       (get attr)
+                       (get "en")
+                       (get "value")))]
   (reduce #(conj %1 [ %2
                       (getValue %2 "labels")
-                      (getValue %2 "descriptions")]) [] (keys result))))
+                      (getValue %2 "descriptions")
+                      (getGender (get result %2))
+                      (getBirthDate (get result %2))]) [] (keys result))))
 
-(searchFor "jackson")
+
+(searchFor "Michael Jackson")

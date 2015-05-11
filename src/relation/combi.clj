@@ -41,16 +41,16 @@
 
  (defn project [relation attributes]
     (if (map? attributes)
-      ;TODO attributes is a hash map
+      ; attributes is a hash map
       (let [head (vec (keys attributes))
             ; seq with functions that return the correct value for the position
-            new-rel (set (map (fn [t]
-                                (apply merge (map (fn [[k v]] {k (if (or (keyword? v) (fn? v))
-                                                                   (v t)
-                                                                   v)}) attributes)))
-                              (:rows relation)))]
-        (dataset new-rel))
-
+            new-rel (set
+                     (map (fn [t]
+                            (apply merge
+                                   (map (fn [[k v]] {k (if (or
+                                                            (keyword? v) (fn? v))
+                                                         (v t) v)}) attributes))) (:rows relation)))]
+        (dataset (keys attributes) new-rel))
       ; attributes is a set/vector/list
       (let [value-tuples (set (map #(vec (map (fn [p] (% p)) attributes))
                                 (:rows relation)))]
@@ -59,5 +59,3 @@
   r
  (project r [:x1 :x3])
  (project r {:x1 :x1, :new-x3 (relfn [t] (* 2 (:x3 t)))})
-
- (seq r)

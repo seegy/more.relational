@@ -104,7 +104,7 @@
 
 
 
-
+ ;TODO
  (defn rename [relation smap]
    "Given a substitution map, it renames the attributes.
 
@@ -113,10 +113,8 @@
     (Relation. (replace smap (.head relation)) (.body relation)))
 
 
- ; TODO BAUSTELLE
-(replace {:x1 :x1v2} (:column-names r))
-(map #(replace {:x1 :x1v2} %) (:rows r))
 
+  ;TODO
   (defn rename* [relation match-exp replace-str]
     "Renames all attributes that match match-regexp with replace-str. Semantics
     are the same as clojure.string/replace.
@@ -128,6 +126,7 @@
                                (.head relation)))
                      (.body relation)))
 
+  ;TODO
   (defn restrict [relation predicate]
     "Returns a relation with only the tuples that satisfy the predicate pred?.
     That is a usual function, but fn shall be replaced with relfn, so that
@@ -148,6 +147,9 @@
 
 
 
+ ; TODO BAUSTELLE für rename
+(replace {:x1 :x1v2} (:column-names r))
+(map #(replace {:x1 :x1v2} %) (:rows r))
 
 
 

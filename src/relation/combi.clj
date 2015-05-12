@@ -26,11 +26,6 @@
 
 
 
-(def r (dataset [:x1 :x2 :x3]
- [[1 2 3]
- [4 5 6]
- [7 8 9]]))
-
 (defmacro relfn
   "Behaves like fn, but stores the source code in the metadata to allow
   optimisation."
@@ -71,14 +66,6 @@
                                 (:rows relation)))]
         (dataset attributes value-tuples))))
 
-  r
-
-
-  (project r [:x1 :x3])
-
-
- (project r {:x1 :x1, :new-x3 (relfn [t] (* 2 (:x3 t)))})
-
 
 
  (defn project- [relation attributes]
@@ -96,18 +83,6 @@
 
 
 
- (let [attrs (if (set? [:x3]) [ :x3] (set [ :x3]))
-          pos (remove nil? (map #(if (contains? attrs %)
-                                    nil
-                                     %)
-                                (:column-names r)))]
-   project r pos)
-
-
- (project- r [:x3])
-
-
-
 
  (defn project+ [relation extend-map]
    "Extends the relation with the attributes specified in extend-map. In this,
@@ -119,7 +94,67 @@
       ; same as
       (project r {:a1 :a1, :a2 :a2, ..., :an :an,
                   :new-price (relfn [t] (* 1.05 (:price t))"
-   (let [atts (reduce #(fn [t](assoc )) {}) ] ; TODO keys von relation zu map, extend-map dazu, dann 'project' aufrufen
-     ))
+   (let [head (set (apply merge (:column-names relation) (map first extend-map)))
+         data (set (map (fn [t]
+                            (apply merge t
+                                   (map (fn [[k v]] {k (if (or
+                                                            (keyword? v) (fn? v))
+                                                         (v t) v)}) extend-map))) (:rows relation)))]
+     (dataset head data)))
 
- (project r {:new-x3 (relfn [t] (* 2 (:x3 t)))})
+
+
+
+ (defn rename [relation smap]
+   "Given a substitution map, it renames the attributes.
+
+    Example:
+      (rename r {:pname :product-name})"
+    (Relation. (replace smap (.head relation)) (.body relation)))
+
+
+
+(replace {:x1 :x1v2} (:column-names r))
+(map #(replace {:x1 :x1v2} %) (:rows r))
+
+  (defn rename* [relation match-exp replace-str]
+    "Renames all attributes that match match-regexp with replace-str. Semantics
+    are the same as clojure.string/replace.
+
+    Example:
+      (rename* r #\"(.+)\" \"prefix-$1\""
+    (rel (vec (map (fn [a]
+                                 (-> a name (str/replace match-exp replace-str) keyword))
+                               (.head relation)))
+                     (.body relation)))
+
+  (defn restrict [relation predicate]
+    "Returns a relation with only the tuples that satisfy the predicate pred?.
+    That is a usual function, but fn shall be replaced with relfn, so that
+    optimization can be done.
+
+    Examples:
+      (restrict r (relfn [t] (= (:sno t) \"S12\")))"
+    (rel (set (filter predicate (seq relation)))))
+
+ ;############################################################################################
+ ;########################                   USAGE TEST                     ##################
+ ;############################################################################################
+
+ (def r (dataset [:x1 :x2 :x3]
+           [[1 2 3]
+           [4 5 6]
+           [7 8 9]]))
+
+ r
+
+ (project r [:x1 :x3])
+
+
+ (project r {:x1 :x1, :new-x3 (relfn [t] (* 2 (:x3 t)))})
+
+
+ (project- r [:x3])
+
+
+ (project+ r {:new-x3 (relfn [t] (* 2 (:x3 t))), :new-x2 (relfn [t] (+ 1 (:x2 t)))})

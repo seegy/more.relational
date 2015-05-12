@@ -113,7 +113,7 @@
     (Relation. (replace smap (.head relation)) (.body relation)))
 
 
-
+ ; TODO BAUSTELLE
 (replace {:x1 :x1v2} (:column-names r))
 (map #(replace {:x1 :x1v2} %) (:rows r))
 
@@ -137,9 +137,19 @@
       (restrict r (relfn [t] (= (:sno t) \"S12\")))"
     (rel (set (filter predicate (seq relation)))))
 
+
+
+
+
+
  ;############################################################################################
  ;########################                   USAGE TEST                     ##################
  ;############################################################################################
+
+
+
+
+
 
  (def r (dataset [:x1 :x2 :x3]
            [[1 2 3]

@@ -147,9 +147,7 @@
 
 
 
- ; TODO BAUSTELLE für rename
-(replace {:x1 :x1v2} (:column-names r))
-(map #(replace {:x1 :x1v2} %) (:rows r))
+
 
 
 
@@ -170,3 +168,18 @@
 
 
  (project+ r {:new-x3 (relfn [t] (* 2 (:x3 t))), :new-x2 (relfn [t] (+ 1 (:x2 t)))})
+
+ ; TODO BAUSTELLE für rename
+(replace {:x1 :x1v2} (:column-names r))
+(map #(replace {:x1 :x1v2} %) (:rows r))
+
+
+
+                                     ;; DEFTYPE bei bader lesen
+                                     ;; MAPS verwendbar anstat vectoren?
+                                     ;; das ist Zeilenorientiert, geht spaltenorientiert? (MonetDB)
+                                     ;; clojure EDN
+                                     ;; cjlHttp
+
+
+

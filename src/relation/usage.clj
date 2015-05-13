@@ -8,7 +8,7 @@
 
 (def addresses (rel [:aID :address] #{[1 "Alter Platz 1"], [2 "Bäckerstraße"]}))
 
-(save-rel  people "D:/Downloads/employees/test.clj")
+;(save-rel  people "D:/Downloads/employees/test.clj")
 
 
 (count (:addressID people))
@@ -53,12 +53,15 @@
 (count insertClj)
 
 (defn toEmplyeeMap[row]
-  {:emp_no (nth row 0)
+  {:emp_no (nth row 0)s
    :birth_date (nth row 1)
     :first_name (nth row 2)
     :last_name (nth row 3)
     :gender (nth row 4)
     :hire_date (nth row 5)})
+
+(def employees-var (relvar employees))
+(assign! employees-var (rel [:emp_no :birth_date :first_name :last_name :gender :hire_date] (set insertClj)))
 
  (map #(insert! employees-var (toEmplyeeMap %))  (take 500 insertClj))
 

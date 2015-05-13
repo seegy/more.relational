@@ -6,9 +6,11 @@
 ;
 (def baseURL "https://wikidata.org/w/api.php?")
 
+(def lang "de")
+
 (def defaultParams [["sites" "enwiki"],
                     ["props" "descriptions|labels|claims"],
-                    ["language" "en"],
+                    ["language" lang],
                     ["format" "json"]])
 
 (defn replaceSpace [string]
@@ -77,7 +79,7 @@
                     (-> result
                          (get  id)
                          (get attr)
-                         (get "en")
+                         (get lang)
                          (get "value")))]
    (filter #(not (nil?(nth % 3))) (reduce #(conj %1 [ %2
                         (getValue %2 "labels")
@@ -88,4 +90,4 @@
    (searchFor title 20)))
 
 
-(searchFor "Michael Jackson" 20)
+(searchFor "Steve Rogers" 20)

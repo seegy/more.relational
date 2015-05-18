@@ -97,12 +97,7 @@
       (seq #{{}})
 
       ; just make a sequence
-      (map (fn [tuple]
-           (apply merge (map (fn [attr val]
-                               {attr val})
-                             (.head this)
-                             tuple)))
-       (.body this))))
+      (seq (.body this))))
 
   clojure.lang.Counted
   (count [this]
@@ -173,7 +168,9 @@
                  (map? (first dat))
                    dat
                  :else
-                   (map #(apply assoc {} (interleave column-names %)) dat))]
+                   (map #(if (empty? %)
+                            {}
+                            (apply assoc {} (interleave column-names %))) dat))]
       (Relation. (into [] column-names) (set rows))))
 
   ([tuple-set]
@@ -181,12 +178,11 @@
                    #{}
                    (if (map? tuple-set) #{tuple-set} tuple-set))]
       (let [head (vec (keys (first tuples)))]
-        (print head)(print tuples)
        (Relation.
          head
          tuples)))))
 
-(rel #{ {:id 1, :name "Arthur"} {:id 2, :name "Betty"} })
+(def r (rel #{ {:id 1, :name "Arthur"} {:id 2, :name "Betty"} }))
 (rel [:id :name] #{ [1 "Arthur"] [2 "Betty"]})
 
 
@@ -195,12 +191,11 @@
 ;  (3) Given as head and body: [:id :name] #{ [1 \"Arthur\"] [2 \"Betty\"} }
 
 
-; ####### I AM HERE
-
 (defn in?
   "Checks if the tuple is containing in the relation"
   [rel tuple]
   (some #(= % tuple) (seq rel)))
+
 
 (def dee "Represents true." (rel [] #{[]}))
 (def dum "Represents false." (rel [] #{}))
@@ -214,6 +209,8 @@
   "Loads a relation from the specified file."
   [file]
   (edn/read-string {:readers {'rel core.relational/rel}} (slurp file)))
+
+; ####### I AM HERE
 
 (defn order
   "Returns the relation as a sorted set. The sorting is defined by the hash
@@ -238,3 +235,10 @@
                    (compare (t1 attr) (t2 attr))
                    (compare (t2 attr) (t1 attr)))))))
          (seq rel)))
+
+(seq r)
+(order r []) ;TODO?
+(order r {:id :asc})
+(order r [{:id :desc}, {:name :asc}])
+(order r [ {:name :desc}])
+

@@ -1,6 +1,6 @@
 (ns relation.newRel.relation
-  (:require [clojure.edn :as edn])
-  (:require [relation.newRel.tools]))
+  (:require [clojure.edn :as edn]
+            [relation.newRel.tools]))
 
 
 (declare same-type?)

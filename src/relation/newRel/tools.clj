@@ -28,6 +28,16 @@
        nil
        res))
 
+  (defn diverging-attr
+  "Returns a vector of all attributes that occur in relation 1, but are not
+  common with relation 2. Order is that in relation 1."
+  [relation1 relation2]
+  (let [common (common-attr relation1 relation2)]
+    (remove nil? (map #(if (some #{%} (.head relation2))
+                         nil
+                         %)
+                 (.head relation1)))))
+
 (defn sort-vec
   "Creates a vector showing the positions of the attributes in the second
   relation in the order of the first relation header. So the second relation
@@ -47,3 +57,20 @@
   (let [h1 (.head relation1)
         h2 (.head relation2)]
     (vec (map #(index-of h2 %) h1))))
+
+(defn common-attr
+  "Returns a vector of all attributes that both relations have in common.
+  Order is that in relation 1."
+  [relation1 relation2]
+  (remove nil? (map #(some #{%} (.head relation2))
+                 (.head relation1))))
+
+(defn attr-complement
+  "Returns a vector of all attributes of the relation, except the one(s)
+  specified. Parameter attributes may be a single keyword or a collection.
+  Unknown attributes are ignored. Result may be empty."
+  [relation attributes]
+  (if (and (not (keyword? attributes)) (empty? attributes))
+      (.head relation)
+      (let [attrs (if (coll? attributes) (set attributes) #{attributes})]
+        (vec (remove #(if (contains? attrs %) true false) (.head relation))))))

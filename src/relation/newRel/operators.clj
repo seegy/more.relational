@@ -1,5 +1,10 @@
-(ns relation.newRel.relation)
+(ns relation.newRel.relation
+  (:require [relation.newRel.tools]
+            [clojure.string :as str]))
 
+(declare attr-complement)
+(declare common-attr)
+(declare diverging-attr)
 
 (defprotocol RelationalOperators
   "Protocol for relational operators. If an attribute is given that does not
@@ -143,16 +148,26 @@
                        group by pno;\""))
 
 
+
+(def r (rel #{ {:id 1, :name "Arthur"} {:id 2, :name "Betty"} }))
+(rename r {:id :di})
+
+(rename* r #"(.+)" "prefix-$1")
+
 ; implementation for Relation (clojure data structures, row-oriented)
 (extend-protocol RelationalOperators Relation
   (rename [relation smap]
-    (Relation. (replace smap (.head relation)) (.body relation)))
+    (Relation.
+     (replace smap (.head relation))
+     (map #(clojure.set/rename-keys % smap) (.body relation))))
 
+  ; #### IAM HERE!!!
   (rename* [relation match-exp replace-str]
-    (rel (vec (map (fn [a]
+           (let [attrs (map (fn [a]
                                  (-> a name (str/replace match-exp replace-str) keyword))
-                               (.head relation)))
-                     (.body relation)))
+                               (.head relation))
+                 smap (merge (.head relation) attrs)]
+    (rel (vec attrs) (map #(clojure.set/rename-keys % smap) (.body relation)))))
 
   (restrict [relation predicate]
     (rel (set (filter predicate (seq relation)))))
@@ -239,7 +254,7 @@
                                                 (nth tuple pos))
                                            sorter)))
                                (.body relation2)))))]
-      (rel (.head relation1) (clj-set/union (.body relation1) rel2-body))))
+      (rel (.head relation1) (clojure.set/union (.body relation1) rel2-body))))
 
   (intersect [relation1 relation2]
     (when-not (same-type? relation1 relation2)
@@ -256,7 +271,7 @@
                                                 (nth tuple pos))
                                            sorter)))
                                (.body relation2)))))]
-      (rel (.head relation1) (clj-set/intersection (.body relation1) rel2-body))))
+      (rel (.head relation1) (clojure.set/intersection (.body relation1) rel2-body))))
 
   (difference [relation1 relation2]
     (let [rel2-body (if (same-attr-order? relation1 relation2)
@@ -270,7 +285,7 @@
                                                 (nth tuple pos))
                                            sorter)))
                                (.body relation2)))))]
-      (rel (.head relation1) (clj-set/difference (.body relation1) rel2-body))))
+      (rel (.head relation1) (clojure.set/difference (.body relation1) rel2-body))))
 
   (divide [relation1 relation2]
     (let [r1-only-attrs (diverging-attr relation1 relation2)
@@ -315,7 +330,7 @@
       (if (nil? attrs)
           r
           (let [attr-pos (index-of (.head r) (first attrs))
-                _ (when-not (empty? (clj-set/intersection
+                _ (when-not (empty? (clojure.set/intersection
                                       (set (.head r))
                                       (set (.head (get (first (.body r)) attr-pos)))))
                     (throw (IllegalStateException.
@@ -355,7 +370,7 @@
       (if (nil? attrs)
           r
           (let [attr-pos (index-of (.head r) (first attrs))
-                _ (when-not (empty? (clj-set/intersection
+                _ (when-not (empty? (clojure.set/intersection
                                       (set (.head r))
                                       (set (keys (get (first (.body r)) attr-pos)))))
                     (throw (IllegalStateException.

@@ -1,64 +1,13 @@
-(ns relation.newRel
-  (:require[clojure.edn :as edn]))
+(ns relation.newRel.relation
+  (:require [clojure.edn :as edn])
+  (:require [relation.newRel.tools]))
 
 
- ;############################################################################################
- ;########################                   TOOLS                          ##################
- ;############################################################################################
-
-(defn same-type?
-  "Checks if two relations have the same type, i.e. have the same header."
-  [relation1 relation2]
-  (=
-    (sort (.head relation1))
-    (sort (.head relation2))))
-
-(defn same-attr-order?
-  "Checks if the attributes of the relations are in the same order. If not or
-  if the headers are not equal, it returns false."
-  [relation1 relation2]
-  (if (and (same-type? relation1 relation2)
-        (= (.head relation1) (.head relation2)))
-    true
-    false))
-
-(defn index-of
-  "Finds the position of the item in the collection. Nil if not in there."
-  [coll item]
-  (let [index (.indexOf coll item)]
-    (if (>= index 0)
-      index
-      nil)))
-  #_(let [res (count (take-while (partial not= item) coll))]
-     (if (>= res (count coll))
-       nil
-       res))
-
-(defn sort-vec
-  "Creates a vector showing the positions of the attributes in the second
-  relation in the order of the first relation header. So the second relation
-  can be ordered like the first one. Example:
-
-  header of rel1 = [id name phone]
-  header of rel2 = [name phone id]
-  (sort-vec rel1 rel2) => [2 0 1]
-
-  Reads like: The new first attribute of rel2 is currently on position 2, etc.
-
-  If the predicate same-attr-order? is true, it will always return [0 1 2 ...]"
-  [relation1 relation2]
-  (when-not (same-type? relation1 relation2)
-    (throw (IllegalArgumentException. "The two relations have different types.")))
-
-  (let [h1 (.head relation1)
-        h2 (.head relation2)]
-    (vec (map #(index-of h2 %) h1))))
-
- ;############################################################################################
- ;########################                   NEW REL                        ##################
- ;############################################################################################
-
-(declare sort-rel)
+(declare same-type?)
+(declare same-attr-order?)
+(declare sort-vec)
+(declare index-of)
+ (declare sort-rel)
 
 (deftype Relation [head body]
   Object
@@ -144,7 +93,6 @@
 
 (defmethod print-method Relation
   [rel writer]
-  ;(.write writer (str "#rel " (pr-str (set (seq rel))))))
   (.write writer (str "#rel " (pr-str  (scheme rel) (body rel)) )))
 
 
@@ -210,7 +158,6 @@
   [file]
   (edn/read-string {:readers {'rel core.relational/rel}} (slurp file)))
 
-; ####### I AM HERE
 
 (defn order
   "Returns the relation as a sorted set. The sorting is defined by the hash
@@ -236,9 +183,9 @@
                    (compare (t2 attr) (t1 attr)))))))
          (seq rel)))
 
-(seq r)
-(order r []) ;TODO?
-(order r {:id :asc})
-(order r [{:id :desc}, {:name :asc}])
-(order r [ {:name :desc}])
+;(seq r)
+;(order r []) ;TODO?
+;(order r {:id :asc})
+;(order r [{:id :desc}, {:name :asc}])
+;(order r [ {:name :desc}])
 

@@ -1,4 +1,11 @@
-(ns relation.newRel.tools)
+(ns relation.newRel)
+
+(defmacro relfn
+  "Behaves like fn, but stores the source code in the metadata to allow
+  optimisation."
+  [args body]
+  (with-meta (list 'fn args body)
+             {:body (list 'quote body)}))
 
 (defn same-type?
   "Checks if two relations have the same type, i.e. have the same header."
@@ -27,6 +34,14 @@
      (if (>= res (count coll))
        nil
        res))
+
+  (defn common-attr
+  "Returns a vector of all attributes that both relations have in common.
+  Order is that in relation 1."
+  [relation1 relation2]
+  (remove nil? (map #(some #{%} (.head relation2))
+                 (.head relation1))))
+
 
   (defn diverging-attr
   "Returns a vector of all attributes that occur in relation 1, but are not
@@ -58,12 +73,6 @@
         h2 (.head relation2)]
     (vec (map #(index-of h2 %) h1))))
 
-(defn common-attr
-  "Returns a vector of all attributes that both relations have in common.
-  Order is that in relation 1."
-  [relation1 relation2]
-  (remove nil? (map #(some #{%} (.head relation2))
-                 (.head relation1))))
 
 (defn attr-complement
   "Returns a vector of all attributes of the relation, except the one(s)

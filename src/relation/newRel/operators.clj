@@ -1,10 +1,5 @@
-(ns relation.newRel.relation
-  (:require [relation.newRel.tools]
-            [clojure.string :as str]))
+(ns relation.newRel)
 
-(declare attr-complement)
-(declare common-attr)
-(declare diverging-attr)
 
 (defprotocol RelationalOperators
   "Protocol for relational operators. If an attribute is given that does not
@@ -149,11 +144,6 @@
 
 
 
-(def r (rel #{ {:id 1, :name "Arthur"} {:id 2, :name "Betty"} }))
-(rename r {:id :di})
-
-(rename* r #"(.+)" "prefix-$1")
-
 ; implementation for Relation (clojure data structures, row-oriented)
 (extend-protocol RelationalOperators Relation
   (rename [relation smap]
@@ -161,48 +151,45 @@
      (replace smap (.head relation))
      (map #(clojure.set/rename-keys % smap) (.body relation))))
 
-  ; #### IAM HERE!!!
+
   (rename* [relation match-exp replace-str]
            (let [attrs (map (fn [a]
                                  (-> a name (str/replace match-exp replace-str) keyword))
                                (.head relation))
-                 smap (merge (.head relation) attrs)]
+                 smap (zipmap (.head relation) attrs)]
     (rel (vec attrs) (map #(clojure.set/rename-keys % smap) (.body relation)))))
 
   (restrict [relation predicate]
     (rel (set (filter predicate (seq relation)))))
+
 
   (project [relation attributes]
     (if (map? attributes)
       ; attributes is a hash map
       (let [head (vec (keys attributes))
             ; seq with functions that return the correct value for the position
-            new-rel (set (map (fn [t]
-                                (apply merge (map (fn [[k v]] {k (if (or (keyword? v) (fn? v))
-                                                                   (v t)
-                                                                   v)}) attributes)))
-                              (seq relation)))]
-        (rel new-rel))
-
+            new-rel (set
+                     (map (fn [t]
+                            (apply merge
+                                   (map (fn [[k v]] {k (if (or
+                                                            (keyword? v) (fn? v))
+                                                         (v t) v)}) attributes))) (.body relation)))]
+        (rel (keys attributes) new-rel))
       ; attributes is a set/vector/list
-      (let [; find positions of attributes that shall be shown
-           positions (remove nil? (map #(index-of (.head relation) %) attributes))
-           ; "take" just these attributes
-           value-tuples (set (map #(vec (map (fn [p] (nth % p)) positions))
-                                 (.body relation)))
-           head (vec (map #(get (.head relation) %) positions))]
-        (rel head value-tuples))))
+      (let [value-tuples (set (map #(vec (map (fn [p] (% p)) attributes))
+                                (.body relation)))]
+        (rel attributes value-tuples))))
+
+    ;### TODO IAM HERE
 
   (project- [relation attributes]
     (let [attrs (if (set? attributes) attributes (set attributes))
           pos (remove nil? (map #(if (contains? attrs %)
                                     nil
-                                    (index-of (.head relation) %))
+                                    %)
                                 (.head relation)))]
-      (rel (vec (map #(get (.head relation) %) pos))
-                       (set (map (fn [t]
-                                   (vec (map #(get t %) pos)))
-                                 (.body relation))))))
+      (project relation pos)))
+
 
   (project+ [relation extend-map]
     (rel (set (map (fn [t]

@@ -1,6 +1,5 @@
-(ns relation.newRel.relation
-  (:require [clojure.edn :as edn]
-            [relation.newRel.tools]))
+(ns relation.newRel
+  (:require [clojure.edn    :as edn]))
 
 
 (declare same-type?)
@@ -156,7 +155,7 @@
 (defn load-rel
   "Loads a relation from the specified file."
   [file]
-  (edn/read-string {:readers {'rel core.relational/rel}} (slurp file)))
+  (edn/read-string {:readers {'rel relation.newRel/rel}} (slurp file)))
 
 
 (defn order

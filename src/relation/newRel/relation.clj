@@ -51,7 +51,7 @@
   (count [this]
     (count (.body this)))
 
-  clojure.lang.IKeywordLookup
+  clojure.lang.IKeywordLookup ; in Masterarbeit nachgucken: evtl. projektion auf ein attribute
   (getLookupThunk [this key]
     (reify clojure.lang.ILookupThunk
       (get [_ target]
@@ -129,8 +129,8 @@
          head
          tuples)))))
 
-(def r (rel #{ {:id 1, :name "Arthur"} {:id 2, :name "Betty"} }))
-(rel [:id :name] #{ [1 "Arthur"] [2 "Betty"]})
+;(def r (rel #{ {:id 1, :name "Arthur"} {:id 2, :name "Betty"} }))
+;(rel [:id :name] #{ [1 "Arthur"] [2 "Betty"]})
 
 
 ;  (1) Given as a set of hash maps: #{ {:id 1, :name \"Arthur\"} {:id 2, :name \"Betty\"} }

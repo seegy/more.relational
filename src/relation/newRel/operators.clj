@@ -180,7 +180,6 @@
                                 (.body relation)))]
         (rel attributes value-tuples))))
 
-    ;### TODO IAM HERE
 
   (project- [relation attributes]
     (let [attrs (if (set? attributes) attributes (set attributes))
@@ -198,50 +197,40 @@
                                                              v)}) extend-map)))
                       (seq relation)))))
 
+
   (join [relation1 relation2]
-    (let [common (common-attr relation1 relation2)
+   (let [common (common-attr relation1 relation2)
           div-r2 (diverging-attr relation2 relation1)
-          new-head (vec (concat (.head relation1) div-r2))
-          common-positions-r1 (map #(index-of (.head relation1) %) common)
-          common-positions-r2 (map #(index-of (.head relation2) %) common)
-          div-positions-r2 (map #(index-of (.head relation2) %) div-r2)]
+          new-head (vec (concat (.head relation1) div-r2))]
       ; add relation 2 value tuples to that of relation 1
       (rel new-head
         ; tuple join
         (set (apply concat (map (fn [tuple-r1]
-                                (remove nil? (map (fn [tuple-r2]
+                          (remove nil? (map (fn [tuple-r2]
                                                   ; check equality of common attributes
-                                                  (if (every? true? (map (fn [pos-r1 pos-r2]
-                                                                           (= (nth tuple-r1 pos-r1)
-                                                                              (nth tuple-r2 pos-r2)))
-                                                                      common-positions-r1
-                                                                      common-positions-r2))
+                                                  (if (every? true? (map (fn [attr]
+                                                                           (= (get tuple-r1 attr)
+                                                                              (get tuple-r2 attr)))
+                                                                      common))
                                                     ; join tuples
-                                                    (vec (concat tuple-r1 (map (fn [pos]
-                                                                                 (nth tuple-r2 pos))
-                                                                            div-positions-r2)))))
+                                                    (reduce merge tuple-r1 (map (fn [attr]
+                                                                                 {attr (get tuple-r2 attr)})
+                                                                            div-r2))))
                                                     (.body relation2))))
                                  (.body relation1)))))))
+
 
   (compose [relation1 relation2]
     (project- (join relation1 relation2) (common-attr relation1 relation2)))
 
+
+
   (union [relation1 relation2]
     (when-not (same-type? relation1 relation2)
       (throw (IllegalArgumentException. "The two relations have different types.")))
+      (rel (.head relation1) (clojure.set/union (.body relation1) (.body relation2))))
 
-    (let [rel2-body (if (same-attr-order? relation1 relation2)
-                      ; same order: nothing todo
-                      (.body relation2)
-
-                      ; different order: sort the second relation like the first one
-                      (set (let [sorter (sort-vec relation1 relation2)]
-                             (map (fn [tuple]
-                                    (vec (map (fn [pos]
-                                                (nth tuple pos))
-                                           sorter)))
-                               (.body relation2)))))]
-      (rel (.head relation1) (clojure.set/union (.body relation1) rel2-body))))
+      ;### TODO IAM HERE
 
   (intersect [relation1 relation2]
     (when-not (same-type? relation1 relation2)

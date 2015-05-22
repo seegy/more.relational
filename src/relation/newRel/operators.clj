@@ -230,38 +230,20 @@
       (throw (IllegalArgumentException. "The two relations have different types.")))
       (rel (.head relation1) (clojure.set/union (.body relation1) (.body relation2))))
 
-      ;### TODO IAM HERE
+
 
   (intersect [relation1 relation2]
     (when-not (same-type? relation1 relation2)
       (throw (IllegalArgumentException. "The two relations have different types.")))
+      (rel (.head relation1) (clojure.set/intersection (.body relation1) (.body relation2))))
 
-    (let [rel2-body (if (same-attr-order? relation1 relation2)
-                      ; same order: nothing todo
-                      (.body relation2)
 
-                      ; different order: sort the second relation like the first one
-                      (set (let [sorter (sort-vec relation1 relation2)]
-                             (map (fn [tuple]
-                                    (vec (map (fn [pos]
-                                                (nth tuple pos))
-                                           sorter)))
-                               (.body relation2)))))]
-      (rel (.head relation1) (clojure.set/intersection (.body relation1) rel2-body))))
 
   (difference [relation1 relation2]
-    (let [rel2-body (if (same-attr-order? relation1 relation2)
-                      ; same order: nothing todo
-                      (.body relation2)
+      (rel (.head relation1) (clojure.set/difference (.body relation1) (.body relation2))))
 
-                      ; different order: sort the second relation like the first one
-                      (set (let [sorter (sort-vec relation1 relation2)]
-                             (map (fn [tuple]
-                                    (vec (map (fn [pos]
-                                                (nth tuple pos))
-                                           sorter)))
-                               (.body relation2)))))]
-      (rel (.head relation1) (clojure.set/difference (.body relation1) rel2-body))))
+
+    ;### TODO IAM HERE
 
   (divide [relation1 relation2]
     (let [r1-only-attrs (diverging-attr relation1 relation2)
@@ -270,6 +252,8 @@
                   (project (difference (join r1-only relation2)
                                        relation1)
                            r1-only-attrs))))
+
+
 
   (tclose [relation]
     (let [temp (keyword (gensym))

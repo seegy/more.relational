@@ -43,7 +43,32 @@
 
 (compose (compose r rs) s)
 
-(def r2 (rel #{ {:id 11, :name "xxxxArthur", :address "xxxxsomewhere"} {:id 12, :name "xxxxBetty" :address "xxxxnowhere"} }))
+(def r2 (rel #{ {:id 1, :name "Arthur", :address "somewhere"} {:id 11, :name "xxxxArthur", :address "xxxxsomewhere"} {:id 12, :name "xxxxBetty" :address "xxxxnowhere"} }))
 
 (union r r2)
+(union r2 r)
 
+
+(intersect r r2)
+
+(difference r r2)
+(difference r2 r)
+
+
+(divide r (project r #{:address}))
+(divide rs r)
+
+
+(def relation1 r)
+(def relation2 rs)
+
+
+(def r1-only-attrs (diverging-attr relation1 relation2))
+(def r1-only (project relation1 r1-only-attrs))
+
+(let [r1-only-attrs (diverging-attr relation1 relation2)
+          r1-only (project relation1 r1-only-attrs)]
+      (difference r1-only
+                  (project (difference (join r1-only relation2)
+                                       relation1)
+                           r1-only-attrs)))

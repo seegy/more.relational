@@ -243,7 +243,7 @@
       (rel (.head relation1) (clojure.set/difference (.body relation1) (.body relation2))))
 
 
-    ;### TODO IAM HERE
+    ;### TODO
 
   (divide [relation1 relation2]
     (let [r1-only-attrs (diverging-attr relation1 relation2)
@@ -254,7 +254,7 @@
                            r1-only-attrs))))
 
 
-
+    ;### TODO
   (tclose [relation]
     (let [temp (keyword (gensym))
           [a1 a2] (.head relation)]
@@ -264,26 +264,22 @@
               r
               (recur new-rel))))))
 
+
+  ;### TODO IAM HERE
   (group [relation group-map]
     (loop [r relation, gmap group-map]
       (if (nil? gmap)
         r
         (let [[alias attributes] (first gmap)
-              positions (map (fn [attr]
-                             (index-of (.head r) attr))
-                        attributes)
-              remaining (remove (fn [pos]
-                                  (some #(= pos %) positions))
-                          (range 0 (count (.head r))))
-              new-header (conj (vec (map #(get (.head r) %) remaining)) alias)
+              remaining (remove attributes (.head r))
+              new-header (conj remaining alias)
               tuples-rel (apply merge-with union (map (fn [tuple]
-                                                        {(vec (map (fn [pos] (get tuple pos)) remaining))
-                                                         (rel (vec attributes) #{(vec (map #(get tuple %)
-                                                                                        positions))})})
-                                                   (.body r)))
+                                                   {(vec (map #(get tuple %) remaining))
+                                                    (rel (vec attributes) #{(vec (map #(get tuple %) attributes)) })})
+                                                 (.body r)))
               new-body (set (map (fn [[k v]] (conj k v)) tuples-rel))]
-        (recur (rel new-header new-body)
-               (next gmap))))))
+          (recur (rel new-header new-body) (next gmap))))))
+
 
   (ungroup [relation attributes]
     (loop [r relation, attrs attributes]

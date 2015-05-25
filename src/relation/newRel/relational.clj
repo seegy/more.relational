@@ -72,3 +72,6 @@
                   (project (difference (join r1-only relation2)
                                        relation1)
                            r1-only-attrs)))
+
+
+(group (join (join r rs) s) {:NameAndHammer #{:sid :donation :description}})

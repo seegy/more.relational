@@ -265,14 +265,14 @@
               (recur new-rel))))))
 
 
-  ;### TODO IAM HERE
+
   (group [relation group-map]
     (loop [r relation, gmap group-map]
       (if (nil? gmap)
         r
         (let [[alias attributes] (first gmap)
               remaining (remove attributes (.head r))
-              new-header (conj remaining alias)
+              new-header (conj (vec remaining) alias)
               tuples-rel (apply merge-with union (map (fn [tuple]
                                                    {(vec (map #(get tuple %) remaining))
                                                     (rel (vec attributes) #{(vec (map #(get tuple %) attributes)) })})
@@ -280,6 +280,8 @@
               new-body (set (map (fn [[k v]] (conj k v)) tuples-rel))]
           (recur (rel new-header new-body) (next gmap))))))
 
+
+    ;### TODO IAM HERE
 
   (ungroup [relation attributes]
     (loop [r relation, attrs attributes]

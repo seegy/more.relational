@@ -281,7 +281,7 @@
           (recur (rel new-header new-body) (next gmap))))))
 
 
-    ;### TODO IAM HERE
+
 
    (ungroup [relation attributes]
     (loop [r relation, attrs attributes]
@@ -306,6 +306,8 @@
                                  (.body r))))]
             (recur (rel new-head new-body)
                    (next attrs))))))
+
+  ;### TODO IAM HERE
 
   (wrap [relation wrap-map]
     (loop [r relation, wrapper wrap-map]

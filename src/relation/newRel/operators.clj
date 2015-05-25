@@ -283,27 +283,28 @@
 
     ;### TODO IAM HERE
 
-  (ungroup [relation attributes]
+   (ungroup [relation attributes]
     (loop [r relation, attrs attributes]
       (if (nil? attrs)
           r
-          (let [attr-pos (index-of (.head r) (first attrs))
+          (let [target (first attrs)
                 _ (when-not (empty? (clojure.set/intersection
                                       (set (.head r))
-                                      (set (.head (get (first (.body r)) attr-pos)))))
+                                      (set (.head (get (first (.body r)) target)))))
                     (throw (IllegalStateException.
                              "There are attributes in the inner relation that already are in the outer one.")))
-                rem-pos  (remove #(= attr-pos %) (range 0 (count (.head r))))
-                new-head (vec (concat (remove #(= (first attrs) %) (.head r))
-                                      (-> (.body r) first (nth attr-pos) .head)))
-                new-body (apply concat (map (fn [t]
-                                              (let [beginning (map (fn [pos] (nth t pos))
-                                                                   rem-pos)]
-                                                (map (fn [inner-t]
-                                                       (concat beginning inner-t))
-                                                     (-> t (nth attr-pos) .body))))
-                                            (.body r)))]
-            (recur (rel new-head (set (map vec new-body)))
+                rem-attrs (remove #{target} (.head r))
+                new-head (vec (concat rem-attrs
+                                 (.head (get (first (.body r)) target))))
+                 new-body  (set (apply concat (map (fn [tuple]
+                                   (let [beginning (reduce (fn [map attr] (assoc map attr (get tuple attr))) {}
+                                                                   rem-attrs)]
+                                     (map (fn [inner-tuple]
+                                           (merge beginning inner-tuple))
+                                          (-> tuple (get target) .body))
+                                     ))
+                                 (.body r))))]
+            (recur (rel new-head new-body)
                    (next attrs))))))
 
   (wrap [relation wrap-map]

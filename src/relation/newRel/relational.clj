@@ -19,7 +19,7 @@
 (def r (rel #{ {:id 1, :name "Arthur", :address "somewhere"} {:id 2, :name "Betty" :address "nowhere"} }))
 (def s (rel #{{:sid 1 :description "Scrows"}, {:sid 2 :description "Hammer"}, {:sid 3, :description "Nail"}}))
 
-(def rs (rel #{{:id 1 :sid 1 :donation 200} {:id 1 :sid 2 :donation 2} {:id 2 :sid 3 :donation 100} {:id 2 :sid 2 :donation 1}}))
+(def rs (rel #{{:id 1 :sid 1 :quantity 200} {:id 1 :sid 2 :quantity 2} {:id 2 :sid 3 :quantity 100} {:id 2 :sid 2 :quantity 1}}))
 
 (rename r {:id :di})
 
@@ -74,4 +74,8 @@
                            r1-only-attrs)))
 
 
-(group (join (join r rs) s) {:NameAndHammer #{:sid :donation :description}})
+(group (join (join r rs) s) {:NameAndHammer #{:sid :quantity :description}})
+(def srgroup (group (join (join r rs) s) {:NameAndHammer #{:sid :quantity :description}}))
+(ungroup srgroup #{:NameAndHammer})
+
+

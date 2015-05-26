@@ -1,4 +1,4 @@
-(ns relation.newRel)
+(ns relation.newRel.relational)
 
 
 (defprotocol RelationalOperators

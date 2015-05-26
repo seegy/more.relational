@@ -1,4 +1,4 @@
-(ns relation.newRel)
+(ns relation.newRel.relational)
 
 (defmacro relfn
   "Behaves like fn, but stores the source code in the metadata to allow

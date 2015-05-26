@@ -55,7 +55,7 @@
   (getLookupThunk [this key]
     (reify clojure.lang.ILookupThunk
       (get [_ target]
-           (set (map (fn [t] (get t key) (.body target))))))))
+           (set (map (fn [t] (get t key)) (.body target)))))))
 
 
 (defn scheme

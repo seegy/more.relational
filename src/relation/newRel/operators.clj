@@ -307,51 +307,49 @@
             (recur (rel new-head new-body)
                    (next attrs))))))
 
-  ;### TODO IAM HERE
-
   (wrap [relation wrap-map]
     (loop [r relation, wrapper wrap-map]
       (if (nil? wrapper)
           r
           (let [[new-attr old-attrs] (first wrapper)
-                old-pos (map #(index-of (.head r) %) old-attrs)
-                rem-pos (remove #(index-of old-pos %) (range 0 (count (.head r))))
-                new-head (conj (vec (map #(nth (.head r) %) rem-pos)) new-attr)
-                new-body (set (map (fn [t]
-                                     (conj (vec (map #(nth t %) rem-pos))
-                                           (apply merge (map #(hash-map (nth (.head r) %)
-                                                                        (nth t %))
-                                                             old-pos))))
-                                   (.body r)))]
+                rem-pos (remove old-attrs (.head r))
+                new-head (concat rem-pos [new-attr])
+                new-body (map (fn [tuple]
+                               (let [make-map (fn [key-list](reduce (fn [m k] (assoc m k (get tuple k))) {} key-list))
+                                     rem-tuple-stuff (make-map rem-pos)
+                                     inner-tuple (make-map old-attrs)]
+                                 (assoc rem-tuple-stuff new-attr inner-tuple))) (.body r))]
             (recur (rel new-head new-body)
                    (next wrapper))))))
 
+
+
   (unwrap [relation attributes]
     (loop [r relation, attrs attributes]
-      (if (nil? attrs)
+            (if (nil? attrs)
           r
-          (let [attr-pos (index-of (.head r) (first attrs))
+          (let [attr (first attrs)
                 _ (when-not (empty? (clojure.set/intersection
                                       (set (.head r))
-                                      (set (keys (get (first (.body r)) attr-pos)))))
+                                      (set (keys (get (first (.body r)) attr)))))
                     (throw (IllegalStateException.
                              "There are attributes in the inner relation that already are in the outer one.")))
-                rem-pos (remove #(= attr-pos %) (range 0 (count (.head r))))
-                new-attrs (-> r .body first (nth attr-pos) keys)
-                new-head (vec (concat (map #(nth (.head r) %) rem-pos)
-                                      new-attrs))
-                new-body (set (map (fn [t]
-                                     (vec (concat (map #(nth t %) rem-pos)
-                                                  (map #(get (nth t attr-pos) %) new-attrs))))
-                                   (.body r)))]
+                new-attrs (-> r .body first (get attr) keys)
+                rem-attrs (remove #{attr} (.head r))
+                new-head (concat (vec rem-attrs) new-attrs)
+                new-body (map (fn [tuple]
+                                  (reduce (fn [m k] (assoc m k (get (get tuple attr) k)) )
+                                          (reduce (fn [rem-m rem-k] (assoc rem-m rem-k (get tuple rem-k))) {} rem-attrs)
+                                          new-attrs))
+                                  (.body r))]
             (recur (rel new-head new-body)
                    (next attrs))))))
+;### TODO IAM HERE
 
   (summarize [relation group-by sum-map]
     (let [group? (not (empty? group-by))
           gsym (keyword (gensym "G_"))
-          r (if group? (group relation {gsym (attr-complement relation group-by)}) relation)
-          inner-rel-index (index-of (.head r) gsym)]
+          r (if group? (group relation {gsym (set(attr-complement relation group-by))}) relation)]
       (if group?
           ; with group by
           (loop [new-rel r
@@ -360,10 +358,10 @@
                 (project- new-rel [gsym])
                 (let [[name fun] (first summap)
                       new-head (conj (.head new-rel) name)
-                      new-body (set (map (fn [t]
-                                           (let [new-val (fun (nth t inner-rel-index))]
-                                             (conj t new-val)))
-                                         (.body new-rel)))]
+                      new-body (set (map (fn [tuple]
+                                      (let [new-val (fun (get tuple gsym))]
+                                        (assoc tuple name new-val)))
+                                    (.body new-rel)))]
                   (recur (rel new-head new-body)
                          (next summap)))))
 

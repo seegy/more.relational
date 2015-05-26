@@ -79,3 +79,14 @@
 (ungroup srgroup #{:NameAndHammer})
 
 
+  (wrap  (join (join r rs) s) {:article #{:sid :description}})
+
+  (def wraped (wrap  (join (join r rs) s) {:article #{:sid :description}}))
+
+(unwrap wraped #{:article})
+
+ (def blaRelation (join (join r rs) s))
+ (summarize blaRelation #{:sid :description} {:scount (relfn [r] (count r))})
+ (summarize blaRelation #{ :description} {:quantitysum (relfn [r] (reduce + (:quantity r)))})
+ (summarize blaRelation #{} {:quantitysum (relfn [r] (reduce + (:quantity r)))})
+

@@ -159,8 +159,13 @@
                  smap (zipmap (.head relation) attrs)]
     (rel (vec attrs) (map #(clojure.set/rename-keys % smap) (.body relation)))))
 
+
+  #_(restrict [relation predicate]
+    (rel (set (filter predicate (seq relation))))) ;; TODO set relevant?
+
   (restrict [relation predicate]
-    (rel (set (filter predicate (seq relation)))))
+            (rel (into {} (filter predicate) (.body relation))))
+
 
 
   (project [relation attributes]
@@ -197,7 +202,6 @@
                                                              v)}) extend-map)))
                       (seq relation)))))
 
-
   (join [relation1 relation2]
    (let [common (common-attr relation1 relation2)
           div-r2 (diverging-attr relation2 relation1)
@@ -205,7 +209,7 @@
       ; add relation 2 value tuples to that of relation 1
       (rel new-head
         ; tuple join
-        (set (apply concat (map (fn [tuple-r1]
+        (set (apply concat (map (fn [tuple-r1]    ; alternative zu concat : into
                           (remove nil? (map (fn [tuple-r2]
                                                   ; check equality of common attributes
                                                   (if (every? true? (map (fn [attr]

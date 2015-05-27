@@ -3,6 +3,10 @@
    (:use [clojure.repl])
    (require [wikidata.connector :as wiki]))
 
+(def people (rel [:id :name :aID] #{[1 "Arthur" 2], [2 "Betty" 1], [3 "Charlie" 1]}))
+
+(seq people)
+
 
 (def people (rel [:id :name :aID] #{[1 "Arthur" 2], [2 "Betty" 1], [3 "Charlie" 1]}))
 
@@ -53,7 +57,7 @@
 (count insertClj)
 
 (defn toEmplyeeMap[row]
-  {:emp_no (nth row 0)s
+  {:emp_no (nth row 0)
    :birth_date (nth row 1)
     :first_name (nth row 2)
     :last_name (nth row 3)
@@ -73,9 +77,12 @@
 (count (restrict (deref employees-var) (relfn [t] (= "M" (:gender t)))))
  (count (restrict (deref employees-var) (relfn [t] (= "F" (:gender t)))))
 
+(def r #{  {:a 1 :b 2} {:a 2 :b 1} {:a 2 :b 3}})
 
 
 
+
+(clojure.set/index r #{:a})
 
 
 ;#################### FILL Salaries #################

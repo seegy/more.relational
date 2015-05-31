@@ -202,7 +202,7 @@
                                                              v)}) extend-map)))
                       (seq relation)))))
 
-  (join [relation1 relation2]
+  #_(join [relation1 relation2]
    (let [common (common-attr relation1 relation2)
           div-r2 (diverging-attr relation2 relation1)
           new-head (vec (concat (.head relation1) div-r2))]
@@ -222,6 +222,40 @@
                                                                             div-r2))))
                                                     (.body relation2))))
                                  (.body relation1)))))))
+
+
+
+  #_(join [relation1 relation2]
+        (if (and (seq relation1) (seq relation2))
+          (let [ks (clojure.set/intersection (set (.head relation1)) (set (.head relation2)))
+                [r s] (if (<= (count relation1) (count relation2))
+                        [relation1 relation2]
+                        [relation2 relation1])
+                idx (clojure.set/index r ks)]
+            (rel (reduce (fn [ret x]
+                      (let [found (idx (select-keys x ks))]
+                        (if found
+                          (reduce #(conj %1 (merge %2 x)) ret found)
+                          ret)))
+                    #{} s)))
+          (rel [] #{}))) ;TODO head
+
+    (join [relation1 relation2]
+        (if (and (seq relation1) (seq relation2))
+          (let [ks (clojure.set/intersection (set (.head relation1)) (set (.head relation2)))
+                [r s] (if (<= (count relation1) (count relation2))
+                        [relation1 relation2]
+                        [relation2 relation1])
+                idx (clojure.set/index r ks)]
+            (rel (reduce (fn [ret x]
+                      (let [found (idx (select-keys x ks))]
+                        (if found
+                          (transduce (comp (merge x)) conj ret found)
+                          ret)))
+                    #{} s)))
+          (rel [] #{}))) ;TODO head
+
+
 
 
   (compose [relation1 relation2]

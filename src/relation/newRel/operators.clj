@@ -160,9 +160,6 @@
     (rel (vec attrs) (map #(clojure.set/rename-keys % smap) (.body relation)))))
 
 
-  #_(restrict [relation predicate]
-    (rel (set (filter predicate (seq relation))))) ;; TODO set relevant?
-
   (restrict [relation predicate]
             (rel (into {} (filter predicate) (.body relation))))
 
@@ -202,31 +199,9 @@
                                                              v)}) extend-map)))
                       (seq relation)))))
 
-  #_(join [relation1 relation2]
-   (let [common (common-attr relation1 relation2)
-          div-r2 (diverging-attr relation2 relation1)
-          new-head (vec (concat (.head relation1) div-r2))]
-      ; add relation 2 value tuples to that of relation 1
-      (rel new-head
-        ; tuple join
-        (set (apply concat (map (fn [tuple-r1]    ; alternative zu concat : into
-                          (remove nil? (map (fn [tuple-r2]
-                                                  ; check equality of common attributes
-                                                  (if (every? true? (map (fn [attr]
-                                                                           (= (get tuple-r1 attr)
-                                                                              (get tuple-r2 attr)))
-                                                                      common))
-                                                    ; join tuples
-                                                    (reduce merge tuple-r1 (map (fn [attr]
-                                                                                 {attr (get tuple-r2 attr)})
-                                                                            div-r2))))
-                                                    (.body relation2))))
-                                 (.body relation1)))))))
 
-
-
-  #_(join [relation1 relation2]
-        (if (and (seq relation1) (seq relation2))
+  (join [relation1 relation2]
+        (if (and (seq relation1) (seq relation2)) ; Both args are resolveable to seq
           (let [ks (clojure.set/intersection (set (.head relation1)) (set (.head relation2)))
                 [r s] (if (<= (count relation1) (count relation2))
                         [relation1 relation2]
@@ -238,24 +213,11 @@
                           (reduce #(conj %1 (merge %2 x)) ret found)
                           ret)))
                     #{} s)))
-          (rel [] #{}))) ;TODO head
-
-    (join [relation1 relation2]
-        (if (and (seq relation1) (seq relation2))
-          (let [ks (clojure.set/intersection (set (.head relation1)) (set (.head relation2)))
-                [r s] (if (<= (count relation1) (count relation2))
-                        [relation1 relation2]
-                        [relation2 relation1])
-                idx (clojure.set/index r ks)]
-            (rel (reduce (fn [ret x]
-                      (let [found (idx (select-keys x ks))]
-                        (if found
-                          (transduce (comp (merge x)) conj ret found)
-                          ret)))
-                    #{} s)))
-          (rel [] #{}))) ;TODO head
-
-
+          (if (seq relation1) ; cases for not relations
+            relation1
+            (if (seq relation2)
+              relation2
+               (rel [] #{})))))
 
 
   (compose [relation1 relation2]
@@ -382,7 +344,7 @@
                                   (.body r))]
             (recur (rel new-head new-body)
                    (next attrs))))))
-;### TODO IAM HERE
+
 
   (summarize [relation group-by sum-map]
     (let [group? (not (empty? group-by))

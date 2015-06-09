@@ -144,7 +144,7 @@
 
 
 
-; implementation for Relation (clojure data structures, row-oriented)
+; implementation for Relation (clojure data structures, row-oriented, rows as maps, including trancuders)
 (extend-protocol RelationalOperators Relation
   (rename [relation smap]
     (Relation.
@@ -243,7 +243,7 @@
       (rel (.head relation1) (clojure.set/difference (.body relation1) (.body relation2))))
 
 
-    ;### TODO
+    ;### TODO maybe divide give not correct results
 
   (divide [relation1 relation2]
     (let [r1-only-attrs (diverging-attr relation1 relation2)
@@ -274,9 +274,10 @@
               remaining (remove attributes (.head r))
               new-header (conj (vec remaining) alias)
               tuples-rel (apply merge-with union (map (fn [tuple]
-                                                   {(vec (map #(get tuple %) remaining))
-                                                    (rel (vec attributes) #{(vec (map #(get tuple %) attributes)) })})
-                                                 (.body r)))
+                               (let [xf (comp (map #(get tuple %)))]
+                               {(into [] xf remaining)
+                                (rel (vec attributes)
+                                     #{ (into [] xf attributes) })})) (.body r)))
               new-body (set (map (fn [[k v]] (conj k v)) tuples-rel))]
           (recur (rel new-header new-body) (next gmap))))))
 

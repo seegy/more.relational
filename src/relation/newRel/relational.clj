@@ -23,65 +23,9 @@
 
 (def rs (rel #{{:id 1 :sid 1 :quantity 200} {:id 1 :sid 2 :quantity 2} {:id 2 :sid 3 :quantity 100} {:id 2 :sid 2 :quantity 1}}))
 
-(def relation1 r)
-(def relation2 rs)
-
-(def ks (clojure.set/intersection (set (.head relation1)) (set (.head relation2))))
-
-(def r relation1)
-(def s relation2)
-
-(def idx (clojure.set/index r ks))
-
-(def x (first s))
-(def ret #{})
-
-(def xform
-  (comp
-   #(select-keys % ks)
-   #(idx %)
-   ))
-
-(reduce (fn [ret x] (transduce xform #(conj %1 (merge %2 x)) ret x)) #{} s)
+(group (join (join r rs) s) {:NameAndHammer #{:sid :quantity :description}})
 
 
-;(transduce  (comp (filter #(= (:id (key %) 1))) (map #(assoc (key %) :id 3 ))) conj {} idx)
-
-
-(def xf (comp (filter odd?) (map inc)))
-(transduce xf + (range 1000))
-
-(into [] xf (range 1000))
-(sequence xf (range 1000))
-
-
-(def xform (comp #(select-keys %) #(idx %) #([x %])))
-
-(transduce (fn [ret [x found]]
-          (if found
-              (reduce #(conj %1 (merge %2 x)) ret found)
-                  ret)) xform #{} s)
-
-
-
-
-  #_(join [relation1 relation2]
-        (if (and (seq relation1) (seq relation2))
-          (let [ks (clojure.set/intersection (set (.head relation1)) (set (.head relation2)))
-                [r s] (if (<= (count relation1) (count relation2))
-                        [relation1 relation2]
-                        [relation2 relation1])
-                idx (clojure.set/index r ks)]
-            (rel (reduce (fn [ret x]
-                      (let [found (idx (select-keys x ks))]
-                        (if found
-                          (reduce #(conj %1 (merge %2 x)) ret found)
-                          ret)))
-                    #{} s)))
-          (rel [] #{}))) ;TODO head
-
-
-(join r rs)
 
 #_(
 (seq r)

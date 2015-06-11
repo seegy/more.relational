@@ -6,11 +6,6 @@
 (deftype BAT [buns])
 
 
-(into [] (comp
-          (filter #(= 2 (count %)))
-          (filter #(not (nil? (:tail %))))
-          (filter #(not (nil? (:head %))))) names)
-
 (defn bat
   ([tuple-vec]
    (let [data (into [] (comp

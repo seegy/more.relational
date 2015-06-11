@@ -95,7 +95,6 @@
   (.write writer (str "#rel " (pr-str  (scheme rel) (body rel)) )))
 
 
-
 (defn rel
   "
   Returns a map of type incanter.core.dataset constructed from the given column-names and
@@ -115,10 +114,11 @@
                  (map? (first dat))
                    dat
                  :else
-                   (map #(if (empty? %)
-                            {}
-                            (apply assoc {} (interleave column-names %))) dat))]
-      (Relation. (into [] column-names) (set rows))))
+                   (into #{} (comp
+                              (map (fn [t] (zipmap column-names t)))
+                              (filter not-empty))
+                             dat))]
+      (Relation. (into [] column-names)  rows)))
 
   ([tuple-set]
     (let [tuples (if (or (empty? tuple-set) (nil? tuple-set))
@@ -129,8 +129,9 @@
          head
          tuples)))))
 
+
 ;(def r (rel #{ {:id 1, :name "Arthur"} {:id 2, :name "Betty"} }))
-;(rel [:id :name] #{ [1 "Arthur"] [2 "Betty"]})
+(rel [:id :name] #{ [1 "Arthur"] [2 "Betty"]})
 
 
 ;  (1) Given as a set of hash maps: #{ {:id 1, :name \"Arthur\"} {:id 2, :name \"Betty\"} }

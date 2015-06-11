@@ -131,7 +131,7 @@
 
 
 ;(def r (rel #{ {:id 1, :name "Arthur"} {:id 2, :name "Betty"} }))
-(rel [:id :name] #{ [1 "Arthur"] [2 "Betty"]})
+;(rel [:id :name] #{ [1 "Arthur"] [2 "Betty"]})
 
 
 ;  (1) Given as a set of hash maps: #{ {:id 1, :name \"Arthur\"} {:id 2, :name \"Betty\"} }

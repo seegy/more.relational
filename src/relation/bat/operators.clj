@@ -26,6 +26,10 @@
  (bat date-of-birth)
 
  (def nameBAT (bat names))
+ (def NameRelationBAT (bat [{:head 1 :tail 2}
+                           {:head 1 :tail 3}
+                           {:head 2 :tail 3}
+                           {:head 3 :tail 2} ]))
 
  (defn find
    [batObj head]
@@ -54,6 +58,24 @@
 ; (select nameBAT :bla :r1 false :r2 true)
 (select nameBAT "Jane" :v2 "John" :r1 false)
 (select (bat postal-codes) 123 :v2 789 :r1 false :r2 true)
+
+
+
+
+(defn join
+"(bat[H1,T1] AB, bat[T1,T2] CD,str f, ···pi···)"
+  [batObjAB batObjCD]
+   (bat (into [] (map (fn [tupleAB]
+                   (first (filter not-empty (map (fn [tupleCD]
+                         (if (= (:tail tupleAB) (:head tupleCD))
+                           {:head (:head tupleAB)
+                            :tail (:tail tupleCD)}))
+                       (buns batObjCD)))))
+                  (buns batObjAB)))))
+
+
+(join  NameRelationBAT nameBAT)
+
 
 
 
@@ -109,6 +131,6 @@
 (slice nameBAT 0 2)
 
 
-
+(count nameBAT)
 
 

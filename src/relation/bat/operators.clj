@@ -1,42 +1,8 @@
 (ns relation.bat.bat)
 
-
-
-
-
-(def names [{:head 1 :tail "John"}
-            {:head 2 :tail "Jane"}
-            {:head 3 :tail "Bob"}])
-
-(def postal-codes [{:head 1 :tail 123}
-                 {:head 2 :tail 456}
-                 {:head 3 :tail 789} ])
-
-(def date-of-birth [{:head 1 :tail "01-01-2001"}
-                    {:head 2 :tail "02-02-2001"}
-                    {:head 3 :tail "03-03-2001"}])
-
-
-
-(def named-tables {:name (bat names)
-                   :postal-code (bat postal-codes)
-                   :date-of-birth (bat date-of-birth)})
- (bat names)
- (bat postal-codes)
- (bat date-of-birth)
-
- (def nameBAT (bat names))
- (def NameRelationBAT (bat [{:head 1 :tail 2}
-                           {:head 1 :tail 3}
-                           {:head 2 :tail 3}
-                           {:head 3 :tail 2} ]))
-
  (defn find
    [batObj head]
    (:tail (first (filter #(= head (:head %)) (buns batObj)))))
-
-
- (find nameBAT 2)
 
 
  (defn select
@@ -55,11 +21,6 @@
                      (buns batObj)))]
     (bat newBat)))
 
-; (select nameBAT :bla :r1 false :r2 true)
-(select nameBAT "Jane" :v2 "John" :r1 false)
-(select (bat postal-codes) 123 :v2 789 :r1 false :r2 true)
-
-
 
 
 (defn join
@@ -74,7 +35,6 @@
                   (buns batObjAB)))))
 
 
-(join  NameRelationBAT nameBAT)
 
 
 
@@ -85,19 +45,10 @@
                          :tail (:head tuple)}) (buns batObj))))
 
 
-(reverse nameBAT)
-
-
-
-
 (defn mirror
   [batObj]
   (bat (map (fn [tuple] {:head (:head tuple)
                          :tail (:head tuple)}) (buns batObj))))
-
-
-(mirror nameBAT)
-(mirror (reverse nameBAT))
 
 
 
@@ -106,9 +57,6 @@
   (bat (map (fn [tuple] {:head (:head tuple)
                          :tail (dec (+ o (:head tuple)))}) (buns batObj))))
 
-(mark nameBAT :o 10)
-(mark nameBAT)
-
 
 
 (defn project
@@ -116,21 +64,39 @@
   (bat (map (fn [tuple] {:head (:head tuple)
                          :tail c}) (buns batObj))))
 
-(project nameBAT "Test")
-
-
 
 (defn slice
   [batObj lo hi]
   (bat (into [] (comp (take (+ lo hi))
                       (drop lo ))(buns batObj))))
 
-(slice nameBAT 1 1)
-(slice nameBAT 0 0)
-(slice nameBAT 2 1)
-(slice nameBAT 0 2)
+
+(defn sum
+  [batObj]
+  (reduce #(+ %1 (:tail %2)) 0 (buns batObj)))
 
 
-(count nameBAT)
+(defn max
+  [batObj]
+  (apply clojure.core/max (map #(:tail %) (buns batObj))))
 
 
+
+(defn min
+  [batObj]
+  (apply clojure.core/min (map #(:tail %) (buns batObj))))
+
+
+(defn unique
+  [batObj]
+  (bat (set (buns batObj))))
+
+
+(defn diff
+  [batObjAB batObjCD]
+  (bat (clojure.set/difference (set (buns batObjAB)) (set (buns batObjCD)))))
+
+
+(defn union
+  [batObjAB batObjCD]
+  (bat (clojure.set/union (buns batObjAB) (buns batObjCD))))

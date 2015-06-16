@@ -13,9 +13,9 @@
 
 
 
-(def names [{:head 1 :tail "John"}
-            {:head 2 :tail "Jane"}
-            {:head 3 :tail "Bob"}])
+(def names [{:head 1 :tail "Roland"}
+            {:head 2 :tail "Eddie"}
+            {:head 3 :tail "Susanna"}])
 
 (def postal-codes [{:head 1 :tail 123}
                  {:head 2 :tail 456}
@@ -43,16 +43,16 @@
 
 
 
- (find nameBAT 2)
-
+(find nameBAT 2)
 
 
 ; (select nameBAT :bla :r1 false :r2 true)
-(select nameBAT "Jane" :v2 "John" :r1 false)
+(select nameBAT "Roland" :v2 "Susanna" :r1 false)
 (select (bat postal-codes) 123 :v2 789 :r1 false :r2 true)
 
-
-(join  NameRelationBAT nameBAT)
+(join NameRelationBAT nameBAT =)
+(join NameRelationBAT nameBAT = 2)
+(join NameRelationBAT nameBAT <)
 
 (reverse nameBAT)
 
@@ -80,11 +80,15 @@
 (unique NameRelationBAT)
 
 (def namesBAT2 (bat [{:head 4 :tail "Jake"}
-            {:head 2 :tail "Jane"}
-            {:head 3 :tail "Bob"}]))
+            {:head 2 :tail "Eddie"}
+            {:head 3 :tail "Susanna"}]))
 
 (diff nameBAT namesBAT2)
 (diff namesBAT2 nameBAT)
 
 (union nameBAT namesBAT2)
+
+(intersect nameBAT namesBAT2)
+(intersect namesBAT2 nameBAT)
+
 

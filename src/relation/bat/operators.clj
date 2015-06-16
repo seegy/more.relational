@@ -25,17 +25,22 @@
 
 (defn join
 "(bat[H1,T1] AB, bat[T1,T2] CD,str f, ···pi···)"
-  [batObjAB batObjCD]
+  ([batObjAB batObjCD f]
    (bat (into [] (map (fn [tupleAB]
                    (first (filter not-empty (map (fn [tupleCD]
-                         (if (= (:tail tupleAB) (:head tupleCD))
+                         (if (f (:tail tupleAB) (:head tupleCD))
                            {:head (:head tupleAB)
                             :tail (:tail tupleCD)}))
                        (buns batObjCD)))))
                   (buns batObjAB)))))
-
-
-
+  ([batObjAB batObjCD f & more]
+   (bat (into [] (map (fn [tupleAB]
+                   (first (filter not-empty (map (fn [tupleCD]
+                         (if (apply f (conj more (:tail tupleAB) (:head tupleCD)))
+                           {:head (:head tupleAB)
+                            :tail (:tail tupleCD)}))
+                       (buns batObjCD)))))
+                  (buns batObjAB))))))
 
 
 
@@ -100,3 +105,11 @@
 (defn union
   [batObjAB batObjCD]
   (bat (clojure.set/union (buns batObjAB) (buns batObjCD))))
+
+(defn intersect
+  [batObjAB batObjCD]
+  (bat (clojure.set/intersection (set (buns batObjAB)) (set (buns batObjCD)))))
+
+(defn group
+  ([batObj])
+  ([batObjAB batObjCD]))

@@ -27,12 +27,15 @@
 
 
 
+
+
 (def named-tables {:name (bat names)
                    :postal-code (bat postal-codes)
                    :date-of-birth (bat date-of-birth)})
  (bat names)
  (bat postal-codes)
  (bat date-of-birth)
+(bat "li" "la" "lu")
 
  (def nameBAT (bat names))
  (def NameRelationBAT (bat [{:head 1 :tail 2}

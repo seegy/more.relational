@@ -43,31 +43,29 @@
                   (buns batObjAB))))))
 
 
-
 (defn reverse
   [batObj]
-  (bat (map (fn [tuple] {:head (:tail tuple)
-                         :tail (:head tuple)}) (buns batObj))))
+  (bat (map (fn [bun] {:head (:tail bun)
+                         :tail (:head bun)}) (buns batObj))))
 
 
 (defn mirror
   [batObj]
-  (bat (map (fn [tuple] {:head (:head tuple)
-                         :tail (:head tuple)}) (buns batObj))))
+  (bat (map (fn [bun] (assoc bun
+                         :tail (:head bun))) (buns batObj))))
 
 
 
 (defn mark
   [batObj & {:keys [o] :or {o 0}}]
-  (bat (map (fn [tuple] {:head (:head tuple)
-                         :tail (dec (+ o (:head tuple)))}) (buns batObj))))
+  (bat (map (fn [bun] (assoc bun
+                         :tail (dec (+ o (:head bun))))) (buns batObj))))
 
 
 
 (defn project
   [batObj c]
-  (bat (map (fn [tuple] {:head (:head tuple)
-                         :tail c}) (buns batObj))))
+  (bat (map (fn [bun](assoc bun :tail c) ) (buns batObj))))
 
 
 (defn slice
@@ -111,5 +109,19 @@
   (bat (clojure.set/intersection (set (buns batObjAB)) (set (buns batObjCD)))))
 
 (defn group
-  ([batObj])
-  ([batObjAB batObjCD]))
+  ([batObj]
+   (let [id (fn [tail] (:head (first (filter #(= ( :tail %) tail) batObj))))]
+     (bat (map (fn[bun](assoc bun :tail (id (:tail bun)))) batObj))))
+  ([batObjAB batObjCD]
+   (let [joined (map (fn [bunAB]
+                       (first (filter not-empty (map (fn [bunCD]
+                                        (if (= (:head bunAB) (:head bunCD))
+                                          {:a (:head bunAB)
+                                           :b (:tail bunAB)
+                                           :d (:tail bunCD)}
+                                          ()
+                                          )) batObjCD)))) batObjAB)
+         id (fn [b d] (:a (first (filter #(and (= (:b %) b) (= (:d %) d)) joined))))]
+     (bat (map (fn[tuple]{:head (:a tuple) :tail (id (:b tuple) (:d tuple))}) joined)))))
+
+

@@ -46,7 +46,7 @@
 (find nameBAT 2)
 
 
-; (select nameBAT :bla :r1 false :r2 true)
+(select nameBAT "Roland")
 (select nameBAT "Roland" :v2 "Susanna" :r1 false)
 (select (bat postal-codes) 123 :v2 789 :r1 false :r2 true)
 
@@ -92,3 +92,16 @@
 (intersect namesBAT2 nameBAT)
 
 
+ (def AB (bat [{:head 1 :tail 1}
+                           {:head 2 :tail 1}
+                           {:head 3 :tail 2}
+                           {:head 4 :tail 2} ]))
+
+ (def CD (bat [{:head 1 :tail "A"}
+                           {:head 2 :tail "A"}
+                           {:head 3 :tail "B"}
+                           {:head 4 :tail "C"} ]))
+
+ (group AB)
+ (group (group AB))
+ (group (group AB) CD)

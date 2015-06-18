@@ -28,7 +28,9 @@
  (print "read employees")
  (time (def employees (rel [:emp_no :birth_date :first_name :last_name :gender :hire_date] employees-data))); auf MAC: 65.3 ms
 
-(time (convertToBats employees))
+(time (def employeesBat (convertToBats employees)))
+
+(bat/select (:gender employeesBat) "M")
 
 
 

@@ -43,10 +43,34 @@
                   (buns batObjAB))))))
 
 
+(def nameBAT (reverse (bat [{:head 1 :tail "Roland"}
+            {:head 2 :tail "Eddie"}
+            {:head 3 :tail "Susanna"}])))
+(def NameRelationBAT (bat [{:head 1 :tail 2}
+                           {:head 1 :tail 3}
+                           {:head 2 :tail 3}
+                           {:head 3 :tail 2} ]))
+
+
+(defn join [batAB batCD]
+  (let [ AB (map (fn[bun] (clojure.set/rename-keys bun {:tail :key})) (buns batAB))
+         CB (map (fn[bun] (clojure.set/rename-keys bun {:head :key})) (buns batCD))
+         ks #{:key}
+         idx (clojure.set/index AB ks)]
+    (bat (reduce (fn [ret x]
+           (let [found (idx (select-keys x ks))]
+             (if found
+               (reduce #(conj %1 (dissoc  (merge %2 x) :key)) ret found)
+               ret)))
+         [] CB))))
+
+(join nameBAT NameRelationBAT)
+
+
+
 (defn reverse
   [batObj]
-  (bat (map (fn [bun] {:head (:tail bun)
-                         :tail (:head bun)}) (buns batObj))))
+  (bat (map (fn [bun] (clojure.set/rename-keys bun {:head :tail, :tail :head})) (buns batObj))))
 
 
 (defn mirror

@@ -1,6 +1,6 @@
 (ns relation.batRel
   (:require  [relation.newRel.relational :as rel])
-  (:require  [relation.bat.bat]))
+  (:require  [relation.bat.bat :as bat]))
 
 
 
@@ -23,14 +23,19 @@
 
 
 (def employees-data (set (read-string  (str "[" (slurp  "resources/employees.clj" ) "]" ))))
+
+   (def employees-data (take 100 employees-data))
+
  (count employees-data)
 
  (print "read employees")
- (time (def employees (rel [:emp_no :birth_date :first_name :last_name :gender :hire_date] employees-data))); auf MAC: 65.3 ms
+ (time (def employees (rel/rel [:emp_no :birth_date :first_name :last_name :gender :hire_date] employees-data))); auf MAC: 65.3 ms
 
 (time (def employeesBat (convertToBats employees)))
 
-(bat/select (:gender employeesBat) "M")
+(def males (bat/select (:gender employeesBat) "M"))
+
+#_(bat/join (bat/reverse (:emp_no employeesBat)) males =)
 
 
 

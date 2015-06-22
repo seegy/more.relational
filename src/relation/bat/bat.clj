@@ -37,7 +37,9 @@
  (bat date-of-birth)
 (bat "li" "la" "lu")
 
- (def nameBAT (bat names))
+ (def nameBAT (bat [{:head 1 :tail "Roland"}
+            {:head 2 :tail "Eddie"}
+            {:head 3 :tail "Susanna"}]))
  (def NameRelationBAT (bat [{:head 1 :tail 2}
                            {:head 1 :tail 3}
                            {:head 2 :tail 3}
@@ -53,6 +55,7 @@
 (select nameBAT "Roland" :v2 "Susanna" :r1 false)
 (select (bat postal-codes) 123 :v2 789 :r1 false :r2 true)
 
+(join (reverse nameBAT)  (bat postal-codes) =)
 (join NameRelationBAT nameBAT =)
 (join NameRelationBAT nameBAT = 2)
 (join NameRelationBAT nameBAT <)

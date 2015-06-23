@@ -23,7 +23,7 @@
 
 
 
-(defn join
+#_(defn join
 "(bat[H1,T1] AB, bat[T1,T2] CD,str f, ···pi···)"
   ([batObjAB batObjCD f]
    (bat (into [] (map (fn [tupleAB]
@@ -43,16 +43,16 @@
                   (buns batObjAB))))))
 
 
-(def nameBAT (reverse (bat [{:head 1 :tail "Roland"}
+#_(def nameBAT (reverse (bat [{:head 1 :tail "Roland"}
             {:head 2 :tail "Eddie"}
             {:head 3 :tail "Susanna"}])))
-(def NameRelationBAT (bat [{:head 1 :tail 2}
+#_(def NameRelationBAT (bat [{:head 1 :tail 2}
                            {:head 1 :tail 3}
                            {:head 2 :tail 3}
                            {:head 3 :tail 2} ]))
 
 
-(defn join [batAB batCD]
+#_(defn join [batAB batCD]
   (let [ AB (map (fn[bun] (clojure.set/rename-keys bun {:tail :key})) (buns batAB))
          CB (map (fn[bun] (clojure.set/rename-keys bun {:head :key})) (buns batCD))
          ks #{:key}
@@ -62,9 +62,50 @@
              (if found
                (reduce #(conj %1 (dissoc  (merge %2 x) :key)) ret found)
                ret)))
-         [] CB))))
+         [] CD))))
 
-(join nameBAT NameRelationBAT)
+
+(defn join
+  ([batAB batCD f & more]
+  (let [ AB (map (fn[bun] (clojure.set/rename-keys bun {:tail :key})) (buns batAB))
+         CD (map (fn[bun] (clojure.set/rename-keys bun {:head :key})) (buns batCD))
+         ks #{:key}
+         idx (clojure.set/index AB ks)]
+    (bat (reduce (fn [ret x]
+           (let [found (first (filter not-empty (map (fn [[k v]]
+                                                        (if (apply f (:key k) (:key x) more)
+                                         v
+                                         nil)) idx)))]
+             (if found
+              (reduce #(conj %1 (dissoc  (merge %2 x) :key)) ret found)
+               ret)))
+         [] CD))))
+   ([batAB batCD f]
+   (let [ AB (map (fn[bun] (clojure.set/rename-keys bun {:tail :key})) (buns batAB))
+         CD (map (fn[bun] (clojure.set/rename-keys bun {:head :key})) (buns batCD))
+         ks #{:key}
+         idx (clojure.set/index AB ks)]
+    (if (= f =)
+
+      (bat (reduce (fn [ret x]
+           (let [found (idx (select-keys x ks))]
+             (if found
+               (reduce #(conj %1 (dissoc  (merge %2 x) :key)) ret found)
+               ret)))
+         [] CD))
+
+     (bat (reduce (fn [ret x]
+           (let [found (first (filter not-empty (map (fn [[k v]]
+                                                        (if  (f (:key k) (:key x))
+                                         v
+                                         nil)) idx)))]
+             (if found
+              (reduce #(conj %1 (dissoc  (merge %2 x) :key)) ret found)
+               ret)))
+         [] CD))))))
+
+
+#_(join nameBAT NameRelationBAT =)
 
 
 

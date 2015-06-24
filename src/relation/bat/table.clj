@@ -21,7 +21,7 @@
           (filter #(= 2 (count %)))
           (filter #(not (nil? (:tail %))))
           (filter #(not (nil? (:head %))))) tuple-vec)]
-     (BAT. (sort-by #(:head %) data))))
+     (BAT. data)))
   ([one & more]
    (let [tails (map #(assoc {} :tail %) (conj (seq more) one))
          heads (map #(assoc {} :head %) (take (count tails) (range)))

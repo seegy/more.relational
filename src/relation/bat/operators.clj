@@ -22,6 +22,24 @@
     (bat newBat)))
 
 
+(defn selectX
+  [batObj f & more]
+  (let [< (fn[a b] (neg? (compare a b)))
+        > (fn[a b] (pos? (compare a b)))
+        newBat (into [] (comp
+                    (filter #(let [b (:tail %)]
+                               (apply f b more)))
+                         (map #(assoc  % :tail nil)))
+                     (buns batObj))]
+    (bat newBat)))
+
+
+(def NameRelationBAT (bat [{:head 1 :tail 2}
+                           {:head 1 :tail 3}
+                           {:head 2 :tail 3}
+                           {:head 3 :tail 2} ]))
+
+(selectX NameRelationBAT (fn [x h l] (and (<= x h) (>= x l))) 3 3)
 
 #_(defn join
 "(bat[H1,T1] AB, bat[T1,T2] CD,str f, ···pi···)"
@@ -190,3 +208,17 @@
      (bat (map (fn[tuple]{:head (:a tuple) :tail (id (:b tuple) (:d tuple))}) joined)))))
 
 
+(defn fragment
+  ""
+  [batAB batCD]
+  (map (fn[bun]( select batAB (fn [x l h] (and (>= x l) (<= x h))) (:head bun) (:tail bun))) batCD))
+
+(def nameBAT  (bat [{:head 1 :tail "Roland"}
+            {:head 2 :tail "Eddie"}
+            {:head 3 :tail "Susanna"}]))
+(def NameRelationBAT (bat [{:head 1 :tail 2}
+                           {:head 1 :tail 3}
+                           {:head 2 :tail 3}
+                           {:head 3 :tail 2} ]))
+
+(fragment  nameBAT NameRelationBAT)

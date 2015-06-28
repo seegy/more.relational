@@ -19,8 +19,9 @@
   ([tuple-vec]
    (let [data (into [] (comp
           (filter #(= 2 (count %)))
-          (filter #(not (nil? (:tail %))))
-          (filter #(not (nil? (:head %))))) tuple-vec)]
+         ; (filter #(not (nil? (:tail %))))
+         ; (filter #(not (nil? (:head %))))
+                        ) tuple-vec)]
      (BAT. data)))
   ([one & more]
    (let [tails (map #(assoc {} :tail %) (conj (seq more) one))

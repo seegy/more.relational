@@ -5,24 +5,8 @@
    (:tail (first (filter #(= head (:head %)) (buns batObj)))))
 
 
- (defn select
-   [batObj v1 & {:keys [v2 r1 r2] :or {v2 v1, r1 true, r2 r1}}]
-  (let [< (fn[a b] (neg? (compare a b)))
-        > (fn[a b] (pos? (compare a b)))
-        newBat (into []
-             (filter #(let [b (:tail %)]
-                       (or
-                         (and (or (nil? v1) (< v1 b))
-                              (or (nil? v2) (< b v2))
-                              (not (and (nil? v1) (nil? v2))))
-                         (and r1 (= v1 b))
-                         (and r2 (= v2 b))
-                         (and (nil? v1) r1 (nil? v2) r2 (nil? b))))
-                     (buns batObj)))]
-    (bat newBat)))
 
-
-(defn selectX
+(defn select
   [batObj f & more]
   (let [< (fn[a b] (neg? (compare a b)))
         > (fn[a b] (pos? (compare a b)))
@@ -39,48 +23,7 @@
                            {:head 2 :tail 3}
                            {:head 3 :tail 2} ]))
 
-(selectX NameRelationBAT (fn [x h l] (and (<= x h) (>= x l))) 3 3)
-
-#_(defn join
-"(bat[H1,T1] AB, bat[T1,T2] CD,str f, ···pi···)"
-  ([batObjAB batObjCD f]
-   (bat (into [] (map (fn [tupleAB]
-                   (first (filter not-empty (map (fn [tupleCD]
-                         (if (f (:tail tupleAB) (:head tupleCD))
-                           {:head (:head tupleAB)
-                            :tail (:tail tupleCD)}))
-                       (buns batObjCD)))))
-                  (buns batObjAB)))))
-  ([batObjAB batObjCD f & more]
-   (bat (into [] (map (fn [tupleAB]
-                   (first (filter not-empty (map (fn [tupleCD]
-                         (if (apply f (conj more (:tail tupleAB) (:head tupleCD)))
-                           {:head (:head tupleAB)
-                            :tail (:tail tupleCD)}))
-                       (buns batObjCD)))))
-                  (buns batObjAB))))))
-
-
-#_(def nameBAT (reverse (bat [{:head 1 :tail "Roland"}
-            {:head 2 :tail "Eddie"}
-            {:head 3 :tail "Susanna"}])))
-#_(def NameRelationBAT (bat [{:head 1 :tail 2}
-                           {:head 1 :tail 3}
-                           {:head 2 :tail 3}
-                           {:head 3 :tail 2} ]))
-
-
-#_(defn join [batAB batCD]
-  (let [ AB (map (fn[bun] (clojure.set/rename-keys bun {:tail :key})) (buns batAB))
-         CB (map (fn[bun] (clojure.set/rename-keys bun {:head :key})) (buns batCD))
-         ks #{:key}
-         idx (clojure.set/index AB ks)]
-    (bat (reduce (fn [ret x]
-           (let [found (idx (select-keys x ks))]
-             (if found
-               (reduce #(conj %1 (dissoc  (merge %2 x) :key)) ret found)
-               ret)))
-         [] CD))))
+(select NameRelationBAT (fn [x h l] (and (<= x h) (>= x l))) 3 3)
 
 
 (defn join
@@ -99,31 +42,29 @@
                ret)))
          [] CD))))
    ([batAB batCD f]
-   (let [ AB (map (fn[bun] (clojure.set/rename-keys bun {:tail :key})) (buns batAB))
-         CD (map (fn[bun] (clojure.set/rename-keys bun {:head :key})) (buns batCD))
-         ks #{:key}
-         idx (clojure.set/index AB ks)]
-    (if (= f =)
+     (let [ AB (map (fn[bun] (clojure.set/rename-keys bun {:tail :key})) (buns batAB))
+           CD (map (fn[bun] (clojure.set/rename-keys bun {:head :key})) (buns batCD))
+           ks #{:key}
+           idx (clojure.set/index AB ks)]
+      (if (= f =)
 
-      (bat (reduce (fn [ret x]
-           (let [found (idx (select-keys x ks))]
-             (if found
-               (reduce #(conj %1 (dissoc  (merge %2 x) :key)) ret found)
-               ret)))
-         [] CD))
+        (bat (reduce (fn [ret x]
+             (let [found (idx (select-keys x ks))]
+               (if found
+                 (reduce #(conj %1 (dissoc  (merge %2 x) :key)) ret found)
+                 ret)))
+           [] CD))
 
-     (bat (reduce (fn [ret x]
-           (let [found (first (filter not-empty (map (fn [[k v]]
-                                                        (if  (f (:key k) (:key x))
-                                         v
-                                         nil)) idx)))]
-             (if found
-              (reduce #(conj %1 (dissoc  (merge %2 x) :key)) ret found)
-               ret)))
-         [] CD))))))
+       (bat (reduce (fn [ret x]
+             (let [found (first (filter not-empty (map (fn [[k v]]
+                                                          (if  (f (:key k) (:key x))
+                                           v
+                                           nil)) idx)))]
+               (if found
+                (reduce #(conj %1 (dissoc  (merge %2 x) :key)) ret found)
+                 ret)))
+           [] CD))))))
 
-
-#_(join nameBAT NameRelationBAT =)
 
 
 
@@ -208,17 +149,11 @@
      (bat (map (fn[tuple]{:head (:a tuple) :tail (id (:b tuple) (:d tuple))}) joined)))))
 
 
+
 (defn fragment
   ""
   [batAB batCD]
-  (map (fn[bun]( select batAB (fn [x l h] (and (>= x l) (<= x h))) (:head bun) (:tail bun))) batCD))
+  (bat (map (fn[bun]{:head (:tail bun)
+                :tail (select batAB (fn [x l h] (and (>= x l) (<= x h))) (:head bun) (:tail bun))}) batCD)))
 
-(def nameBAT  (bat [{:head 1 :tail "Roland"}
-            {:head 2 :tail "Eddie"}
-            {:head 3 :tail "Susanna"}]))
-(def NameRelationBAT (bat [{:head 1 :tail 2}
-                           {:head 1 :tail 3}
-                           {:head 2 :tail 3}
-                           {:head 3 :tail 2} ]))
 
-(fragment  nameBAT NameRelationBAT)

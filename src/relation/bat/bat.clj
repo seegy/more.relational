@@ -51,9 +51,8 @@
 (find nameBAT 2)
 
 
-(select nameBAT "Roland")
-(select nameBAT "Roland" :v2 "Susanna" :r1 false)
-(select (bat postal-codes) 123 :v2 789 :r1 false :r2 true)
+(select nameBAT #(= % "Roland"))
+(select (bat postal-codes)  #(and (> % 123) (<= % 789)))
 
 (join (reverse nameBAT)  (bat postal-codes) =)
 (join NameRelationBAT nameBAT =)

@@ -153,7 +153,8 @@
 (defn fragment
   ""
   [batAB batCD]
-  (bat (map (fn[bun]{:head (:tail bun)
-                :tail (select batAB (fn [x l h] (and (>= x l) (<= x h))) (:head bun) (:tail bun))}) batCD)))
+  (let [AA (mirror batAB)]
+    (bat (map (fn[bun]{:head (:tail bun)
+                      :tail (select AA (fn [x l h] (and (>= x l) (<= x h))) (:head bun) (:tail bun))}) batCD))))
 
 

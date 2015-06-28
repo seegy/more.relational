@@ -110,3 +110,12 @@
  (group AB)
  (group (group AB))
  (group (group AB) CD)
+
+
+ (def AB  (bat [{:head 1 :tail 1231}
+            {:head 2 :tail 323}
+            {:head 3 :tail 1}]))
+
+(def CD (bat [{:head 1 :tail 1} {:head 2 :tail 3}]))
+
+(fragment  AB CD)

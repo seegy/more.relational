@@ -83,6 +83,21 @@
   (bat (map (fn [bun] (assoc bun
                          :tail (dec (+ o (:head bun))))) (buns batObj))))
 
+(defn mark
+  ""
+  [batObj o]
+  (let [os (drop o (range (+ o (count batObj))))
+        recurMark (fn[table buns os]
+                    (if (empty? buns)
+                      table
+                      (let [fbun (first buns)
+                            fo (first os)
+                            newTable (conj table {:head (:head fbun) :tail fo})]
+                        (recur newTable (drop 1 buns) (drop 1 os)))))]
+    (recurMark [] (buns bat) os)))
+
+  (mark nameBAT 0)
+
 
 ;TODO gibts im orig. Script garnicht!
 (defn project

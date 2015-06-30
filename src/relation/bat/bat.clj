@@ -75,8 +75,8 @@
 (mirror nameBAT)
 (mirror (reverse nameBAT))
 
-(mark nameBAT :o 10)
-(mark nameBAT)
+(mark nameBAT  10)
+(mark nameBAT 0)
 
 (project nameBAT "Test")
 

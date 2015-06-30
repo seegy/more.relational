@@ -10,9 +10,7 @@
 (defn select
   "Returns a sub-BAT for batObj with entries giving true to f. Function f for matching entries can have additional parameters (f tail_of_bat & more)."
   [batObj f & more]
-  (let [< (fn[a b] (neg? (compare a b)))
-        > (fn[a b] (pos? (compare a b)))
-        newBat (into [] (comp
+  (let [newBat (into [] (comp
                     (filter #(let [b (:tail %)]
                                (apply f b more)))
                          (map #(assoc  % :tail nil)))
@@ -76,13 +74,6 @@
                          :tail (:head bun))) (buns batObj))))
 
 
-;TODO Mark ist im Orig. Script anders.
-(defn mark
-  "Returns a BAT with each entry of batObj, but modified head by adding :o to it. If the heads are not numeric, this function can crush."
-  [batObj & {:keys [o] :or {o 0}}]
-  (bat (map (fn [bun] (assoc bun
-                         :tail (dec (+ o (:head bun))))) (buns batObj))))
-
 (defn mark
   ""
   [batObj o]
@@ -94,9 +85,8 @@
                             fo (first os)
                             newTable (conj table {:head (:head fbun) :tail fo})]
                         (recur newTable (drop 1 buns) (drop 1 os)))))]
-    (recurMark [] (buns bat) os)))
+    (recurMark [] (buns batObj) os)))
 
-  (mark nameBAT 0)
 
 
 ;TODO gibts im orig. Script garnicht!
@@ -127,11 +117,6 @@
 (defn min
   [batObj]
   (apply clojure.core/min (map #(:tail %) (buns batObj))))
-
-
-(defn unique
-  [batObj]
-  (bat (set (buns batObj))))
 
 
 (defn diff
@@ -172,9 +157,73 @@
     (bat (map (fn[bun]{:head (:tail bun)
                       :tail (select AA (fn [x l h] (and (>= x l) (<= x h))) (:head bun) (:tail bun))}) batCD))))
 
+; Brauchbar? Wofür n?
+(defn split
+  ""
+  [batObj n]
+    (let [allPairs  (flatten (map (fn [bunA](map (fn [bunB]{:head (:head bunA) :tail (:head bunB) }) batObj )) batObj))]
+      (into [] (comp
+                (filter #(<= (:head %) (:tail %))))
+            allPairs)))
 
 
+#_(
+                                         (if (bat? firstThing)
+                                             (let [ks #{:head}
+                                                   heads (clojure.set/index table ks)]
+                                                (reduce (fn [ret x]
+                                                             (let [found (heads (select-keys x ks))]
+                                                               (if found
+                                                                 ;(reduce #(conj %1 (merge %2 x)) ret found)
+                                                                 (println found x)
+                                                                 ret)))
+                                                           [] firstThing))
 
 
+   ))
+
+(defn recurMultijoin [table thingList]
+                      (if (empty? thingList)
+                        table
+                        (let [firstThing (first thingList)
+                               newTable    (if (bat? firstThing)
+                                             (let [ks #{:head}
+                                                   heads (clojure.set/index table ks)]
+                                                (reduce (fn [ret x]
+                                                             (let [found (heads (select-keys x ks))]
+                                                               (if found
+                                                                 (reduce #(conj %1 {:head (:head %2) :tail (conj (:tail %2) (:tail x))}) ret found)
+                                                                 ;(println found x)
+                                                                 ret)))
+                                                           [] firstThing))
+
+                                             (map (fn[bun](assoc bun :tail (conj (:tail bun) firstThing))) table))]
+                           (recur newTable (next thingList)))))
+
+
+(defn multijoin
+  ""
+  [f AB CD & more]
+  (let [moreList (cons CD more)
+       betterAB (map #(assoc % :tail [(:tail %)]) AB)
+       recurMultijoin (fn [table thingList]
+                      (if (empty? thingList)
+                        table
+                        (let [firstThing (first thingList)
+                               newTable    (if (bat? firstThing)
+                                             (let [ks #{:head}
+                                                   heads (clojure.set/index table ks)]
+                                                (reduce (fn [ret x]
+                                                             (let [found (heads (select-keys x ks))]
+                                                               (if found
+                                                                 (reduce #(conj %1 {:head (:head %2) :tail (conj (:tail %2) (:tail x))}) ret found)
+                                                                 ;(println found x)
+                                                                 ret)))
+                                                           [] firstThing))
+
+                                             (map (fn[bun](assoc bun :tail (conj (:tail bun) firstThing))) table))]
+                           (recur newTable (next thingList)))))
+        paramMap (recurMultijoin betterAB moreList)]
+    (bat (map (fn[bun](assoc bun :tail (apply f (:tail bun)))) paramMap))))
 
 

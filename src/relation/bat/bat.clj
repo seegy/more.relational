@@ -14,28 +14,26 @@
 
 
 
-(def names [{:head 1 :tail "Roland"}
+(def names (bat [{:head 1 :tail "Roland"}
             {:head 2 :tail "Eddie"}
-            {:head 3 :tail "Susanna"}])
+            {:head 3 :tail "Susanna"}]))
 
-(def postal-codes [{:head 1 :tail 123}
+(def postal-codes (bat[{:head 1 :tail 123}
                  {:head 2 :tail 456}
-                 {:head 3 :tail 789} ])
+                 {:head 3 :tail 789} ]))
 
-(def date-of-birth [{:head 1 :tail "01-01-2001"}
+(def date-of-birth (bat[{:head 1 :tail "01-01-2001"}
                     {:head 2 :tail "02-02-2001"}
-                    {:head 3 :tail "03-03-2001"}])
+                    {:head 3 :tail "03-03-2001"}]))
 
 
 
 
 
-(def named-tables {:name (bat names)
-                   :postal-code (bat postal-codes)
-                   :date-of-birth (bat date-of-birth)})
- (bat names)
- (bat postal-codes)
- (bat date-of-birth)
+(def named-tables {:name  names
+                   :postal-code  postal-codes
+                   :date-of-birth date-of-birth})
+
 (bat "li" "la" "lu")
 
  (def nameBAT (bat [{:head 1 :tail "Roland"}
@@ -55,7 +53,7 @@
 
 
 (select nameBAT #(= % "Roland"))
-(select (bat postal-codes)  #(and (> % 123) (<= % 789)))
+(select postal-codes  #(and (> % 123) (<= % 789)))
 
 (def NameRelationBAT (bat [{:head 1 :tail 2}
                            {:head 1 :tail 3}
@@ -65,7 +63,7 @@
 (select NameRelationBAT (fn [x h l] (and (<= x h) (>= x l))) 3 3)
 
 
-(join (reverse nameBAT)  (bat postal-codes) =)
+(join (reverse nameBAT)  postal-codes =)
 (join NameRelationBAT nameBAT =)
 (join NameRelationBAT nameBAT = 2)
 (join NameRelationBAT nameBAT <)
@@ -93,7 +91,6 @@
 
 (min NameRelationBAT)
 
-(unique NameRelationBAT)
 
 (def namesBAT2 (bat [{:head 4 :tail "Jake"}
             {:head 2 :tail "Eddie"}
@@ -130,6 +127,36 @@
 (def CD (bat [{:head 1 :tail 1} {:head 2 :tail 3}]))
 
 (fragment  AB CD)
+
+
+
+
+  (def AB (bat [{:head 1 :tail 1}
+                           {:head 2 :tail 1}
+                           {:head 3 :tail 2}
+                           {:head 4 :tail 2} ]))
+
+
+  (split AB 4)
+
+
+
+(def names (bat [{:head 1 :tail "Roland"}
+            {:head 2 :tail "Eddie"}
+            {:head 3 :tail "Susanna"}]))
+
+(def postal-codes (bat [{:head 3 :tail 123}
+                 {:head 2 :tail 456}
+                 {:head 1 :tail 789} ]))
+
+(def date-of-birth  (bat [{:head 1 :tail "01-01-2001"}
+                    {:head 2 :tail "02-02-2001"}
+                    {:head 3 :tail "03-03-2001"}]))
+
+
+(multijoin str names 0.07 postal-codes date-of-birth)
+(multijoin = postal-codes postal-codes)
+
 
 
 

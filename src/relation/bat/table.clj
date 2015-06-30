@@ -16,19 +16,18 @@
 
 
 
-; TODO sorted-set !!!
 (defn bat
   ([tuple-vec]
-   (let [data (into #{} (comp
+   (let [data (into [] (comp
           (filter #(= 2 (count %)))
          ; (filter #(not (nil? (:tail %))))
          ; (filter #(not (nil? (:head %))))
-                        ) tuple-vec)]
+                        ) (distinct (seq tuple-vec)))]
      (BAT. data)))
   ([one & more]
    (let [tails (map #(assoc {} :tail %) (conj (seq more) one))
          heads (map #(assoc {} :head %) (take (count tails) (range)))
-         both (set (map (fn [pair] (apply merge pair)) (map vector heads tails)))]
+         both  (vec (distinct (map (fn [pair] (apply merge pair)) (map vector heads tails))))]
      (BAT. both))))
 
 
@@ -39,3 +38,6 @@
   [rel writer]
   (.write writer (str "#BAT " (pr-str  (buns rel)) )))
 
+(defn bat?
+  [x]
+ (= (type x) relation.bat.bat.BAT))

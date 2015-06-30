@@ -5,7 +5,8 @@
 
 
 (load "table")
-(load "operators")
+(load "batOperators")
+(load "milOperators")
 
 
 
@@ -40,6 +41,8 @@
  (def nameBAT (bat [{:head 1 :tail "Roland"}
             {:head 2 :tail "Eddie"}
             {:head 3 :tail "Susanna"}]))
+
+
  (def NameRelationBAT (bat [{:head 1 :tail 2}
                            {:head 1 :tail 3}
                            {:head 2 :tail 3}
@@ -53,6 +56,14 @@
 
 (select nameBAT #(= % "Roland"))
 (select (bat postal-codes)  #(and (> % 123) (<= % 789)))
+
+(def NameRelationBAT (bat [{:head 1 :tail 2}
+                           {:head 1 :tail 3}
+                           {:head 2 :tail 3}
+                           {:head 3 :tail 2} ]))
+
+(select NameRelationBAT (fn [x h l] (and (<= x h) (>= x l))) 3 3)
+
 
 (join (reverse nameBAT)  (bat postal-codes) =)
 (join NameRelationBAT nameBAT =)
@@ -119,3 +130,25 @@
 (def CD (bat [{:head 1 :tail 1} {:head 2 :tail 3}]))
 
 (fragment  AB CD)
+
+
+
+
+
+(def names (bat [{:head 1 :tail "Roland"}
+            {:head 2 :tail "Eddie"}
+            {:head 3 :tail "Susanna"}]))
+
+(def postal-codes (bat [{:head 3 :tail 123}
+                 {:head 2 :tail 456}
+                 {:head 1 :tail 789} ]))
+
+(def date-of-birth  (bat [{:head 1 :tail "01-01-2001"}
+                    {:head 2 :tail "02-02-2001"}
+                    {:head 3 :tail "03-03-2001"}]))
+
+(makeTable [:zip] [:name :zip :birth] names postal-codes date-of-birth)
+
+
+
+

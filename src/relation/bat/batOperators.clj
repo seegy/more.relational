@@ -1,12 +1,14 @@
 (ns relation.bat.bat)
 
  (defn find
+   "Returns the tail value of first bun for head, or nil if not exists."
    [batObj head]
    (:tail (first (filter #(= head (:head %)) (buns batObj)))))
 
 
 
 (defn select
+  "Returns a sub-BAT for batObj with entries giving true to f. Function f for matching entries can have additional parameters (f tail_of_bat & more)."
   [batObj f & more]
   (let [< (fn[a b] (neg? (compare a b)))
         > (fn[a b] (pos? (compare a b)))
@@ -18,15 +20,8 @@
     (bat newBat)))
 
 
-(def NameRelationBAT (bat [{:head 1 :tail 2}
-                           {:head 1 :tail 3}
-                           {:head 2 :tail 3}
-                           {:head 3 :tail 2} ]))
-
-(select NameRelationBAT (fn [x h l] (and (<= x h) (>= x l))) 3 3)
-
-
 (defn join
+  "Returns a BAT of [tailAB tailCD] by connecting heads of batAB and batCD. Function f for matching pairs can have additinal parameters (f tail_of_AB tail_of_CD & more)."
   ([batAB batCD f & more]
   (let [ AB (map (fn[bun] (clojure.set/rename-keys bun {:tail :key})) (buns batAB))
          CD (map (fn[bun] (clojure.set/rename-keys bun {:head :key})) (buns batCD))
@@ -69,27 +64,32 @@
 
 
 (defn reverse
+  "Returns a BAT with switched head and tail for each entry in batObj."
   [batObj]
   (bat (map (fn [bun] (clojure.set/rename-keys bun {:head :tail, :tail :head})) (buns batObj))))
 
 
 (defn mirror
+  "Returns a BAT with same tail as head for each entry in batObj."
   [batObj]
   (bat (map (fn [bun] (assoc bun
                          :tail (:head bun))) (buns batObj))))
 
 
-
+;TODO Mark ist im Orig. Script anders.
 (defn mark
+  "Returns a BAT with each entry of batObj, but modified head by adding :o to it. If the heads are not numeric, this function can crush."
   [batObj & {:keys [o] :or {o 0}}]
   (bat (map (fn [bun] (assoc bun
                          :tail (dec (+ o (:head bun))))) (buns batObj))))
 
 
-
+;TODO gibts im orig. Script garnicht!
 (defn project
+
   [batObj c]
   (bat (map (fn [bun](assoc bun :tail c) ) (buns batObj))))
+
 
 
 (defn slice
@@ -156,5 +156,10 @@
   (let [AA (mirror batAB)]
     (bat (map (fn[bun]{:head (:tail bun)
                       :tail (select AA (fn [x l h] (and (>= x l) (<= x h))) (:head bun) (:tail bun))}) batCD))))
+
+
+
+
+
 
 

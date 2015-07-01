@@ -1,4 +1,5 @@
-(ns relation.bat.bat)
+(ns relation.bat.batOperators
+   (:use [relation.bat.table]))
 
  (defn find
    "Returns the tail value of first bun for head, or nil if not exists."

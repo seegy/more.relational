@@ -5,6 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.7.0-RC1"]
                  [core.relational "0.1.0-SNAPSHOT"]
+                 [potemkin "0.3.13"]
                  ;[incanter "1.5.6"]
                  ;[org.clojure/data.json "0.2.6"]
                  ]

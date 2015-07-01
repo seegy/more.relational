@@ -1,10 +1,11 @@
-(ns relation.bat.bat)
+(ns relation.bat.milOperators
+   (:use [relation.bat.batOperators]))
 
 
 
 (defn makeTable [orderseq keySeq & columns]
   ""
-  (let [idsOfFirst (vec (map (fn [bun] (dissoc bun :tail)) (buns (first columns))))
+  (let [idsOfFirst (vec (map (fn [bun] (dissoc bun :tail))  (first columns)))
         recurMakeTable (fn [table keySeq columns]
                           (if (or (empty? keySeq)
                                   (empty? columns))

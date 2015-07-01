@@ -1,14 +1,38 @@
-(ns relation.bat.bat
+(ns relation.bat
+  (:use [potemkin])
   (:require [clojure.repl   :refer :all]
             [clojure.string :as str]
-            [clojure.edn    :as edn]))
+            [clojure.edn    :as edn]
+            [relation.bat.milOperators]))
 
 
-(load "table")
-(load "batOperators")
-(load "milOperators")
 
-
+(import-vars
+ [relation.bat.table
+   bat
+   buns
+   bat?]
+ [relation.bat.batOperators
+   find
+   select
+   join
+   reverse
+   mirror
+   mark
+   project
+   slice
+   sum
+   max
+   min
+   diff
+   union
+   intersect
+   group
+   fragment
+   split
+   multijoin]
+ [relation.bat.milOperators
+   makeTable])
 
 
 
@@ -16,7 +40,7 @@
 
 (def names (bat [{:head 1 :tail "Roland"}
             {:head 2 :tail "Eddie"}
-            {:head 3 :tail "Susanna"}]))
+            {:head 3 :tail "Susanna"}]) )
 
 (def postal-codes (bat[{:head 1 :tail 123}
                  {:head 2 :tail 456}

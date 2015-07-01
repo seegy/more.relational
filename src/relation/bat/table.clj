@@ -1,4 +1,4 @@
-(ns relation.bat.bat)
+(ns relation.bat.table)
 
 
 
@@ -40,4 +40,4 @@
 
 (defn bat?
   [x]
- (= (type x) relation.bat.bat.BAT))
+ (= (type x) relation.bat.table.BAT))

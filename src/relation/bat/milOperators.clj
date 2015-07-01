@@ -8,7 +8,7 @@
         recurMakeTable (fn [table keySeq columns]
                           (if (or (empty? keySeq)
                                   (empty? columns))
-                            table
+                            (map (fn [row](dissoc row :head)) table)
                             (let [firstKey (first keySeq)
                                   firstColumn (map (fn[bun](clojure.set/rename-keys bun {:tail firstKey})) (first columns))
                                   ks #{:head}

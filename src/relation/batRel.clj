@@ -61,7 +61,7 @@
 
 
 
-(def males (bat/select (:gender employeesBat) "M"))
+(def males (bat/select (:gender employeesBat) = "M"))
 (time (bat/join (bat/reverse (:emp_no employeesBat)) males =))
 
 
@@ -78,11 +78,19 @@
 
 ; ############################### beispiel
 
-; SELECT employee.last_name , salaries.salary
+; SELECT employee.last_name  AS :last_name , salaries.salary / 12  AS :monthlySalary
 ; FROM employee JOIN salaries
 ; WHERE salaries.salary BETWEEN 100000 AND 110000
+; ORDER BY :monthlySalary
 
-(def sal_bat (bat/select (:salary salariesBat) 100000 :v2 110000))
-(def emp_sal_bat (bat/join (bat/reverse (:emp_no salariesBat)) sal_bat =))
-(def emp_no_bat (bat/join (bat/reverse (:emp_no employeesBat)) emp_sal_bat =))
-(bat/join (bat/reverse (:last_name employeesBat)) emp_no_bat =)
+(defn between [x l h] (and (<= x h) (>= x  l)))
+
+
+(def sal_id_nil (bat/select (:salary salariesBat) between 100000 110000))
+(def sal_id_sal_salary (bat/join (bat/mirror sal_id_nil) (:salary salariesBat) =))
+(def sal_emp_no_sal_salary (bat/join (bat/reverse (:emp_no salariesBat)) sal_id_sal_salary =))
+(def sal_emp_no_sal_salary_mod (bat/multijoin / sal_emp_no_sal_salary 12))
+(def emp_id_emp_no (bat/join (:emp_no employeesBat) (bat/mirror sal_emp_no_sal_salary_mod) =))
+(def emp_emp_no_lastname (bat/join (bat/reverse  emp_id_emp_no)  (:last_name employeesBat) =))
+
+(bat/makeTable [:monthlySalary] [:last_name :monthlySalary] emp_emp_no_lastname sal_emp_no_sal_salary_mod )

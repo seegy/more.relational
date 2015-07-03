@@ -30,7 +30,9 @@
    group
    fragment
    split
-   multijoin]
+   multijoin
+   pump
+  ]
  [relation.bat.milOperators
    makeTable])
 
@@ -199,6 +201,29 @@
                     {:head 3 :tail "03-03-2001"}]))
 
 (makeTable [:zip] [:name :zip :birth] names postal-codes date-of-birth)
+
+
+
+
+
+ (def testAB (bat [{:head 1 :tail 1}
+                   {:head 1 :tail 2}
+                   {:head 1 :tail 3}
+                   {:head 1 :tail 4}
+                   {:head 2 :tail 666}
+                   {:head 3 :tail 100}
+                   {:head 3 :tail 100}
+                   {:head 3 :tail 100}
+                   {:head 3 :tail 100}]))
+
+
+ (def testCD (bat [{:head 1 :tail 2}
+                   {:head 3 :tail 2} ]))
+
+ (pump sum testAB testCD)
+ (pump count testAB testCD)
+ (pump min testAB testCD)
+ (pump max testAB testCD)
 
 
 

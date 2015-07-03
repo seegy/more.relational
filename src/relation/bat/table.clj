@@ -22,12 +22,12 @@
           (filter #(= 2 (count %)))
          ; (filter #(not (nil? (:tail %))))
          ; (filter #(not (nil? (:head %))))
-                        ) (distinct (seq tuple-vec)))]
+                        )  (seq tuple-vec))]
      (BAT. data)))
   ([one & more]
    (let [tails (map #(assoc {} :tail %) (conj (seq more) one))
          heads (map #(assoc {} :head %) (take (count tails) (range)))
-         both  (vec (distinct (map (fn [pair] (apply merge pair)) (map vector heads tails))))]
+         both  (vec (map (fn [pair] (apply merge pair)) (map vector heads tails)))]
      (BAT. both))))
 
 

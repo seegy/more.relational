@@ -68,6 +68,7 @@
   (bat (map (fn [bun] (clojure.set/rename-keys bun {:head :tail, :tail :head})) (buns batObj))))
 
 
+
 (defn mirror
   "Returns a BAT with same tail as head for each entry in batObj."
   [batObj]
@@ -92,48 +93,56 @@
 
 ;TODO gibts im orig. Script garnicht!
 (defn project
-
+  ""
   [batObj c]
   (bat (map (fn [bun](assoc bun :tail c) ) (buns batObj))))
 
 
 
 (defn slice
+  ""
   [batObj lo hi]
   (bat (into [] (comp (take (+ lo hi))
                       (drop lo ))(buns batObj))))
 
 
 (defn sum
+  ""
   [batObj]
   (reduce #(+ %1 (:tail %2)) 0 (buns batObj)))
 
 
 (defn max
+  ""
   [batObj]
   (apply clojure.core/max (map #(:tail %) (buns batObj))))
 
 
 
 (defn min
+  ""
   [batObj]
   (apply clojure.core/min (map #(:tail %) (buns batObj))))
 
 
 (defn diff
+  ""
   [batObjAB batObjCD]
   (bat (clojure.set/difference (set (buns batObjAB)) (set (buns batObjCD)))))
 
 
 (defn union
+  ""
   [batObjAB batObjCD]
   (bat (clojure.set/union (buns batObjAB) (buns batObjCD))))
 
 (defn intersect
+  ""
   [batObjAB batObjCD]
   (bat (clojure.set/intersection (set (buns batObjAB)) (set (buns batObjCD)))))
 
 (defn group
+  ""
   ([batObj]
    (let [id (fn [tail] (:head (first (filter #(= ( :tail %) tail) batObj))))]
      (bat (map (fn[bun](assoc bun :tail (id (:tail bun)))) batObj))))
@@ -168,38 +177,8 @@
             allPairs)))
 
 
-#_(
-                                         (if (bat? firstThing)
-                                             (let [ks #{:head}
-                                                   heads (clojure.set/index table ks)]
-                                                (reduce (fn [ret x]
-                                                             (let [found (heads (select-keys x ks))]
-                                                               (if found
-                                                                 ;(reduce #(conj %1 (merge %2 x)) ret found)
-                                                                 (println found x)
-                                                                 ret)))
-                                                           [] firstThing))
 
 
-   ))
-
-(defn recurMultijoin [table thingList]
-                      (if (empty? thingList)
-                        table
-                        (let [firstThing (first thingList)
-                               newTable    (if (bat? firstThing)
-                                             (let [ks #{:head}
-                                                   heads (clojure.set/index table ks)]
-                                                (reduce (fn [ret x]
-                                                             (let [found (heads (select-keys x ks))]
-                                                               (if found
-                                                                 (reduce #(conj %1 {:head (:head %2) :tail (conj (:tail %2) (:tail x))}) ret found)
-                                                                 ;(println found x)
-                                                                 ret)))
-                                                           [] firstThing))
-
-                                             (map (fn[bun](assoc bun :tail (conj (:tail bun) firstThing))) table))]
-                           (recur newTable (next thingList)))))
 
 
 (defn multijoin
@@ -227,4 +206,18 @@
         paramMap (recurMultijoin betterAB moreList)]
     (bat (map (fn[bun](assoc bun :tail (apply f (:tail bun)))) paramMap))))
 
+
+
+(defn pump
+  ""
+  [f AB CD]
+  (let [joined (join (mirror CD) AB =)
+        groups (reduce (fn [m bun]
+                         (let [entry (get m (:head bun))]
+                           (if (nil? entry)
+                             (assoc m (:head bun) [{:head (:tail bun) :tail (:tail bun)}])
+                             (assoc m (:head bun) (conj entry {:head (:tail bun) :tail (:tail bun)})))))
+                       {} joined)
+        groupsBat  (map (fn [[k v]] {:head k :tail (f (bat v))}) groups)]
+   (bat groupsBat)))
 

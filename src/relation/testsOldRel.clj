@@ -1,4 +1,4 @@
-(ns relation.testsOldRel
+#_((ns relation.testsOldRel
   (:use [core.relational]))
 
  ;; ######################## BIG TEST ############################
@@ -57,3 +57,4 @@
 (time (group employees {:dates #{:birth_date :hire_date}}))
 (time (summarize employees #{:emp_no} {:scount (relfn [r] (count r))}))
 (time (summarize employees #{} {:quantitysum (relfn [r] (reduce + (:emp_no r)))}))
+)

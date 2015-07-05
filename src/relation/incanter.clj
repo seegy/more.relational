@@ -163,6 +163,7 @@ p
 ; ######################### LARGE DATA TEST! #############################################################
 ;---------------------------------------------------------------------------------------------------------
 
+#_(
 (def file "resources/employees.clj")
 
 (def insertCljEmployees  (first (map #(read-string (str "[" % "]"))  (let [rdr (clojure.java.io/reader file)]
@@ -191,12 +192,13 @@ salaries
  ($where {:gender {:fn  #(= % "M")}}
          ($join [:emp_no :emp_no] employees salaries))
  :cols [:first_name])
-
+)
 
 ;---------------------------------------------------------------------------------------------------------
 ; ################################ WIKI DATA #############################################################
 ;---------------------------------------------------------------------------------------------------------
 
+#_(
 (def persons (dataset [:id :name :description :gender :birth_date ] (wiki/searchFor "Usain Bolt" 20)))
 
  (print (dataset [:id :name :description :gender :birth_date ] (wiki/searchFor "Usain Bolt" 20)))
@@ -208,3 +210,4 @@ salaries
      persons))
 
  (createPersonView "Michael Jackson" 10)
+)

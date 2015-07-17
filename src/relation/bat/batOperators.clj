@@ -221,3 +221,25 @@
         groupsBat  (map (fn [[k v]] {:head k :tail (f (bat v))}) groups)]
    (bat groupsBat)))
 
+
+
+
+
+(defn delete
+  " delete {:head a, :tail b} from AB "
+  [AB a b]
+  (diff AB (bat [{:head a :tail b}])))
+
+
+
+(defn insert
+  " add {:head a, :tail b} to AB "
+  [AB a b]
+  (union AB (bat [{:head a :tail b}])))
+
+
+(defn update
+  "--> (delete AB a b) & (insert AB a c)"
+  [AB a b c]
+  (insert (delete AB a b) a c))
+

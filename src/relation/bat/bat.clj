@@ -3,7 +3,7 @@
   (:require [clojure.repl   :refer :all]
             [clojure.string :as str]
             [clojure.edn    :as edn]
-            [relation.bat.milOperators]))
+            [relation.bat.batOperators]))
 
 
 
@@ -11,7 +11,9 @@
  [relation.bat.table
    bat
    buns
-   bat?]
+   bat?
+   makeTable
+   convertToBats]
  [relation.bat.batOperators
    find
    select
@@ -32,9 +34,7 @@
    split
    multijoin
    pump
-  ]
- [relation.bat.milOperators
-   makeTable])
+  ])
 
 
 
@@ -225,6 +225,11 @@
  (pump min testAB testCD)
  (pump max testAB testCD)
 
+
+
+(convertToBats #{ {:id 1, :name "Arthur"} {:id 2, :name "Betty" :address "nowhere"} {:id 3, :address "anywhere"}})
+(def bla (convertToBats #{ {:id 1, :name "Arthur"} {:id 2, :name "Betty" :address "nowhere"} {:id 3, :address "anywhere"}}))
+(:address bla)
 
 
 

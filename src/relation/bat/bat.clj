@@ -233,3 +233,39 @@
 
 
 
+
+
+
+(def bestellungen [{:id 1 :name "Peter" :artikel "Nagel" :menge 10 :datum "1.1.01"}
+                   {:id 2 :name "Max" :artikel "Nagel" :menge 20 :datum "1.2.01"}
+                   {:id 4 :name "Max" :artikel "Hammer" :menge 1 :datum "1.2.01"}
+                   {:id 3 :name "Max" :artikel "Nagel" :menge 20 :datum "2.2.01"}])
+
+(def bestellungenBat (convertToBats bestellungen))
+
+
+;Select name, sum(Menge) As Menge FROM bestellungen Where artikel = "Nagel" GROUP BY name
+
+(def oid_nil_wherenagel (select (:artikel bestellungenBat) #( = "Nagel" %)))
+(def oid_name_wherenagel (join (mirror oid_nil_nagel) (:name bestellungenBat) =))
+(def groupoid_oid_namegroup_wherenagel (group oid_name_nagel ))
+(def groupid_menge_namegroup_wherenagel (join (reverse groupoid_oid_namegroup_wherenagel) (:menge bestellungenBat) =))
+(def oid_menge (pump sum groupid_menge_namegroup_wherenagel groupid_menge_namegroup_wherenagel ))
+
+(makeTable [:name] [:name "Menge"] (:name bestellungenBat) oid_menge)
+
+
+
+
+
+
+(def testAB (bat [{:head 1 :tail 1}
+                   {:head 1 :tail 1}
+                   {:head 2 :tail 2}]))
+
+
+ (def testCD (bat [{:head 1 :tail 1}
+                   {:head 2 :tail 2} ]))
+
+(join testAB testCD =)
+(join testCD testAB =)

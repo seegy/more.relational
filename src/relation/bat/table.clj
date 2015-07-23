@@ -1,7 +1,9 @@
 (ns relation.bat.table)
 
 
-
+(defn- hashCalcHelper
+  ([a b] (+ (* 31 a) b))
+  ([a b & more] (apply hashCalcHelper (hashCalcHelper a b) more)))
 
 (deftype BAT [buns]
 
@@ -12,8 +14,12 @@
 
   clojure.lang.Counted
   (count [this]
-    (count (.buns this))))
+    (count (.buns this)))
 
+  Object
+  (hashCode [this]
+    (let [hashs (conj (map hash (.buns this)) 17)]
+      (apply hashCalcHelper  hashs))))
 
 
 (defn bat
@@ -29,6 +35,7 @@
          heads (map #(assoc {} :head %) (take (count tails) (range)))
          both  (vec (map (fn [pair] (apply merge pair)) (map vector heads tails)))]
      (BAT. both))))
+
 
 
 (defn buns [bat]

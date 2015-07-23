@@ -88,6 +88,10 @@
 
 (select NameRelationBAT (fn [x h l] (and (<= x h) (>= x l))) 3 3)
 
+(join  (bat [{:head 1 :tail "Roland"}
+            {:head 2 :tail "Eddie"}
+            {:head 3 :tail "Susanna"}])  (bat []) =)
+
 
 (join (reverse nameBAT)  postal-codes =)
 (join NameRelationBAT nameBAT =)

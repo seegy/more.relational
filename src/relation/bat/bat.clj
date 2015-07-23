@@ -247,8 +247,8 @@
 ;Select name, sum(Menge) As Menge FROM bestellungen Where artikel = "Nagel" GROUP BY name
 
 (def oid_nil_wherenagel (select (:artikel bestellungenBat) #( = "Nagel" %)))
-(def oid_name_wherenagel (join (mirror oid_nil_nagel) (:name bestellungenBat) =))
-(def groupoid_oid_namegroup_wherenagel (group oid_name_nagel ))
+(def oid_name_wherenagel (join (mirror oid_nil_wherenagel) (:name bestellungenBat) =))
+(def groupoid_oid_namegroup_wherenagel (group oid_nil_wherenagel ))
 (def groupid_menge_namegroup_wherenagel (join (reverse groupoid_oid_namegroup_wherenagel) (:menge bestellungenBat) =))
 (def oid_menge (pump sum groupid_menge_namegroup_wherenagel groupid_menge_namegroup_wherenagel ))
 

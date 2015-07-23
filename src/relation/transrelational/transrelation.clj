@@ -16,7 +16,7 @@
 
 (defmethod print-method Transrelation
   [tr writer]
-  (.write writer (str "#TR " (pr-str  (keyorder  tr) (fieldValues  tr) (recordReconst  tr)))))
+  (.write writer (str "#TR "  "Key order: " (keyorder  tr) " Field Value Table: " (fieldValues  tr) "Record Reconstruction Table: " (recordReconst  tr))))
 
 
 
@@ -34,8 +34,16 @@
                             {} keyorder)
         fvt (reduce (fn[m [k v]](assoc m k  (map first v))) {} permutation)
         rrt (let [perm  (reduce (fn[m [k v]](assoc m k  (map second v))) {} permutation)
-                  heads (conj keyorder (first keyorder))]
-              ())]
+                  zigzagTo (fn [[a b]](map (fn[recnr] (.indexOf b recnr)) a))
+                  fromPerm (vec (map (fn[x](get perm x)) keyorder))
+                  toPerm (conj (vec (rest fromPerm)) (first fromPerm))
+                  mergePerms (fn [m from to]
+                               (if (empty? from)
+                                 m
+                                 (let [ffrom (first from)
+                                       fto (first to)]
+                                   (recur (conj m [ffrom fto]) (rest from) (rest to)))))]
+              (map zigzagTo (mergePerms [] fromPerm toPerm)))]
     (Transrelation. keyorder fvt rrt)))
 
 

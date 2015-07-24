@@ -160,6 +160,33 @@
 
 
 
+
+(defn groupV2
+  ""
+  ([batObj]
+   (let [tails (distinct (map (fn[tuple](:tail tuple)) batObj))
+         tails' (map (fn[tail] (bat (filter #(= (:tail %) tail) batObj))) tails)]
+     (bat (map (fn[tuple] {:head (:head (first tuple)) :tail tuple}) tails'))))
+  ([AB CD]
+   (let [B (distinct (map (fn[tuple] (:tail tuple)) AB))
+         groups (vals (reduce (fn[m bun] (let [k (:head bun)
+                                         v (:tail bun)]
+                                     (if (contains? m v)
+                                         (assoc m v (conj (get m v) k))
+                                         (assoc m v #{k})))) {} (buns CD)))
+         tails'  (reduce (fn[m x](apply conj m x)) []
+                         (map (fn[subBat] (filter (fn[x] (not (empty? x)))
+                                                  (map (fn[group]
+                                                         (filter #(contains? group (:head %))
+                                                                 subBat))
+                                                       groups)))
+                              B))]
+    (bat (map (fn[tuple] {:head (:head (first tuple)) :tail (bat tuple)}) tails')))))
+
+
+
+
+
 (defn fragment
   ""
   [batAB batCD]
@@ -183,8 +210,8 @@
 
 (defn multijoin
   ""
-  [f AB CD & more]
-  (let [moreList (cons CD more)
+  [f AB & more] ;; ---> TODO Original hatte zwei Bats vorgegeben, aufgrund vom group ist es hier nur noch 1
+  (let [moreList more
        betterAB (map #(assoc % :tail [(:tail %)]) AB)
        recurMultijoin (fn [table thingList]
                       (if (empty? thingList)

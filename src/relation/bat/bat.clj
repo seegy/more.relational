@@ -30,6 +30,7 @@
    union
    intersect
    group
+   groupV2
    fragment
    split
    multijoin
@@ -247,16 +248,29 @@
 
 (def bestellungenBat (convertToBats bestellungen))
 
-
 ;Select name, sum(Menge) As Menge FROM bestellungen Where artikel = "Nagel" GROUP BY name
 
 (def oid_nil_wherenagel (select (:artikel bestellungenBat) #( = "Nagel" %)))
+oid_nil_wherenagel
+
 (def oid_name_wherenagel (join (mirror oid_nil_wherenagel) (:name bestellungenBat) =))
-(def groupoid_oid_namegroup_wherenagel (group oid_nil_wherenagel ))
-(def groupid_menge_namegroup_wherenagel (join (reverse groupoid_oid_namegroup_wherenagel) (:menge bestellungenBat) =))
-(def oid_menge (pump sum groupid_menge_namegroup_wherenagel groupid_menge_namegroup_wherenagel ))
+oid_name_wherenagel
+
+(def groupoid_oid_namegroup_wherenagel (groupV2 oid_name_wherenagel ))
+groupoid_oid_namegroup_wherenagel
+
+(def groupid_menge_namegroup_wherenagel (multijoin #(join (mirror %) (:menge bestellungenBat) =) groupoid_oid_namegroup_wherenagel))
+groupid_menge_namegroup_wherenagel
+
+(def oid_menge (multijoin sum groupid_menge_namegroup_wherenagel ))
+oid_menge
 
 (makeTable [:name] [:name "Menge"] (:name bestellungenBat) oid_menge)
+
+
+
+;Select name, artikel, sum(Menge) As Menge FROM bestellungen GROUP BY name, artikel
+
 
 
 
@@ -273,3 +287,32 @@
 
 (join testAB testCD =)
 (join testCD testAB =)
+
+
+
+
+
+
+
+(groupV2 (bat [{:head 1 :tail 22}
+               {:head 1 :tail 33}
+               {:head 2 :tail 22}
+               {:head 3 :tail 33} ]))
+
+(multijoin sum (groupV2 (bat [{:head 1 :tail 22}
+               {:head 1 :tail 33}
+               {:head 2 :tail 22}
+               {:head 3 :tail 33} ])))
+
+
+
+(groupV2 (groupV2 (bat [{:head 1 :tail 22}
+               {:head 2 :tail 22}
+               {:head 2 :tail 33}
+               {:head 3 :tail 33}
+               {:head 2 :tail 44}
+               {:head 3 :tail 44} ]) )
+
+         (bat [{:head 1 :tail "AA"}
+               {:head 2 :tail "AA"}
+               {:head 3 :tail "BB"} ]))

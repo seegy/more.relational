@@ -24,16 +24,13 @@
 
 (defn bat
   ([tuple-vec]
-   (let [data (into [] (comp
-          (filter #(= 2 (count %)))
-         ; (filter #(not (nil? (:tail %))))
-         ; (filter #(not (nil? (:head %))))
-                        )  (seq tuple-vec))]
+   (let [data (into #{} (comp
+                          (filter #(= 2 (count %))))  (seq tuple-vec))]
      (BAT. data)))
   ([one & more]
    (let [tails (map #(assoc {} :tail %) (conj (seq more) one))
          heads (map #(assoc {} :head %) (take (count tails) (range)))
-         both  (vec (map (fn [pair] (apply merge pair)) (map vector heads tails)))]
+         both  (set (map (fn [pair] (apply merge pair)) (map vector heads tails)))]
      (BAT. both))))
 
 

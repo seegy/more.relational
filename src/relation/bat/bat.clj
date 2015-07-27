@@ -34,11 +34,14 @@
    fragment
    split
    multijoin
-   pump
-  ])
+   pump]
+ [relation.bat.batsvar
+  temp])
 
 
-
+(bat [{:head 1 :tail "Roland"}{:head 1 :tail "Roland"}
+            {:head 2 :tail "Eddie"}
+            {:head 3 :tail "Susanna"}])
 
 
 (def names (bat [{:head 1 :tail "Roland"}
@@ -270,10 +273,19 @@ oid_menge
 
 
 ;Select name, artikel, sum(Menge) As Menge FROM bestellungen GROUP BY name, artikel
+(def groupuid_name (groupV2 (:name bestellungenBat)))
+groupuid_name
 
+(def groupuid_name_and_article (groupV2 groupuid_name (:artikel bestellungenBat)))
+groupuid_name_and_article
 
+(def groupid_menge (multijoin #(join (mirror %) (:menge bestellungenBat) =) groupuid_name_and_article))
+groupid_menge
 
+(def oid_menge (multijoin sum groupid_menge ))
+oid_menge
 
+(makeTable [:artikel] [:name :artikel :menge] (:name bestellungenBat) (:artikel bestellungenBat) oid_menge)
 
 
 
@@ -306,12 +318,12 @@ oid_menge
 
 
 
-(groupV2 (groupV2 (bat [{:head 1 :tail 22}
-               {:head 2 :tail 22}
-               {:head 2 :tail 33}
-               {:head 3 :tail 33}
-               {:head 2 :tail 44}
-               {:head 3 :tail 44} ]) )
+(groupV2 (groupV2 (bat [ {:head 1 :tail 22}
+                         {:head 2 :tail 22}
+                         {:head 2 :tail 33}
+                         {:head 3 :tail 33}
+                         {:head 2 :tail 44}
+                         {:head 3 :tail 44} ]) )
 
          (bat [{:head 1 :tail "AA"}
                {:head 2 :tail "AA"}

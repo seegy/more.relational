@@ -29,10 +29,9 @@
      (BAT. data)))
   ([one & more]
    (let [tails (map #(assoc {} :tail %) (conj (seq more) one))
-         heads (map #(assoc {} :head %) (take (count tails) (range)))
+         heads (map #(assoc {} :head %) (rest (take (inc (count tails)) (range))))
          both  (set (map (fn [pair] (apply merge pair)) (map vector heads tails)))]
      (BAT. both))))
-
 
 
 (defn buns [bat]
@@ -81,6 +80,8 @@
   [table]
   (let [heads (reduce (fn [heads entry](apply conj heads (keys entry))) #{} table)
         table (vec table)]
-     (reduce (fn [m attr] (assoc m attr (bat (filter #(not (nil? (:tail %))) (map (fn [entry] {:head (.indexOf table entry), :tail (get entry attr)}) table))))) {} heads)))
-
+     (reduce (fn [m attr]
+               (assoc m attr (bat
+                              (filter #(not (nil? (:tail %)))
+                                      (map (fn [entry] {:head (inc (.indexOf table entry)), :tail (get entry attr)}) table))))) {} heads)))
 

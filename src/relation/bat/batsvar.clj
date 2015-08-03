@@ -2,13 +2,11 @@
    (:use [relation.bat.batOperators])
    (:require  [relation.bat.table]))
 
-(defn temp[])
-
 
 (defn batvar
   ""
   ([batMap metaMap]
-    (ref batMap :meta metaMap)
+    (ref batMap :meta metaMap))
   ([batMap]
     (batvar batMap {})))
 
@@ -19,7 +17,7 @@
   ""
   [batRef batMap]
   (dosync
-    (when-not (= (keys @batRef) (keys batMap))
+    (when-not (= (set (keys @batRef)) (set (keys batMap)))
       (throw (IllegalArgumentException. "Schema of map of BATs are not equal.")))
     (ref-set batRef batMap)
     batRef))
@@ -29,28 +27,52 @@
 (defn insert!
   ""
   ([batRef attr head tail]
-  (dosync
-   (def temp (insert (get @batRef attr) head tail))
-   (def newBatMap (assoc @batRef attr temp))
-   (ref-set batRef newBatMap)
-   batRef)))
+    (dosync
+     (def temp (insert (get @batRef attr) head tail))
+     (def newBatMap (assoc @batRef attr temp))
+     (ref-set batRef newBatMap)
+     batRef))
+  ([batRef tuple]
+   (when-not (= (set (keys tuple)) (set (keys @batRef)))
+       (throw (IllegalArgumentException. "Schemas of map of BATs are not equal.")))
+   (let[ newId (inc (apply clojure.core/max(map (fn[[_ bat]] (max (reverse bat))) @batRef)))]
+     (map (fn[[name value]] (insert! batRef name newId value)) tuple))))
 
-(def bestellungen [{:id 1 :name "Peter" :artikel "Nagel" :menge 10 :datum "1.1.01"}
-                   {:id 2 :name "Max" :artikel "Nagel" :menge 20 :datum "1.2.01"}
-                   {:id 4 :name "Max" :artikel "Hammer" :menge 1 :datum "1.2.01"}
-                   {:id 3 :name "Max" :artikel "Nagel" :menge 20 :datum "2.2.01"}])
 
-(keys {:id 1 :name "Peter" :artikel "Nagel" :menge 10 :datum "1.1.01"})
+(defn update!
+  ""
+  ([batRef attr head oldTail newTail]
+   (dosync
+    (def temp (update (get @batRef attr) head oldTail newTail))
+    (def newBatMap (assoc @batRef attr temp))
+    (ref-set batRef newBatMap)
+    batRef))
+  ([batRef attr old new]
+   (dosync
+    (def toDelete (select (get @batRef attr) #(= % old)))
+    (println toDelete)
+    (def newBat  (reduce (fn[bat d] (insert (delete bat (:head d) old) (:head d) new)) (get @batRef attr) toDelete))
+    (def newBatMap (assoc @batRef attr newBat))
+    (ref-set batRef newBatMap)
+    batRef)))
 
-(def bestellungenBat (convertToBats bestellungen))
 
-(def batRef (batvar bestellungenBat))
+(defn delete!
+  ""
+  ([batRef attr head tail]
+   (dosync
+    (def temp (delete (get @batRef attr) head tail))
+    (def newBatMap (assoc  @batRef attr temp))
+    (ref-set batRef newBatMap)
+    batRef))
+  ([batRef tuple]
+   (dosync
+    (def bunsSeq (map (fn[attr] (select (get @batRef attr) #( = % (get tuple attr)))) (keys tuple)))
+    (def joined (reduce (fn[a b] (mirror (join a b =))) (mirror (first bunsSeq)) (rest bunsSeq)))
+    (def newBatMap (reduce (fn[m [attr bat]](assoc m attr (reduce (fn[bat bun](delete bat (:head bun) (get tuple attr))) bat joined))) @batRef @batRef))
+    (ref-set batRef newBatMap)
+    batRef)))
 
-(insert! batRef :id 5 5)
-(insert! batRef :name 5 "Alan")
-(insert! batRef :artikel 5 "Säge")
-(insert! batRef :menge 5 1)
-(insert! batRef :datum 5 "Gestern")
 
 
 (defn makeTable!
@@ -60,5 +82,3 @@
      (makeTable orderseq keySeq batSeq)))
   ([batRef]
    (makeTable! [] batRef)))
-
-(makeTable! batRef)

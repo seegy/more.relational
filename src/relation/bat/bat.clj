@@ -39,6 +39,9 @@
    delete
    update]
  [relation.bat.batsvar
-  temp
   batvar
-  assign!])
+  assign!
+  insert!
+  ;delete!
+  ;update!
+  makeTable!])

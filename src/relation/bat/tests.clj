@@ -358,3 +358,69 @@ batRef
 
 
 
+
+
+(def bestellungen [{:id 1 :name "Peter" :artikel "Nagel" :menge 10 :datum "1.1.01"}
+                   {:id 2 :name "Max" :artikel "Nagel" :menge 20 :datum "1.2.01"}
+                   {:id 4 :name "Max" :artikel "Hammer" :menge 1 :datum "1.2.01"}
+                   {:id 3 :name "Max" :artikel "Nagel" :menge 20 :datum "2.2.01"}])
+
+(def bestellungenBat (convertToBats bestellungen))
+
+(def batRef (batvar bestellungenBat))
+
+(insert! batRef :id 5 5)
+(insert! batRef :name 5 "Alan")
+(insert! batRef :artikel 5 "Säge")
+(insert! batRef :menge 5 1)
+
+
+(insert! batRef {:id 6 :name "Kevin" :artikel "Schraubenzieher" :menge 2 :datum "Irgendwann"})
+
+
+(makeTable! batRef)
+(clojure.core/reverse (makeTable! [:id] batRef))
+
+(def bestellungen [{:id 1 :name "Peter" :artikel "Nagel" :menge 10 :datum "1.1.01"}
+                   {:id 2 :name "Max" :artikel "Nagel" :menge 20 :datum "1.2.01"}
+                   {:id 4 :name "Max" :artikel "Hammer" :menge 1 :datum "1.2.01"}
+                   {:id 3 :name "Max" :artikel "Nagel" :menge 20 :datum "2.2.01"}])
+
+(def bestellungenBat (convertToBats bestellungen))
+
+(def batRef (batvar bestellungenBat))
+
+(update! batRef :artikel 3 "Hammer" "Spachtel")
+
+(update! batRef :artikel "Nagel" "Nägel")
+
+
+
+   (def bestellungen [{:id 1 :name "Peter" :artikel "Nagel" :menge 10 :datum "1.1.01"}
+                   {:id 2 :name "Max" :artikel "Nagel" :menge 20 :datum "1.2.01"}
+                   {:id 4 :name "Max" :artikel "Hammer" :menge 1 :datum "1.2.01"}
+                   {:id 3 :name "Max" :artikel "Nagel" :menge 20 :datum "2.2.01"}])
+
+(def bestellungenBat (convertToBats bestellungen))
+
+(def batRef (batvar bestellungenBat))
+
+(delete! batRef :name 3 "Max")
+
+
+ (def bestellungen [{:id 1 :name "Peter" :artikel "Nagel" :menge 10 :datum "1.1.01"}
+                   {:id 2 :name "Max" :artikel "Nagel" :menge 20 :datum "1.2.01"}
+                   {:id 4 :name "Max" :artikel "Hammer" :menge 1 :datum "1.2.01"}
+                   {:id 3 :name "Max" :artikel "Nagel" :menge 20 :datum "2.2.01"}])
+
+(def bestellungenBat (convertToBats bestellungen))
+
+(def batRef (batvar bestellungenBat))
+
+(delete! batRef {:id 2 :name "Max" :artikel "Nagel" :menge 20 :datum "1.2.01"})
+
+(makeTable! batRef)
+ (delete! batRef {:artikel "Nagel"})
+
+ (makeTable! batRef)
+

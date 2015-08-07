@@ -37,11 +37,15 @@
    pump
    insert
    delete
-   update]
+   update
+   save
+   load]
  [relation.bat.batsvar
   batvar
   assign!
   insert!
-  ;delete!
-  ;update!
-  makeTable!])
+  delete!
+  update!
+  makeTable!
+  save-batvar
+  load-batvar])

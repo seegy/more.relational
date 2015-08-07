@@ -1,5 +1,6 @@
 (ns relation.bat.batOperators
-   (:use [relation.bat.table]))
+   (:use [relation.bat.table])
+   (:require [clojure.edn    :as edn]))
 
  (defn find
    "Returns the tail value of first bun for head, or nil if not exists."
@@ -269,4 +270,17 @@
   "--> (delete AB a b) & (insert AB a c)"
   [AB a b c]
   (insert (delete AB a b) a c))
+
+
+
+(defn save
+  ""
+  [AB file]
+  (spit file (prn-str AB)))
+
+(defn load
+  ""
+  [file]
+   (edn/read-string {:readers {'BAT   relation.bat.table/bat}}
+                    (slurp file)))
 

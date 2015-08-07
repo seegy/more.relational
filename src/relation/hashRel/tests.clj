@@ -1,33 +1,18 @@
-(ns relation.newRel.relational
-  (:require [clojure.repl   :refer :all]
-            [clojure.string :as str]
-            [clojure.edn    :as edn]))
-
-; entry point for core.relational; loads other classes
-
-(declare same-type?)
-(declare same-attr-order?)
-(declare sort-vec)
-(declare index-of)
-
-(load "relation")
-(load "tools")
-(load "operators")
-
+(ns wayne
+  (:use [relation.hashRel]))
 
 
 
 
 (def r (rel #{ {:id 1, :name "Arthur", :address "somewhere"} {:id 2, :name "Betty" :address "nowhere"} }))
 (def s (rel #{{:sid 1 :description "Scrows"}, {:sid 2 :description "Hammer"}, {:sid 3, :description "Nail"}}))
-
+r
 (def rs (rel #{{:id 1 :sid 1 :quantity 200} {:id 1 :sid 2 :quantity 2} {:id 2 :sid 3 :quantity 100} {:id 2 :sid 2 :quantity 1}}))
 
 (group (join (join r rs) s) {:NameAndHammer #{:sid :quantity :description}})
 
 
 
-#_(
 (seq r)
 
 (count r)
@@ -79,15 +64,7 @@
 (def relation2 rs)
 
 
-(def r1-only-attrs (diverging-attr relation1 relation2))
-(def r1-only (project relation1 r1-only-attrs))
 
-(let [r1-only-attrs (diverging-attr relation1 relation2)
-          r1-only (project relation1 r1-only-attrs)]
-      (difference r1-only
-                  (project (difference (join r1-only relation2)
-                                       relation1)
-                           r1-only-attrs)))
 
 
 (group (join (join r rs) s) {:NameAndHammer #{:sid :quantity :description}})
@@ -106,4 +83,10 @@
  (summarize blaRelation #{ :description} {:quantitysum (relfn [r] (reduce + (:quantity r)))})
  (summarize blaRelation #{} {:quantitysum (relfn [r] (reduce + (:quantity r)))})
 
-)
+
+
+ (def something (relvar blaRelation))
+
+ (save-relvar something "/home/seegy/Desktop/Test-RelVar.file")
+ (load-relvar "/home/seegy/Desktop/Test-RelVar.file")
+

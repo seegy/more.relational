@@ -1,4 +1,4 @@
-(ns relation.newRel.relational)
+(ns relation.hashRel.tools)
 
 (defmacro relfn
   "Behaves like fn, but stores the source code in the metadata to allow
@@ -30,10 +30,7 @@
     (if (>= index 0)
       index
       nil)))
-  #_(let [res (count (take-while (partial not= item) coll))]
-     (if (>= res (count coll))
-       nil
-       res))
+
 
   (defn common-attr
   "Returns a vector of all attributes that both relations have in common.

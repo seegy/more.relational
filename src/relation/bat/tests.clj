@@ -334,6 +334,15 @@ oid_menge
 
 
 
+(save (bat [{:head 1 :tail "AA"}
+               {:head 2 :tail "AA"}
+               {:head 3 :tail "BB"}])
+      "/home/seegy/Desktop/Test-singleBat.file")
+
+
+
+  (load  "/home/seegy/Desktop/Test-singleBat.file")
+
 
 
 
@@ -408,7 +417,7 @@ batRef
 (delete! batRef :name 3 "Max")
 
 
- (def bestellungen [{:id 1 :name "Peter" :artikel "Nagel" :menge 10 :datum "1.1.01"}
+(def bestellungen [{:id 1 :name "Peter" :artikel "Nagel" :menge 10 :datum "1.1.01"}
                    {:id 2 :name "Max" :artikel "Nagel" :menge 20 :datum "1.2.01"}
                    {:id 4 :name "Max" :artikel "Hammer" :menge 1 :datum "1.2.01"}
                    {:id 3 :name "Max" :artikel "Nagel" :menge 20 :datum "2.2.01"}])
@@ -424,3 +433,6 @@ batRef
 
  (makeTable! batRef)
 
+(save-batvar batRef "/home/seegy/Desktop/Test-batRef.file")
+
+(load-batvar "/home/seegy/Desktop/Test-batRef.file")

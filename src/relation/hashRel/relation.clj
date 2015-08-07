@@ -1,21 +1,16 @@
-(ns relation.newRel.relational
+(ns relation.hashRel.relation
+  (:use [relation.hashRel.tools])
   (:require [clojure.edn    :as edn]))
 
 
-(declare same-type?)
-(declare same-attr-order?)
-(declare sort-vec)
-(declare index-of)
- (declare sort-rel)
-
-(deftype Relation [head body]
+(deftype HashRelation [head body]
   Object
   (equals [this obj]
     (cond
       (identical? this obj)
       true
 
-      (not (instance? Relation obj))
+      (not (instance? HashRelation obj))
       false
 
       (not= (count (.head this)) (count (.head obj)))
@@ -33,7 +28,7 @@
       :else false))
   (hashCode [this]
     (let [shead (sort (.head this))
-          sbody (sort (map hash (.body (sort-rel (Relation. shead #{}) this))))]
+          sbody (sort (map hash (.body (sort-rel (HashRelation. shead #{}) this))))]
       (+ (* 31 (+ (* 17 31)
                   (hash shead)))
          (hash sbody))))
@@ -84,13 +79,13 @@
     (if (same-attr-order? rel1 rel2)
       rel2
       (let [sorter (sort-vec rel1 rel2)]
-        (Relation.
+        (HashRelation.
           (vec (map (fn [a] (get (.head rel2) a)) sorter))
           (.body rel2)))
       )))
 
 
-(defmethod print-method Relation
+(defmethod print-method HashRelation
   [rel writer]
   (.write writer (str "#rel " (pr-str  (scheme rel) (body rel)) )))
 
@@ -118,14 +113,14 @@
                               (map (fn [t] (zipmap column-names t)))
                               (filter not-empty))
                              dat))]
-      (Relation. (into [] column-names)  rows)))
+      (HashRelation. (into [] column-names)  rows)))
 
   ([tuple-set]
     (let [tuples (if (or (empty? tuple-set) (nil? tuple-set))
                    #{}
                    (if (map? tuple-set) #{tuple-set} tuple-set))]
       (let [head (vec (keys (first tuples)))]
-       (Relation.
+       (HashRelation.
          head
          tuples)))))
 
@@ -156,7 +151,7 @@
 (defn load-rel
   "Loads a relation from the specified file."
   [file]
-  (edn/read-string {:readers {'rel relation.newRel.relational/rel}} (slurp file)))
+  (edn/read-string {:readers {'rel relation.hashRel.relation/rel}} (slurp file)))
 
 
 (defn order

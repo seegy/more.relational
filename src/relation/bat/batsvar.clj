@@ -1,6 +1,7 @@
 (ns relation.bat.batsvar
-   (:use [relation.bat.batOperators])
-   (:require  [relation.bat.table]))
+   (:use [ relation.bat.batOperators :as OP ])
+   (:use [ relation.bat.table :as TAB ])
+   (:require [clojure.edn    :as edn]))
 
 
 (defn batvar
@@ -28,7 +29,7 @@
   ""
   ([batRef attr head tail]
     (dosync
-     (def temp (insert (get @batRef attr) head tail))
+     (def temp (OP/insert (get @batRef attr) head tail))
      (def newBatMap (assoc @batRef attr temp))
      (ref-set batRef newBatMap)
      batRef))
@@ -43,7 +44,7 @@
   ""
   ([batRef attr head oldTail newTail]
    (dosync
-    (def temp (update (get @batRef attr) head oldTail newTail))
+    (def temp (OP/update (get @batRef attr) head oldTail newTail))
     (def newBatMap (assoc @batRef attr temp))
     (ref-set batRef newBatMap)
     batRef))
@@ -61,7 +62,7 @@
   ""
   ([batRef attr head tail]
    (dosync
-    (def temp (delete (get @batRef attr) head tail))
+    (def temp (OP/delete (get @batRef attr) head tail))
     (def newBatMap (assoc  @batRef attr temp))
     (ref-set batRef newBatMap)
     batRef))
@@ -79,6 +80,20 @@
   ([orderseq batRef]
    (let [keySeq (vec (keys @batRef))
          batSeq (vec (map (fn[k] (get @batRef k)) keySeq))]
-     (makeTable orderseq keySeq batSeq)))
+     (TAB/makeTable orderseq keySeq batSeq)))
   ([batRef]
    (makeTable! [] batRef)))
+
+
+(defn save-batvar
+  ""
+  [batRef file]
+  (spit file (str "#batvar "(prn-str @batRef))))
+
+
+(defn load-batvar
+  ""
+  [file]
+   (edn/read-string {:readers {'batvar relation.bat.batsvar/batvar
+                               'BAT   relation.bat.table/bat}}
+                    (slurp file)))

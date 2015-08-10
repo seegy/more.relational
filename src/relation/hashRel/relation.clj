@@ -1,7 +1,9 @@
 (ns relation.hashRel.relation
   (:use [relation.hashRel.tools])
-  (:require [clojure.edn    :as edn]))
+  (:require [clojure.edn    :as edn]
+            [relation.hashRel.tools]))
 
+(declare sort-rel)
 
 (deftype HashRelation [head body]
   Object

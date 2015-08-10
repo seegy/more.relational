@@ -1,4 +1,4 @@
-(ns wayne
+(ns wayneHashRel
   (:use [relation.hashRel]))
 
 
@@ -89,4 +89,16 @@ r
 
  (save-relvar something "/home/seegy/Desktop/Test-RelVar.file")
  (load-relvar "/home/seegy/Desktop/Test-RelVar.file")
+
+
+ (def bla (relvar blaRelation))
+ (def blubb (relvar blaRelation))
+
+ (def database {:some something :bla bla :blubb blubb})
+
+ (save-db database "/home/seegy/Desktop/Test-RelVar-database-map.file")
+
+ (def database2 #{ something  bla  blubb})
+
+ (save-db database2 "/home/seegy/Desktop/Test-RelVar-database-set.file")
 

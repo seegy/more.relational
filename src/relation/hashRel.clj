@@ -1,6 +1,9 @@
 (ns relation.hashRel
   (:use [potemkin])
-  (:require [relation.hashRel.relation]))
+  (:require [relation.hashRel.relation]
+            [relation.hashRel.tools]
+            [relation.hashRel.relvar]
+            [relation.hashRel.operators]))
 
 
 (import-vars

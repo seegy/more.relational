@@ -97,3 +97,23 @@
    (edn/read-string {:readers {'batvar relation.bat.batsvar/batvar
                                'BAT   relation.bat.table/bat}}
                     (slurp file)))
+
+
+(defn save-db
+  "Saves the database in the specified file. A database is an arbitrary Clojure
+  collection, preferrably a hash map."
+  [db file]
+  (spit file (prn-str (if (map? db)
+                        (apply merge (map (fn [[k v]]
+                                            {k (list 'batvar (list 'bat (set @v)))})
+                                       db))
+                        (vec (map (fn [rv]
+                                    (list 'batvar (list 'bat (set @rv))))
+                               db))))))
+
+(defn load-db
+  "Loads a database from the specified file."
+  [file]
+  (eval (edn/read-string {:readers {'batvar relation.bat.batsvar/batvar
+                               'BAT   relation.bat.table/bat}}
+                    (slurp file))))

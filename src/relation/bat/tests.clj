@@ -1,4 +1,4 @@
-(ns wayne
+(ns wayneBat
   (:use [relation.bat]))
 
 
@@ -436,3 +436,14 @@ batRef
 (save-batvar batRef "/home/seegy/Desktop/Test-batRef.file")
 
 (load-batvar "/home/seegy/Desktop/Test-batRef.file")
+
+
+(def batRef1 (batvar (convertToBats [{:id 1 :name "Peter" :artikel "Nagel" :menge 10 :datum "1.1.01"}])))
+(def batRef2 (batvar (convertToBats [{:id 2 :name "Max" :artikel "Nagel" :menge 20 :datum "1.2.01"}])))
+(def batRef3 (batvar (convertToBats [{:id 3 :name "Max" :artikel "Nagel" :menge 20 :datum "2.2.01"}])))
+
+
+(def database {:batRef1 batRef1 :batRef2 batRef2 :batRef3 batRef3})
+
+(save-db database "/home/seegy/Desktop/Test-batRef-db.file")
+(load-db "/home/seegy/Desktop/Test-batRef-db.file")

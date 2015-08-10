@@ -3,7 +3,9 @@
   (:require [clojure.repl   :refer :all]
             [clojure.string :as str]
             [clojure.edn    :as edn]
-            [relation.bat.batsvar]))
+            [relation.bat.batsvar]
+            [relation.bat.table]
+            [relation.bat.batOperators]))
 
 
 
@@ -48,4 +50,6 @@
   update!
   makeTable!
   save-batvar
-  load-batvar])
+  load-batvar
+  save-db
+  load-db])

@@ -8,5 +8,5 @@
 (import-vars
  [relation.transrelational.table
   tr]
- [relation.transrelational.operations]
+ [relation.transrelational.operators]
  [relation.transrelational.transref])

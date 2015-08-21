@@ -1,2 +1,2 @@
 (ns relation.transrelational.transref
-  (:use [relation.transrelational.operations]))
+  (:use [relation.transrelational.operators]))

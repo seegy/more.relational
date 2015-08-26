@@ -31,6 +31,10 @@ people
 
 
 
+(fieldValueOf people 0 0)
+(fieldValueOf people 2 :name)
+
+
 
 (time (convert people))
 
@@ -99,6 +103,12 @@ afterdelete
 (convert afterdelete)
 
 
+
+
+(order people :name)
+(order people :id)
+(order people :status)
+(order people :city)
 
 
 

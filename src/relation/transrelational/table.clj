@@ -10,20 +10,39 @@
   )
 
 
+
+
 (defn keyorder [tr]
   (.keyorder tr))
+
+
 
 (defn fieldValues [tr]
   (.fvt tr))
 
+
+
 (defn recordReconst [tr]
   (.rrt tr))
 
+
+
+
 (defmethod print-method Transrelation
   [tr writer]
-  (.write writer (str "#TR "  "Key order: " (keyorder  tr)
+  (.write writer (str "#TR Key order: " (keyorder  tr)
                       "\n Field Value Table: " (fieldValues  tr)
                       "\n Record Reconstruction Table: " (recordReconst  tr))))
+
+
+
+(defn fieldValueOf
+  ""
+  [tr row column]
+  (let [columName (if (keyword? column) column (get (keyorder tr) column))]
+     (:value (nth (get (fieldValues tr) columName) row))))
+
+
 
 
 (defn tr
@@ -38,7 +57,10 @@
                                                      (map (fn[record](get record head))
                                                           recordtuples))))
                             {} keyorder)
-        fvt (reduce (fn[m [k v]](assoc m k  (map first v))) {} permutation)
+        fvt (reduce (fn[m [k v]](assoc m k
+                                  (let [ values (map (fn[cell] (first cell)) v)]
+                                    (distinct (map (fn[v] {:value v :from (.indexOf values v) :to (.lastIndexOf values v)}) values))))) {} permutation)
+
         rrt (let [perm  (reduce (fn[m [k v]](assoc m k  (map second v))) {} permutation)
                   zigzagTo (fn [[a b]](vec (map (fn[recnr] (.indexOf b recnr)) a)))
                   fromPerm (vec (map (fn[x](get perm x)) keyorder))
@@ -48,14 +70,39 @@
                                  m
                                  (let [ffrom (first from)
                                        fto (first to)]
-                                   (recur (conj m [ffrom fto]) (rest from) (rest to)))))]
-              (into [] (comp (map zigzagTo) ) (mergePerms [] fromPerm toPerm)))]
-    (Transrelation. keyorder fvt rrt)))
+                                   (recur (conj m [ffrom fto]) (rest from) (rest to)))))
+                  pre-consist-rrt (into [] (comp (map zigzagTo) ) (mergePerms [] fromPerm toPerm))]
+              (map (fn[column](let[columnName (nth keyorder (.indexOf pre-consist-rrt column))]
+                                (map (fn[cell] [(let[valueColumn (get fvt columnName)]
+                                                  (.indexOf valueColumn
+                                                           (first (filter (fn [x] (let [index (.indexOf column cell)](and (<= index (:to x)) (>= index (:from x))))) valueColumn))
+                                                            )
+                                                  )
+                                                cell]) column))) pre-consist-rrt))]
+     (Transrelation. keyorder fvt rrt)))
   ([keyorder fvt rrt]
    (Transrelation. keyorder fvt rrt)))
 
 
 
+
+(time (def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London" :gender "male" :size 10 :hair "black" :eyes "brown" }
+      {:id "S2" :name "Jones" :status 10 :city "Paris" :gender "female" :size 10 :hair "blond" :eyes "brown" }
+      {:id "S3" :name "Blake" :status 30 :city "Paris" :gender "male" :size 20 :hair "black" :eyes "blue" }
+      {:id "S4" :name "Clark" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
+      {:id "S5" :name "Adams" :status 30 :city "Athens" :gender "male" :size 30 :hair "blond" :eyes "blue" }
+      {:id "S6" :name "Miller" :status 30 :city "Paris" :gender "male" :size 20 :hair "black" :eyes "blue" }
+      {:id "S7" :name "Thomas" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
+      {:id "S8" :name "Enderson" :status 30 :city "Athens" :gender "male" :size 30 :hair "blond" :eyes "blue" }
+      {:id "S9" :name "Simpson" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
+      {:id "S10" :name "Woods" :status 30 :city "New York" :gender "male" :size 30 :hair "blond" :eyes "blue" }])))
+
+
+(time people)
+(time (fieldValues people))
+(time (fieldValueOf people 1 1))
+
+(time(recordReconst people))
 
 
 (defn- convert

@@ -10,7 +10,8 @@
   tr
   keyorder
   fieldValues
-  recordReconst]
+  recordReconst
+  fieldValueOf]
  [relation.transrelational.operators
   retrieve
   convert

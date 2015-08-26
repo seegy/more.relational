@@ -20,27 +20,30 @@
 
 
 (defn retrieve
-  ""
-  [trans-table column row]
+  "Get a row of data by the position of one of the cells in the transrelational table."
+  [trans-table row column]
   (let [attrs  (keyorder trans-table)
         attrs (apply conj (vec (drop column attrs)) (drop-last (- (count attrs) column ) attrs))
         rrt (recordReconst trans-table)
         rrt (drop-last (apply conj (vec (drop column rrt)) (drop-last  (- (count rrt) column ) rrt)))
-        getValueBy (fn[attrName row] (nth (get (fieldValues trans-table) attrName) row))
         recMakeTuple (fn[attrs rrt row result]
                        (if (empty? attrs)
                          result
-                         (let [value (getValueBy (first attrs) row)
-                               nextRow (nth (first rrt) row)]
-                           (recur (rest attrs) (rest rrt) nextRow (assoc result (first attrs) value)))))
-        ]
+                         (let [rrt-cell (nth (first rrt) row)
+                               value (fieldValueOf trans-table (first rrt-cell) (first attrs) )
+                               nextRow (second rrt-cell)]
+                           (println rrt-cell)
+                           (println rrt)
+                           (println result)
+                           (println attrs)
+                           (recur (rest attrs) (rest rrt) nextRow (assoc result (first attrs) value)))))]
   (recMakeTuple attrs rrt row {})))
 
-
+(retrieve people 2 3)
 
 
 (defn convert
-  ""
+  "Get a collection of all reconstructed rows by a transrelational table ordered by the first attribute."
   [trans-table]
  (map (fn[row] (retrieve trans-table 0 row)) (range (count trans-table))))
 
@@ -50,7 +53,7 @@
 
 
 (defn insert
-  ""
+  "Returns the given transrelational table with the included datarow. The datarow has to be a map."
   [trans-table data-row]
   (when-not (= (set (keys data-row)) (set (keyorder trans-table)))
     (throw (IllegalArgumentException. "DataRow has not the same schema as the table")))
@@ -67,7 +70,7 @@
 
 (defn delete
   ""
-  [trans-table column row]
+  [trans-table  row column]
   (let [attrs  (keyorder trans-table)
         attrs (apply conj (vec (drop column attrs)) (drop-last (- (count attrs) column ) attrs))
         rrt (recordReconst trans-table)
@@ -87,7 +90,7 @@
 
 (defn update
   ""
-  [trans-table column row update-map]
+  [trans-table  row column update-map]
   (let [old-row (retrieve trans-table column row)
         new-row (merge old-row update-map)]
     (insert (delete trans-table column row) new-row)))
@@ -102,16 +105,4 @@
   (let []
     attr))
 
-
-
-(def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
-      {:id "S2" :name "Jones" :status 10 :city "Paris"}
-      {:id "S3" :name "Blake" :status 30 :city "Paris"}
-      {:id "S4" :name "Clark" :status 20 :city "London"}
-      {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
-
-(order people :name)
-(order people :id)
-(order people :status)
-(order people :city)
 

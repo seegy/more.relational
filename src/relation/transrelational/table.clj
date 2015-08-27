@@ -31,8 +31,8 @@
 (defmethod print-method Transrelation
   [tr writer]
   (.write writer (str "#TR Key order: " (keyorder  tr)
-                      "\n Field Value Table: " (fieldValues  tr)
-                      "\n Record Reconstruction Table: " (recordReconst  tr))))
+                      "\n\n Field Value Table:\n" (fieldValues  tr)
+                      "\n\n Record Reconstruction Table:\n" (recordReconst  tr))))
 
 
 
@@ -84,25 +84,6 @@
    (Transrelation. keyorder fvt rrt)))
 
 
-
-
-(time (def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London" :gender "male" :size 10 :hair "black" :eyes "brown" }
-      {:id "S2" :name "Jones" :status 10 :city "Paris" :gender "female" :size 10 :hair "blond" :eyes "brown" }
-      {:id "S3" :name "Blake" :status 30 :city "Paris" :gender "male" :size 20 :hair "black" :eyes "blue" }
-      {:id "S4" :name "Clark" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
-      {:id "S5" :name "Adams" :status 30 :city "Athens" :gender "male" :size 30 :hair "blond" :eyes "blue" }
-      {:id "S6" :name "Miller" :status 30 :city "Paris" :gender "male" :size 20 :hair "black" :eyes "blue" }
-      {:id "S7" :name "Thomas" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
-      {:id "S8" :name "Enderson" :status 30 :city "Athens" :gender "male" :size 30 :hair "blond" :eyes "blue" }
-      {:id "S9" :name "Simpson" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
-      {:id "S10" :name "Woods" :status 30 :city "New York" :gender "male" :size 30 :hair "blond" :eyes "blue" }])))
-
-
-(time people)
-(time (fieldValues people))
-(time (fieldValueOf people 1 1))
-
-(time(recordReconst people))
 
 
 (defn- convert

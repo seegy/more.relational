@@ -4,6 +4,22 @@
 
 
 
+
+
+(defn- melt [f a b & more]
+  (let [args (filter #(not (nil? %)) (conj [] a b more))]
+    (when-not (= (map count args))
+      (throw (IllegalArgumentException. "Data sets have not the same length.")))
+    (let [melter (fn [result a b]
+                   (if (empty? a)
+                     result
+                     (recur (conj result (f (first a) (first b))) (rest a) (rest b))))]
+    (apply melter [] args))))
+
+(defn- drop-index [col idx]
+  (filter identity (map-indexed #(if (not= %1 idx) %2) col)))
+
+
 (def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
       {:id "S2" :name "Jones" :status 10 :city "Paris"}
       {:id "S3" :name "Blake" :status 30 :city "Paris"}
@@ -64,25 +80,77 @@ people
 (time (convert people))
 
 
+(def after-insert (insert people  {:id "S11" :name "Jones" :status 20 :city "London" :gender "male" :size 21 :hair "blond" :eyes "blue" }))
+after-insert
+
+
+
+(def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London" :gender "male" :size 10 :hair "black" :eyes "brown" }
+      {:id "S2" :name "Jones" :status 10 :city "Paris" :gender "female" :size 10 :hair "blond" :eyes "brown" }
+      {:id "S3" :name "Blake" :status 30 :city "Paris" :gender "male" :size 20 :hair "black" :eyes "blue" }
+      {:id "S4" :name "Clark" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
+      {:id "S5" :name "Adams" :status 30 :city "Athens" :gender "male" :size 30 :hair "blond" :eyes "blue" }
+      {:id "S6" :name "Miller" :status 30 :city "Paris" :gender "male" :size 20 :hair "black" :eyes "blue" }
+      {:id "S7" :name "Thomas" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
+      {:id "S8" :name "Enderson" :status 30 :city "Athens" :gender "male" :size 30 :hair "blond" :eyes "blue" }
+      {:id "S9" :name "Simpson" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
+      {:id "S10" :name "Woods" :status 30 :city "New York" :gender "male" :size 30 :hair "blond" :eyes "blue" }]))
+
+ (insert people  {:id "S11" :name "Jones" :status 20 :city "London" :gender "male" :size 21 :hair "blond" :eyes "blue" })
 
 
 
 
-
-
-
-  (def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
+ (def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
       {:id "S2" :name "Jones" :status 10 :city "Paris"}
       {:id "S3" :name "Blake" :status 30 :city "Paris"}
       {:id "S4" :name "Clark" :status 20 :city "London"}
       {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
+ (recordReconst people)
 
-  (def toInsert {:id "S6" :name "Miller" :status 20 :city "Berlin"})
+  (def toInsert {:id "S1" :name "Blake" :status 0 :city "Athens"})
 
-  (def afterInsert (insert people toInsert))
-  afterInsert
+ (def afterInsert (insert people toInsert))
+ afterInsert
+ (convert afterInsert)
 
-  (convert afterInsert)
+
+(= (vec(convert afterInsert))
+   [ {:id "S1" :name "Smith" :status 20 :city "London"}
+     {:id "S1" :name "Blake" :status 0 :city "Athens"}
+      {:id "S2" :name "Jones" :status 10 :city "Paris"}
+      {:id "S3" :name "Blake" :status 30 :city "Paris"}
+      {:id "S4" :name "Clark" :status 20 :city "London"}
+      {:id "S5" :name "Adams" :status 30 :city "Athens"}
+     ])
+
+
+
+
+(let [ people (tr [ {:id "S1" :name "Smith" :status 20 :city "London" :gender "male" :size 10 :hair "black" :eyes "brown" }
+      {:id "S2" :name "Jones" :status 10 :city "Paris" :gender "female" :size 10 :hair "blond" :eyes "brown" }
+      {:id "S3" :name "Blake" :status 30 :city "Paris" :gender "male" :size 20 :hair "black" :eyes "blue" }
+      {:id "S4" :name "Clark" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
+      {:id "S5" :name "Adams" :status 30 :city "Athens" :gender "male" :size 30 :hair "blond" :eyes "blue" }
+      {:id "S6" :name "Miller" :status 30 :city "Paris" :gender "male" :size 20 :hair "black" :eyes "blue" }
+      {:id "S7" :name "Thomas" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
+      {:id "S8" :name "Enderson" :status 30 :city "Athens" :gender "male" :size 30 :hair "blond" :eyes "blue" }
+      {:id "S9" :name "Simpson" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
+      {:id "S10" :name "Woods" :status 30 :city "New York" :gender "male" :size 30 :hair "blond" :eyes "blue" }])
+      after-insert (insert people  {:id "S11" :name "Jones" :status 20 :city "London" :gender "male" :size 21 :hair "blond" :eyes "blue" })]
+  (use 'clojure.data)
+      (melt (fn [a b] (when-not (= a b) (diff a b)))  (convert after-insert) [ {:id "S1" :name "Smith" :status 20 :city "London" :gender "male" :size 10 :hair "black" :eyes "brown" }
+            {:id "S10" :name "Woods" :status 30 :city "New York" :gender "male" :size 30 :hair "blond" :eyes "blue" }
+            {:id "S11" :name "Jones" :status 20 :city "London" :gender "male" :size 21 :hair "blond" :eyes "blue" }
+            {:id "S2" :name "Jones" :status 10 :city "Paris" :gender "female" :size 10 :hair "blond" :eyes "brown" }
+            {:id "S3" :name "Blake" :status 30 :city "Paris" :gender "male" :size 20 :hair "black" :eyes "blue" }
+            {:id "S4" :name "Clark" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
+            {:id "S5" :name "Adams" :status 30 :city "Athens" :gender "male" :size 30 :hair "blond" :eyes "blue" }
+            {:id "S6" :name "Miller" :status 30 :city "Paris" :gender "male" :size 20 :hair "black" :eyes "blue" }
+            {:id "S7" :name "Thomas" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
+            {:id "S8" :name "Enderson" :status 30 :city "Athens" :gender "male" :size 30 :hair "blond" :eyes "blue" }
+            {:id "S9" :name "Simpson" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
+            ]))
 
 
 

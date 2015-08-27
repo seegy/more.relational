@@ -25,28 +25,36 @@
   (let [attrs  (keyorder trans-table)
         attrs (apply conj (vec (drop column attrs)) (drop-last (- (count attrs) column ) attrs))
         rrt (recordReconst trans-table)
-        rrt (drop-last (apply conj (vec (drop column rrt)) (drop-last  (- (count rrt) column ) rrt)))
+        rrt (apply conj (vec (drop column rrt)) (drop-last  (- (count rrt) column ) rrt))
         recMakeTuple (fn[attrs rrt row result]
                        (if (empty? attrs)
                          result
                          (let [rrt-cell (nth (first rrt) row)
                                value (fieldValueOf trans-table (first rrt-cell) (first attrs) )
                                nextRow (second rrt-cell)]
-                           (println rrt-cell)
-                           (println rrt)
-                           (println result)
-                           (println attrs)
                            (recur (rest attrs) (rest rrt) nextRow (assoc result (first attrs) value)))))]
   (recMakeTuple attrs rrt row {})))
 
-(retrieve people 2 3)
+
+
+
+(time (def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London" :gender "male" :size 10 :hair "black" :eyes "brown" }
+      {:id "S2" :name "Jones" :status 10 :city "Paris" :gender "female" :size 10 :hair "blond" :eyes "brown" }
+      {:id "S3" :name "Blake" :status 30 :city "Paris" :gender "male" :size 20 :hair "black" :eyes "blue" }
+      {:id "S4" :name "Clark" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
+      {:id "S5" :name "Adams" :status 30 :city "Athens" :gender "male" :size 30 :hair "blond" :eyes "blue" }
+      {:id "S6" :name "Miller" :status 30 :city "Paris" :gender "male" :size 20 :hair "black" :eyes "blue" }
+      {:id "S7" :name "Thomas" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
+      {:id "S8" :name "Enderson" :status 30 :city "Athens" :gender "male" :size 30 :hair "blond" :eyes "blue" }
+      {:id "S9" :name "Simpson" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
+      {:id "S10" :name "Woods" :status 30 :city "New York" :gender "male" :size 30 :hair "blond" :eyes "blue" }])))
+
 
 
 (defn convert
   "Get a collection of all reconstructed rows by a transrelational table ordered by the first attribute."
   [trans-table]
- (map (fn[row] (retrieve trans-table 0 row)) (range (count trans-table))))
-
+ (map (fn[row] (retrieve trans-table  row 0)) (range (count trans-table))))
 
 
 
@@ -57,13 +65,36 @@
   [trans-table data-row]
   (when-not (= (set (keys data-row)) (set (keyorder trans-table)))
     (throw (IllegalArgumentException. "DataRow has not the same schema as the table")))
-  (let [new-fvt (reduce (fn [m [k v]](assoc m k (sort (conj (get  (fieldValues trans-table) k) v)))) {}  data-row )
-        indizes (map (fn[[k v]] (.lastIndexOf (get new-fvt k) v)) data-row)
-        indizes-to (conj (vec (rest indizes)) (first indizes))
-        merged-indizes (melt (fn [a b] [a b]) indizes indizes-to )
-        new-rrt  (melt (fn[a [k v]] (map #(if (>= % v) (inc %) %) a)) (recordReconst trans-table) merged-indizes)
-        new-rrt (melt (fn[a [k v]] (flatten (conj  (drop k a) v (take k a)))) new-rrt merged-indizes)]
+  (let [fvt-manipulation (reduce (fn [m [k v]](assoc m k
+                                       (let[old-column (get  (fieldValues trans-table) k)
+                                            untouched (filter #(neg? (compare (:value %) v)) old-column)
+                                            increased (sequence (comp
+                                                                 (map (fn[cell] (merge-with + cell {:from 1 :to 1})))
+                                                                 (filter #(pos? (compare (:value %) v)))
+                                                                 ) old-column)
+                                            target (let[found (first (filter #(= (:value %) v) old-column))]
+                                                     (if (nil? found)
+                                                       (let [index (if (empty? untouched) 0 (inc (:to (last untouched))))]{:value v :from index :to index})
+                                                       (merge-with + found {:to 1})))]
+                                          [(concat untouched [target] increased) [target (count untouched)]]))) {}  data-row )
+        new-fvt (reduce (fn[m [k [ v _ ]]] (assoc m k v)) {} fvt-manipulation)
+        new-rrt (let [inserts (reduce (fn[m [k [ _ v ]]] (assoc m k v)) {} fvt-manipulation)
+                      inserts-in-order (map #(get inserts %) (keyorder trans-table))
+                      entry-infos (melt (fn [a b] [ (second a)
+                                                    (:to (first a))
+                                                    (:to (first b))
+                                                    (= (:to (first a)) (:from (first a)))] )
+                                        inserts-in-order (conj (vec (rest inserts-in-order)) (first inserts-in-order)))]
+                  (melt (fn[column [a-value-index a-next-pointer b-next-pointer a-is-new]] (let [prepared-column (map (fn [[ a b ]] [ (if (and (>= a a-value-index) a-is-new) (inc a) a)
+                                                                                                                                      (if (>= b b-next-pointer) (inc b) b) ]) column)]
+                                                 (concat (take a-next-pointer prepared-column) [[a-value-index b-next-pointer]] (drop a-next-pointer prepared-column) )))
+                        (recordReconst trans-table) entry-infos))]
     (tr (keyorder trans-table) new-fvt new-rrt)))
+
+
+
+
+
 
 
 

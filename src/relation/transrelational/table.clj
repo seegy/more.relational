@@ -32,7 +32,7 @@
   [tr writer]
   (.write writer (str "#TR Key order: " (keyorder  tr)
                       "\n\n Field Value Table:\n" (fieldValues  tr)
-                      "\n\n Record Reconstruction Table:\n" (recordReconst  tr))))
+                      "\n\n Record Reconstruction Table:\n" (vec (recordReconst  tr)))))
 
 
 

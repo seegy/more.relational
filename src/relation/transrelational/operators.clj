@@ -38,17 +38,6 @@
 
 
 
-(time (def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London" :gender "male" :size 10 :hair "black" :eyes "brown" }
-      {:id "S2" :name "Jones" :status 10 :city "Paris" :gender "female" :size 10 :hair "blond" :eyes "brown" }
-      {:id "S3" :name "Blake" :status 30 :city "Paris" :gender "male" :size 20 :hair "black" :eyes "blue" }
-      {:id "S4" :name "Clark" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
-      {:id "S5" :name "Adams" :status 30 :city "Athens" :gender "male" :size 30 :hair "blond" :eyes "blue" }
-      {:id "S6" :name "Miller" :status 30 :city "Paris" :gender "male" :size 20 :hair "black" :eyes "blue" }
-      {:id "S7" :name "Thomas" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
-      {:id "S8" :name "Enderson" :status 30 :city "Athens" :gender "male" :size 30 :hair "blond" :eyes "blue" }
-      {:id "S9" :name "Simpson" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
-      {:id "S10" :name "Woods" :status 30 :city "New York" :gender "male" :size 30 :hair "blond" :eyes "blue" }])))
-
 
 
 (defn convert
@@ -116,6 +105,39 @@
         new-rrt (melt (fn[column attr] (vec (map (fn[x] (if (> x (second (get indizes attr))) (dec x) x))
                                             (drop-index column (first (get indizes attr)))))) (recordReconst trans-table) (keyorder trans-table))]
      (tr (keyorder trans-table) new-fvt new-rrt)))
+
+
+
+
+
+
+
+(defn new-delete
+  ""
+  [trans-table  row column]
+  (let [attrs (let [attrs (keyorder trans-table)]
+                (apply conj (vec (drop column attrs)) (drop-last (- (count attrs) column ) attrs)))
+        rrt (let [ rrt (recordReconst trans-table)]
+              (apply conj (vec (drop column rrt)) (drop-last  (- (count rrt) column ) rrt)))
+         recMakeTuple (fn[attrs rrt row result]
+                       (if (empty? attrs)
+                         result
+                         (let [ cell  (nth (first rrt) row)]
+                           (recur (rest attrs) (rest rrt) (second cell) (assoc result (first attrs) cell)))))
+        indizes (recMakeTuple attrs rrt row {})]
+     [indizes]))
+
+
+(def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
+      {:id "S2" :name "Jones" :status 10 :city "Paris"}
+      {:id "S3" :name "Blake" :status 30 :city "Paris"}
+      {:id "S4" :name "Clark" :status 20 :city "London"}
+      {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
+people
+(recordReconst people)
+
+(new-delete people 1 0)
+(new-delete people 1 3)
 
 
 

@@ -56,8 +56,9 @@ people
 
 
 
-
-
+(def testTR(tr [{:a "a1" :b "b1" :c "c1"}
+     {:a "a2" :b "b1" :c "c2"}
+     {:a "a3" :b "b1" :c "c1"}]))
 
 
 (def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London" :gender "male" :size 10 :hair "black" :eyes "brown" }

@@ -52,6 +52,13 @@ people
 
 
 
+;; #######################################################################################################################################
+;; OPERATIONEN
+;; #######################################################################################################################################
+
+
+
+
 (time (convert people))
 
 
@@ -128,7 +135,7 @@ after-insert
 
 
 
-(let [ people (tr [ {:id "S1" :name "Smith" :status 20 :city "London" :gender "male" :size 10 :hair "black" :eyes "brown" }
+#_(let [ people (tr [ {:id "S1" :name "Smith" :status 20 :city "London" :gender "male" :size 10 :hair "black" :eyes "brown" }
       {:id "S2" :name "Jones" :status 10 :city "Paris" :gender "female" :size 10 :hair "blond" :eyes "brown" }
       {:id "S3" :name "Blake" :status 30 :city "Paris" :gender "male" :size 20 :hair "black" :eyes "blue" }
       {:id "S4" :name "Clark" :status 20 :city "London" :gender "female" :size 40 :hair "red" :eyes "green" }
@@ -172,6 +179,24 @@ afterdelete
 (convert afterdelete)
 
 
+(def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
+      {:id "S2" :name "Jones" :status 10 :city "Paris"}
+      {:id "S3" :name "Blake" :status 30 :city "Paris"}
+      {:id "S4" :name "Clark" :status 20 :city "London"}
+      {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
+
+people
+
+(delete people 1 0)
+(convert (delete people 1 0))
+
+(convert (delete people 3 1))
+
+
+
+
+
+
 
 
 (order people :name)
@@ -183,7 +208,11 @@ afterdelete
 
 
 
-; #####################################################################################################################################################################
+
+;; #######################################################################################################################################
+;; Matrizen
+;; #######################################################################################################################################
+
 
 
 (use 'clojure.core.matrix.operators)

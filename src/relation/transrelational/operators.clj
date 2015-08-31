@@ -74,8 +74,9 @@
                                                     (:to (first b))
                                                     (= (:to (first a)) (:from (first a)))] )
                                         inserts-in-order (conj (vec (rest inserts-in-order)) (first inserts-in-order)))]
-                  (melt (fn[column [a-value-index a-next-pointer b-next-pointer a-is-new]] (let [prepared-column (map (fn [[ a b ]] [ (if (and (>= a a-value-index) a-is-new) (inc a) a)
-                                                                                                                                      (if (>= b b-next-pointer) (inc b) b) ]) column)]
+                  (melt (fn[column [a-value-index a-next-pointer b-next-pointer a-is-new]]
+                          (let [prepared-column (map (fn [[ a b ]] [ (if (and (>= a a-value-index) a-is-new) (inc a) a)
+                                                                     (if (>= b b-next-pointer) (inc b) b) ]) column)]
                                                  (concat (take a-next-pointer prepared-column) [[a-value-index b-next-pointer]] (drop a-next-pointer prepared-column) )))
                         (recordReconst trans-table) entry-infos))]
     (tr (keyorder trans-table) new-fvt new-rrt)))
@@ -86,46 +87,46 @@
 
 
 
-
-
 (defn delete
-  ""
-  [trans-table  row column]
-  (let [attrs  (keyorder trans-table)
-        attrs (apply conj (vec (drop column attrs)) (drop-last (- (count attrs) column ) attrs))
-        rrt (recordReconst trans-table)
-        rrt  (apply conj (vec (drop column rrt)) (drop-last  (- (count rrt) column ) rrt))
-        recMakeTuple (fn[attrs rrt row result]
-                       (if (empty? attrs)
-                         result
-                         (let [ nextRow (nth (first rrt) row)]
-                           (recur (rest attrs) (rest rrt) nextRow (assoc result (first attrs) [row nextRow])))))
-        indizes (recMakeTuple attrs rrt row {})
-        new-fvt (reduce (fn[fft [k [index next-index]]] (assoc fft k (drop-index (get fft k) index))) (fieldValues trans-table) indizes)
-        new-rrt (melt (fn[column attr] (vec (map (fn[x] (if (> x (second (get indizes attr))) (dec x) x))
-                                            (drop-index column (first (get indizes attr)))))) (recordReconst trans-table) (keyorder trans-table))]
-     (tr (keyorder trans-table) new-fvt new-rrt)))
-
-
-
-
-
-
-
-(defn new-delete
   ""
   [trans-table  row column]
   (let [attrs (let [attrs (keyorder trans-table)]
                 (apply conj (vec (drop column attrs)) (drop-last (- (count attrs) column ) attrs)))
         rrt (let [ rrt (recordReconst trans-table)]
               (apply conj (vec (drop column rrt)) (drop-last  (- (count rrt) column ) rrt)))
-         recMakeTuple (fn[attrs rrt row result]
+        recMakeTuple (fn[attrs rrt row result]
                        (if (empty? attrs)
                          result
                          (let [ cell  (nth (first rrt) row)]
                            (recur (rest attrs) (rest rrt) (second cell) (assoc result (first attrs) cell)))))
-        indizes (recMakeTuple attrs rrt row {})]
-     [indizes]))
+        indizes (recMakeTuple attrs rrt row {})
+        delete-Value (fn [attr index]
+                       (let[untouched (take index (get (fieldValues trans-table) attr))
+                            target (let [zwerg (merge-with - (nth (get (fieldValues trans-table) attr) index) {:to 1} )]
+                                     (if (< (:to zwerg ) (:from zwerg))
+                                       '()
+                                       [zwerg]))
+                            tail (map (fn [m] (merge-with - m {:from 1 :to 1} )) (drop (inc index) (get (fieldValues trans-table) attr))) ]
+                         [(concat untouched target  tail)
+                          (empty? target)]))
+        fvt-manipulation (map (fn [[attr [index _]]] (delete-Value attr index)) indizes)
+        new-fvt (apply merge (melt (fn [attr [column _]] {attr column}) attrs fvt-manipulation))
+        entry-infos (let [indizes (map #(get indizes %) attrs)]
+                      (melt (fn [[_ a] [b c d ]] [a b c d])
+                            (apply conj [(last indizes)] (drop-last indizes))
+                            (melt (fn [[a b] c] [a b c])  indizes (map second fvt-manipulation))))
+        new-rrt (let [filtered-rrt (melt (fn [[index _ _ _] column]
+                                           (concat (take index column) (drop (inc index) column)))
+                                         entry-infos rrt)
+                      new-rrt (melt (fn [[_ value-link next-link is-deleted] column]
+                                     ( map (fn[[cell-value cell-next]]
+                                            [(if (and is-deleted (> cell-value value-link)) (dec cell-value) cell-value)
+                                             (if (> cell-next next-link) (dec cell-next) cell-next)]) column)) entry-infos filtered-rrt)]
+                  new-rrt)]
+   (tr (keyorder trans-table)  new-fvt new-rrt)))
+
+
+
 
 
 (def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
@@ -133,11 +134,28 @@
       {:id "S3" :name "Blake" :status 30 :city "Paris"}
       {:id "S4" :name "Clark" :status 20 :city "London"}
       {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
-people
-(recordReconst people)
 
-(new-delete people 1 0)
-(new-delete people 1 3)
+people
+
+(retrieve people 0 3)
+
+(retrieve people 1 2)
+
+
+(delete people 1 0)
+(convert (delete people 1 0))
+
+(delete people 3 1)
+(convert (delete people 3 1))
+
+
+
+(delete people 1 2)
+(convert (delete people 1 2))
+
+
+(delete people 3 1)
+(convert (delete people 3 1))
 
 
 

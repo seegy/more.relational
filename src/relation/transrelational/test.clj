@@ -194,15 +194,59 @@ people
 
 
 
+(def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
+      {:id "S2" :name "Jones" :status 10 :city "Paris"}
+      {:id "S3" :name "Blake" :status 30 :city "Paris"}
+      {:id "S4" :name "Clark" :status 20 :city "London"}
+      {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
+
+people
+
+(retrieve people 0 3)
+
+(retrieve people 1 2)
+
+(retrieve people 0 0)
+(retrieve people 1 0)
+(retrieve people 0 1)
+
+(delete people 1 0)
+(convert (delete people 1 0))
+
+(delete people 3 1)
+(convert (delete people 3 1))
+
+
+(delete people 1 2)
+(convert (delete people 1 2))
+
+
+(delete people 3 1)
+(convert (delete people 3 1))
 
 
 
 
+(def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
+      {:id "S2" :name "Jones" :status 10 :city "Paris"}
+      {:id "S3" :name "Blake" :status 30 :city "Paris"}
+      {:id "S4" :name "Clark" :status 20 :city "London"}
+      {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
 
-(order people :name)
-(order people :id)
-(order people :status)
-(order people :city)
+
+;; Should throw exception
+(update people 0 0 {:sex "male"})
+(update people 0 0 {:city "Berlin"})
+(convert (update people 0 0 {:city "Berlin"}))
+
+(update people 0 3 {:city "Berlin"})
+(convert (update people 0 3 {:city "Berlin"}))
+
+
+
+(update people 2 0 {:id "S7" :name "Müller" :status 0 :city "Frankfurt"})
+(convert (update people 2 0 {:id "S7" :name "Müller" :status 0 :city "Frankfurt"}))
+
 
 
 

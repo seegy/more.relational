@@ -122,49 +122,27 @@
                                      ( map (fn[[cell-value cell-next]]
                                             [(if (and is-deleted (> cell-value value-link)) (dec cell-value) cell-value)
                                              (if (> cell-next next-link) (dec cell-next) cell-next)]) column)) entry-infos filtered-rrt)]
-                  new-rrt)]
+                  (apply conj (vec (drop (- (count rrt) column ) new-rrt)) (drop-last  column new-rrt)))]
    (tr (keyorder trans-table)  new-fvt new-rrt)))
 
 
 
 
 
-(def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
-      {:id "S2" :name "Jones" :status 10 :city "Paris"}
-      {:id "S3" :name "Blake" :status 30 :city "Paris"}
-      {:id "S4" :name "Clark" :status 20 :city "London"}
-      {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
 
-people
-
-(retrieve people 0 3)
-
-(retrieve people 1 2)
-
-
-(delete people 1 0)
-(convert (delete people 1 0))
-
-(delete people 3 1)
-(convert (delete people 3 1))
-
-
-
-(delete people 1 2)
-(convert (delete people 1 2))
-
-
-(delete people 3 1)
-(convert (delete people 3 1))
 
 
 
 (defn update
   ""
   [trans-table  row column update-map]
-  (let [old-row (retrieve trans-table column row)
+  (when-not (not-any? #(contains? (keyorder trans-table) %) (keys update-map))
+    (throw (IllegalArgumentException. "Update map contains illegal attribute.")))
+  (let [old-row (retrieve trans-table row column)
         new-row (merge old-row update-map)]
-    (insert (delete trans-table column row) new-row)))
+    (insert (delete trans-table row column) new-row) ))
+
+
 
 
 

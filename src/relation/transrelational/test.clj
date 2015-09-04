@@ -235,7 +235,9 @@ people
 
 
 ;; Should throw exception
-(update people 0 0 {:sex "male"})
+(try
+  (update people 0 0 {:sex "male"})
+  (catch IllegalArgumentException e "Catched assert exception."))
 (update people 0 0 {:city "Berlin"})
 (convert (update people 0 0 {:city "Berlin"}))
 
@@ -247,7 +249,7 @@ people
 (update people 2 0 {:id "S7" :name "Müller" :status 0 :city "Frankfurt"})
 (convert (update people 2 0 {:id "S7" :name "Müller" :status 0 :city "Frankfurt"}))
 
-
+(convert people [:name :id])
 
 
 

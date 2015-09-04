@@ -362,8 +362,10 @@ batRef
 
 (assign! batRef (convertToBats [{:id 1 :name "pifjpdsijf" :artikel "Nfüokeüofkwagel" :menge 102 :datum "1.1.01324234"}]))
 
-;### SHOULD FAIL! --> Schema of map of BATs are not equal.
-(assign! batRef (convertToBats [{:id 1 :name "pifjpdsijf" :menge 102 :datum "1.1.01324234"}]))
+
+(try
+  (assign! batRef (convertToBats [{:id 1 :name "pifjpdsijf" :menge 102 :datum "1.1.01324234"}]))
+  (catch IllegalArgumentException e "Catched assert Exception."))
 
 
 

@@ -58,12 +58,19 @@
   ([trans-table order]
    (if (empty? order)
      (convert trans-table)
-     (if (not-any? #(contains? (set (keyorder trans-table))) order)
+     (if (not-any? #(contains? (set (keyorder trans-table)) %) order)
        (throw (IllegalArgumentException. "Order attribute not part of relation"))
        (let [attrs (keyorder trans-table)
              row-of-last (.indexOf attrs (last order))
              preorderd-tr (map (fn[row] (retrieve trans-table  row row-of-last)) (range (count trans-table)))]
-         (sort-by (apply juxt (drop-last 1 order) ) preorderd-tr ))))))
+         (if (empty? (drop-last 1 order))
+           preorderd-tr
+           (sort-by (apply juxt (drop-last 1 order) ) preorderd-tr )))))))
+
+
+
+
+
 
 
 

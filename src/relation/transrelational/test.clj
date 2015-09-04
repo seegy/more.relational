@@ -250,6 +250,9 @@ people
 (convert (update people 2 0 {:id "S7" :name "Müller" :status 0 :city "Frankfurt"}))
 
 (convert people [:name :id])
+(convert people [])
+(convert people [:city :id])
+(convert people [:city :name])
 
 
 

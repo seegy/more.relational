@@ -21,6 +21,15 @@
 (defn- drop-index [col idx]
   (filter identity (map-indexed #(if (not= %1 idx) %2) col)))
 
+(defmacro tr-fn
+  "Behaves like fn, but stores the source code in the metadata to allow
+  optimisation."
+  [args body]
+  (with-meta (list 'fn args body)
+             {:body (list 'quote body)}))
+
+
+(tr-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris") (= (:name t) (:city t))))
 
 
 
@@ -161,7 +170,7 @@
 (defn update
   ""
   [trans-table  row column update-map]
-  (when-not (not-any? #(contains? (keyorder trans-table) %) (keys update-map))
+  (when (not-any? #(contains? (set (keyorder trans-table)) %) (keys update-map))
     (throw (IllegalArgumentException. "Update map contains illegal attribute.")))
   (let [old-row (retrieve trans-table row column)
         new-row (merge old-row update-map)]
@@ -181,4 +190,56 @@
 (defn restrict
   ""
   [trans-table pred])
+
+(def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
+      {:id "S2" :name "Jones" :status 10 :city "Paris"}
+      {:id "S3" :name "Blake" :status 30 :city "Paris"}
+      {:id "S4" :name "Clark" :status 20 :city "London"}
+      {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
+
+people
+
+
+(defn project
+    ""
+  [trans-table attrs]
+  (when (not-any? #(contains? (set (keyorder trans-table)) %) attrs)
+    (throw (IllegalArgumentException. "Update map contains illegal attribute.")))
+  (let [to-delete (filterv #(not (contains? (set attrs) %)) (keyorder trans-table))
+        new-fvt (reduce (fn[m attr] (dissoc m attr)) (fieldValues trans-table) to-delete)
+        new-rrt (let [delete-indizes (map (fn[attr] (.indexOf (keyorder trans-table) attr)) to-delete)
+                      change-indizes (map #(mod (dec %) (count (keyorder trans-table))) delete-indizes)
+                      melted (sort  (melt (fn [a b] [a b]) change-indizes delete-indizes ))
+                      merged (reduce (fn[m [a b]] (if (contains?  m b)
+                                                    (assoc (dissoc m b) a (get m b))
+                                                    (if (contains? (set (vals m)) a)
+                                                      (assoc m (get (clojure.set/map-invert m) a)  b)
+                                                      (assoc m a b)))) {} melted )
+                      replace-link (fn[column-index steps]
+                                     (let [columns (map #(nth (recordReconst trans-table) (mod %  (count (keyorder trans-table))))
+                                                        (range (inc column-index) (+ column-index steps 1)))
+                                           rec-replace (fn[base columns]
+                                                         (if (empty? columns)
+                                                           base
+                                                           (recur
+                                                            (map (fn [[a b]] [a (second (nth (first columns) b))]) base)
+                                                            (rest columns))))]
+                                       (rec-replace (nth (recordReconst trans-table) column-index) columns)))
+                      manipulated-columns (reduce (fn[m [a b] ] (assoc m a (replace-link a (mod (- b a) (count (keyorder trans-table)))))) {} merged)
+                      new-rrt (let [ with-new-colums (reduce (fn[m [k v]](assoc m k v)) (vec (recordReconst trans-table)) manipulated-columns )]
+                                (filter #(not (contains? (set delete-indizes) (.indexOf with-new-colums %))) with-new-colums))]
+                  new-rrt)
+        new-ko (filterv #(contains? (set attrs) %) (keyorder trans-table))]
+     (tr new-ko new-fvt new-rrt)))
+
+
+
+(project people [:name :city ])
+
+(project people [ :id :name ])
+
+
+(convert (project people [:status :city ]))
+
+(project people [:id :name :city])
 

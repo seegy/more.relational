@@ -32,6 +32,19 @@
 (tr-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris") (= (:name t) (:city t))))
 
 
+(defn zigzag
+  "Get a row of data by the position of one of the cells in the transrelational table."
+  [trans-table row column]
+  (let [rrt (recordReconst trans-table)
+        rrt (apply conj (vec (drop column rrt)) (drop-last  (- (count rrt) column ) rrt))
+        recMakeTuple (fn[rrt row result]
+                       (if (empty? rrt)
+                         result
+                         (let [[value-link next-row] (nth (first rrt) row)]
+                           (recur (rest rrt) next-row (conj result value-link)))))]
+  (recMakeTuple rrt row [])))
+
+
 
 ;; #######################################################################################################################################
 ;; Basic operations
@@ -44,17 +57,8 @@
   [trans-table row column]
   (let [attrs  (keyorder trans-table)
         attrs (apply conj (vec (drop column attrs)) (drop-last (- (count attrs) column ) attrs))
-        rrt (recordReconst trans-table)
-        rrt (apply conj (vec (drop column rrt)) (drop-last  (- (count rrt) column ) rrt))
-        recMakeTuple (fn[attrs rrt row result]
-                       (if (empty? attrs)
-                         result
-                         (let [rrt-cell (nth (first rrt) row)
-                               value (fieldValueOf trans-table (first rrt-cell) (first attrs) )
-                               nextRow (second rrt-cell)]
-                           (recur (rest attrs) (rest rrt) nextRow (assoc result (first attrs) value)))))]
-  (recMakeTuple attrs rrt row {})))
-
+        indizes (zigzag trans-table row column)]
+ (into {} (melt (fn [attr index][attr (fieldValueOf trans-table index attr)] ) attrs indizes))))
 
 
 
@@ -75,45 +79,6 @@
          (if (empty? (drop-last 1 order))
            preorderd-tr
            (sort-by (apply juxt (drop-last 1 order) ) preorderd-tr )))))))
-
-
-
-
-
-
-
-
-(defn insert
-  "Returns the given transrelational table with the included datarow. The datarow has to be a map."
-  [trans-table data-row]
-  (when-not (= (set (keys data-row)) (set (keyorder trans-table)))
-    (throw (IllegalArgumentException. "DataRow has not the same schema as the table")))
-  (let [fvt-manipulation (reduce (fn [m [k v]](assoc m k
-                                       (let[old-column (get  (fieldValues trans-table) k)
-                                            untouched (filter #(neg? (compare (:value %) v)) old-column)
-                                            increased (sequence (comp
-                                                                 (map (fn[cell] (merge-with + cell {:from 1 :to 1})))
-                                                                 (filter #(pos? (compare (:value %) v)))
-                                                                 ) old-column)
-                                            target (let[found (first (filter #(= (:value %) v) old-column))]
-                                                     (if (nil? found)
-                                                       (let [index (if (empty? untouched) 0 (inc (:to (last untouched))))]{:value v :from index :to index})
-                                                       (merge-with + found {:to 1})))]
-                                          [(concat untouched [target] increased) [target (count untouched)]]))) {}  data-row )
-        new-fvt (reduce (fn[m [k [ v _ ]]] (assoc m k v)) {} fvt-manipulation)
-        new-rrt (let [inserts (reduce (fn[m [k [ _ v ]]] (assoc m k v)) {} fvt-manipulation)
-                      inserts-in-order (map #(get inserts %) (keyorder trans-table))
-                      entry-infos (melt (fn [a b] [ (second a)
-                                                    (:to (first a))
-                                                    (:to (first b))
-                                                    (= (:to (first a)) (:from (first a)))] )
-                                        inserts-in-order (conj (vec (rest inserts-in-order)) (first inserts-in-order)))]
-                  (melt (fn[column [a-value-index a-next-pointer b-next-pointer a-is-new]]
-                          (let [prepared-column (map (fn [[ a b ]] [ (if (and (>= a a-value-index) a-is-new) (inc a) a)
-                                                                     (if (>= b b-next-pointer) (inc b) b) ]) column)]
-                                                 (concat (take a-next-pointer prepared-column) [[a-value-index b-next-pointer]] (drop a-next-pointer prepared-column) )))
-                        (recordReconst trans-table) entry-infos))]
-    (tr (keyorder trans-table) new-fvt new-rrt)))
 
 
 
@@ -161,10 +126,46 @@
 
 
 
+(defn distinct-tr
+  [trans-table]
+  (let [indezes (vals (clojure.set/map-invert (into (sorted-map-by >) (map (fn [x] [x (zigzag trans-table x 0)]) (range (count trans-table))))))
+        to-delete (filter #(not (contains? (set indezes) %)) (range (count trans-table)))]
+    (reduce (fn [tr index] (delete tr index 0)) trans-table to-delete)))
 
 
 
 
+(defn insert
+  "Returns the given transrelational table with the included datarow. The datarow has to be a map."
+  [trans-table data-row]
+  (when-not (= (set (keys data-row)) (set (keyorder trans-table)))
+    (throw (IllegalArgumentException. "DataRow has not the same schema as the table")))
+  (let [fvt-manipulation (reduce (fn [m [k v]](assoc m k
+                                       (let[old-column (get  (fieldValues trans-table) k)
+                                            untouched (filter #(neg? (compare (:value %) v)) old-column)
+                                            increased (sequence (comp
+                                                                 (map (fn[cell] (merge-with + cell {:from 1 :to 1})))
+                                                                 (filter #(pos? (compare (:value %) v)))
+                                                                 ) old-column)
+                                            target (let[found (first (filter #(= (:value %) v) old-column))]
+                                                     (if (nil? found)
+                                                       (let [index (if (empty? untouched) 0 (inc (:to (last untouched))))]{:value v :from index :to index})
+                                                       (merge-with + found {:to 1})))]
+                                          [(concat untouched [target] increased) [target (count untouched)]]))) {}  data-row )
+        new-fvt (reduce (fn[m [k [ v _ ]]] (assoc m k v)) {} fvt-manipulation)
+        new-rrt (let [inserts (reduce (fn[m [k [ _ v ]]] (assoc m k v)) {} fvt-manipulation)
+                      inserts-in-order (map #(get inserts %) (keyorder trans-table))
+                      entry-infos (melt (fn [a b] [ (second a)
+                                                    (:to (first a))
+                                                    (:to (first b))
+                                                    (= (:to (first a)) (:from (first a)))] )
+                                        inserts-in-order (conj (vec (rest inserts-in-order)) (first inserts-in-order)))]
+                  (melt (fn[column [a-value-index a-next-pointer b-next-pointer a-is-new]]
+                          (let [prepared-column (map (fn [[ a b ]] [ (if (and (>= a a-value-index) a-is-new) (inc a) a)
+                                                                     (if (>= b b-next-pointer) (inc b) b) ]) column)]
+                                                 (concat (take a-next-pointer prepared-column) [[a-value-index b-next-pointer]] (drop a-next-pointer prepared-column) )))
+                        (recordReconst trans-table) entry-infos))]
+    (distinct-tr (tr (keyorder trans-table) new-fvt new-rrt))))
 
 
 (defn update
@@ -230,16 +231,29 @@ people
                                 (filter #(not (contains? (set delete-indizes) (.indexOf with-new-colums %))) with-new-colums))]
                   new-rrt)
         new-ko (filterv #(contains? (set attrs) %) (keyorder trans-table))]
-     (tr new-ko new-fvt new-rrt)))
+     (distinct-tr (tr new-ko new-fvt new-rrt))))
 
 
 
-(project people [:name :city ])
 
-(project people [ :id :name ])
+(defn project+
+    ""
+  [trans-table attrs]
+  (when (not-any? #(contains? (set (keyorder trans-table)) %) attrs)
+    (throw (IllegalArgumentException. "Update map contains illegal attribute.")))
+  (let [to-delete (filterv #(not (contains? (set attrs) %)) (keyorder trans-table))
+        converted (convert trans-table)
+        new-converted (distinct (map (fn [m](sort-by (apply juxt attrs) (apply dissoc m to-delete))) converted))]
+     (tr new-converted)))
 
 
-(convert (project people [:status :city ]))
+(time (project people [:name :city ]))
+(time (project+ people [:name :city ]))
 
-(project people [:id :name :city])
+(time (project people [ :id :name ]))
+
+(time (project people [:status :city ]))
+(time (project+ people [:status :city ]))
+
+(time (project people [:id :name :city]))
 

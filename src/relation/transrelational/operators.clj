@@ -8,15 +8,6 @@
 
 
 
-(defn- melt [f a b & more]
-  (let [args (filter #(not (nil? %)) (conj [] a b more))]
-    (when-not (= (map count args))
-      (throw (IllegalArgumentException. "Data sets have not the same length.")))
-    (let [melter (fn [result a b]
-                   (if (empty? a)
-                     result
-                     (recur (conj result (f (first a) (first b))) (rest a) (rest b))))]
-    (apply melter [] args))))
 
 (defn- drop-index [col idx]
   (filter identity (map-indexed #(if (not= %1 idx) %2) col)))
@@ -26,7 +17,7 @@
   optimisation."
   [args body]
   (with-meta (list 'fn args body)
-             {:body (list 'quote body)}))
+              {:origBody (list 'quote body)}))
 
 
 (tr-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris") (= (:name t) (:city t))))
@@ -58,10 +49,9 @@
   (let [attrs  (keyorder trans-table)
         attrs (apply conj (vec (drop column attrs)) (drop-last (- (count attrs) column ) attrs))
         indizes (zigzag trans-table row column)]
- (into {} (melt (fn [attr index][attr (fieldValueOf trans-table index attr)] ) attrs indizes))))
+ (into {} (map (fn [attr index][attr (fieldValueOf trans-table index attr)] ) attrs indizes))))
 
-
-
+(time (retrieve people 0 0))
 
 
 (defn convert
@@ -109,15 +99,15 @@
                          [(concat untouched target  tail)
                           (empty? target)]))
         fvt-manipulation (map (fn [[attr [index _]]] (delete-Value attr index)) indizes)
-        new-fvt (apply merge (melt (fn [attr [column _]] {attr column}) attrs fvt-manipulation))
+        new-fvt (apply merge (mapv (fn [attr [column _]] {attr column}) attrs fvt-manipulation))
         entry-infos (let [indizes (map #(get indizes %) attrs)]
-                      (melt (fn [[_ a] [b c d ]] [a b c d])
+                      (mapv (fn [[_ a] [b c d ]] [a b c d])
                             (apply conj [(last indizes)] (drop-last indizes))
-                            (melt (fn [[a b] c] [a b c])  indizes (map second fvt-manipulation))))
-        new-rrt (let [filtered-rrt (melt (fn [[index _ _ _] column]
+                            (mapv (fn [[a b] c] [a b c])  indizes (map second fvt-manipulation))))
+        new-rrt (let [filtered-rrt (mapv (fn [[index _ _ _] column]
                                            (concat (take index column) (drop (inc index) column)))
                                          entry-infos rrt)
-                      new-rrt (melt (fn [[_ value-link next-link is-deleted] column]
+                      new-rrt (mapv (fn [[_ value-link next-link is-deleted] column]
                                      ( map (fn[[cell-value cell-next]]
                                             [(if (and is-deleted (> cell-value value-link)) (dec cell-value) cell-value)
                                              (if (> cell-next next-link) (dec cell-next) cell-next)]) column)) entry-infos filtered-rrt)]
@@ -155,12 +145,12 @@
         new-fvt (reduce (fn[m [k [ v _ ]]] (assoc m k v)) {} fvt-manipulation)
         new-rrt (let [inserts (reduce (fn[m [k [ _ v ]]] (assoc m k v)) {} fvt-manipulation)
                       inserts-in-order (map #(get inserts %) (keyorder trans-table))
-                      entry-infos (melt (fn [a b] [ (second a)
+                      entry-infos (mapv (fn [a b] [ (second a)
                                                     (:to (first a))
                                                     (:to (first b))
                                                     (= (:to (first a)) (:from (first a)))] )
                                         inserts-in-order (conj (vec (rest inserts-in-order)) (first inserts-in-order)))]
-                  (melt (fn[column [a-value-index a-next-pointer b-next-pointer a-is-new]]
+                  (mapv (fn[column [a-value-index a-next-pointer b-next-pointer a-is-new]]
                           (let [prepared-column (map (fn [[ a b ]] [ (if (and (>= a a-value-index) a-is-new) (inc a) a)
                                                                      (if (>= b b-next-pointer) (inc b) b) ]) column)]
                                                  (concat (take a-next-pointer prepared-column) [[a-value-index b-next-pointer]] (drop a-next-pointer prepared-column) )))
@@ -210,7 +200,7 @@ people
         new-fvt (reduce (fn[m attr] (dissoc m attr)) (fieldValues trans-table) to-delete)
         new-rrt (let [delete-indizes (map (fn[attr] (.indexOf (keyorder trans-table) attr)) to-delete)
                       change-indizes (map #(mod (dec %) (count (keyorder trans-table))) delete-indizes)
-                      melted (sort  (melt (fn [a b] [a b]) change-indizes delete-indizes ))
+                      melted (sort  (mapv (fn [a b] [a b]) change-indizes delete-indizes ))
                       merged (reduce (fn[m [a b]] (if (contains?  m b)
                                                     (assoc (dissoc m b) a (get m b))
                                                     (if (contains? (set (vals m)) a)

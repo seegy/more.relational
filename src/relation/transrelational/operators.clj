@@ -51,7 +51,6 @@
         indizes (zigzag trans-table row column)]
  (into {} (map (fn [attr index][attr (fieldValueOf trans-table index attr)] ) attrs indizes))))
 
-(time (retrieve people 0 0))
 
 
 (defn convert
@@ -237,6 +236,9 @@ people
      (tr new-converted)))
 
 
+
+
+
 (time (project people [:name :city ]))
 (time (project+ people [:name :city ]))
 
@@ -247,3 +249,15 @@ people
 
 (time (project people [:id :name :city]))
 
+(time (project people [ :city :name]))
+(time (project+ people [ :city :name]))
+
+
+(defn extend
+  ""
+  [trans-table preds]
+  (let[table (convert trans-table)
+       extended (map (fn [row]( reduce )) table)] ;TODO
+    extended))
+
+(extend people {:backwardNames (tr-fn [t] (reverse (:name t)))})

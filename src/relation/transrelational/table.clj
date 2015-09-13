@@ -39,9 +39,9 @@
 
 
 (defn fieldValueOf
-  ""
+  "Returns the value of the cell by given positionl. The column can be defined as number or attribute name."
   [tr row column]
-  (let [columnName (if (keyword? column) column (get (keyorder tr) column))
+  (let [columnName (if (contains? (set (keyorder tr)) column) column (get (keyorder tr) column))
         xf (comp #(:value %) #(nth % row) #(get % columnName))]
      (xf (fieldValues tr))))
 
@@ -50,7 +50,9 @@
 
 
 (defn tr
-  ""
+  "Creates a transrelational table by a collection of hash-maps with the same keys or by a
+  prebuildes structure of keyorder, field value table and record reconstrution table."
+
   ([table]
   (let [table (distinct table)
         keyorder  (into [] (keys (first table)))

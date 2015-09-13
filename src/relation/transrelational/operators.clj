@@ -23,8 +23,21 @@
 (tr-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris") (= (:name t) (:city t))))
 
 
+ (defn travel [rrt row column steps]
+   (let [columns (map #(nth rrt (mod %  (count rrt)))
+                      (range  column (+ column steps 1)))
+         rec-travel (fn [row columns ]
+                      (if (empty? (rest columns))
+                        (nth (first columns) row)
+                        (recur (second (nth (first columns) row))  (rest columns))))]
+     (rec-travel row columns)))
+
+
+
+
+
 (defn zigzag
-  "Get a row of data by the position of one of the cells in the transrelational table."
+  "Get a row of data by the numeric position of one of the cells in the transrelational table."
   [trans-table row column]
   (let [rrt (recordReconst trans-table)
         rrt (apply conj (vec (drop column rrt)) (drop-last  (- (count rrt) column ) rrt))
@@ -44,7 +57,7 @@
 
 
 (defn retrieve
-  "Get a row of data by the position of one of the cells in the transrelational table."
+  "Get a row of data by the numeric position of one of the cells in the transrelational table.  "
   [trans-table row column]
   (let [attrs  (keyorder trans-table)
         attrs (apply conj (vec (drop column attrs)) (drop-last (- (count attrs) column ) attrs))
@@ -54,7 +67,7 @@
 
 
 (defn convert
-  "Get a collection of all reconstructed rows by a transrelational table ordered by the first attribute."
+  "Get a collection of all reconstructed rows by a transrelational table ordered by the first attribute or by a sequence of ordering attributes."
   ([trans-table]
    (map (fn[row] (retrieve trans-table  row 0)) (range (count trans-table))))
   ([trans-table order]
@@ -73,10 +86,8 @@
 
 
 
-
-
 (defn delete
-  ""
+  "Deletes one related data row by the numeric position of one of it cells and returns the resulting transrelational table."
   [trans-table  row column]
   (let [attrs (let [attrs (keyorder trans-table)]
                 (apply conj (vec (drop column attrs)) (drop-last (- (count attrs) column ) attrs)))
@@ -116,6 +127,7 @@
 
 
 (defn distinct-tr
+  "Creates set consistency in the table by deleting duplicated data rows."
   [trans-table]
   (let [indezes (vals (clojure.set/map-invert (into (sorted-map-by >) (map (fn [x] [x (zigzag trans-table x 0)]) (range (count trans-table))))))
         to-delete (filter #(not (contains? (set indezes) %)) (range (count trans-table)))]
@@ -158,7 +170,11 @@
 
 
 (defn update
-  ""
+  "Returns the given transrelational table with an updated data row.
+  The row is specificated by the numeric position of one of it cells.
+  The update is specified by a map of attributes as their keys and the new values following.
+
+  Example: (update table 1 2 {:id 10}) to set the attribute :id of the data row relates to cell [1,2]."
   [trans-table  row column update-map]
   (when (not-any? #(contains? (set (keyorder trans-table)) %) (keys update-map))
     (throw (IllegalArgumentException. "Update map contains illegal attribute.")))
@@ -181,14 +197,6 @@
   ""
   [trans-table pred])
 
-(def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
-      {:id "S2" :name "Jones" :status 10 :city "Paris"}
-      {:id "S3" :name "Blake" :status 30 :city "Paris"}
-      {:id "S4" :name "Clark" :status 20 :city "London"}
-      {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
-
-people
-
 
 (defn project
     ""
@@ -196,6 +204,7 @@ people
   (when (not-any? #(contains? (set (keyorder trans-table)) %) attrs)
     (throw (IllegalArgumentException. "Update map contains illegal attribute.")))
   (let [to-delete (filterv #(not (contains? (set attrs) %)) (keyorder trans-table))
+        new-ko (filterv #(contains? (set attrs) %) (keyorder trans-table))
         new-fvt (reduce (fn[m attr] (dissoc m attr)) (fieldValues trans-table) to-delete)
         new-rrt (let [delete-indizes (map (fn[attr] (.indexOf (keyorder trans-table) attr)) to-delete)
                       change-indizes (map #(mod (dec %) (count (keyorder trans-table))) delete-indizes)
@@ -217,10 +226,18 @@ people
                                        (rec-replace (nth (recordReconst trans-table) column-index) columns)))
                       manipulated-columns (reduce (fn[m [a b] ] (assoc m a (replace-link a (mod (- b a) (count (keyorder trans-table)))))) {} merged)
                       new-rrt (let [ with-new-colums (reduce (fn[m [k v]](assoc m k v)) (vec (recordReconst trans-table)) manipulated-columns )]
-                                (filter #(not (contains? (set delete-indizes) (.indexOf with-new-colums %))) with-new-colums))]
-                  new-rrt)
-        new-ko (filterv #(contains? (set attrs) %) (keyorder trans-table))]
-     (distinct-tr (tr new-ko new-fvt new-rrt))))
+                                (filter #(not (contains? (set delete-indizes) (.indexOf with-new-colums %))) with-new-colums))
+                      sorted (if (= 0 (compare attrs new-ko))
+                               new-rrt
+                               (let [index-vector (map (fn[x] (.indexOf new-ko x)) attrs)
+                                     pair-vector (map (fn[ x y] [x y]) index-vector (flatten [(rest index-vector) (first index-vector)]))]
+                                    (map (fn[[a b]] (let[orig-column (nth new-rrt a)]
+                                                   (map (fn [[x y] i] [x  (second (travel new-rrt i a (mod (- b a 1) (count pair-vector))))])
+                                                        orig-column
+                                                        (range (count orig-column)))))
+                                      pair-vector)))]
+                  sorted)]
+     (distinct-tr (tr attrs new-fvt new-rrt))))
 
 
 
@@ -237,10 +254,16 @@ people
 
 
 
+(def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
+      {:id "S2" :name "Jones" :status 10 :city "Paris"}
+      {:id "S3" :name "Blake" :status 30 :city "Paris"}
+      {:id "S4" :name "Clark" :status 20 :city "London"}
+      {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
+
+people
 
 
-(time (project people [:name :city ]))
-(time (project+ people [:name :city ]))
+
 
 (time (project people [ :id :name ]))
 
@@ -249,15 +272,19 @@ people
 
 (time (project people [:id :name :city]))
 
+
+(convert (time (project people [:name :city ])))
+ (time (project+ people [:name :city ]))
+
 (time (project people [ :city :name]))
-(time (project+ people [ :city :name]))
+ (time (project+ people [ :city :name]))
 
 
 (defn extend
   ""
   [trans-table preds]
   (let[table (convert trans-table)
-       extended (map (fn [row]( reduce )) table)] ;TODO
-    extended))
+       extended (map (fn [row]( reduce (fn [m [k v]] (assoc m k (v m))) row preds )) table)]
+    (tr extended)))
 
-(extend people {:backwardNames (tr-fn [t] (reverse (:name t)))})
+(convert (project (extend people {"backwardsName" (tr-fn [t] (clojure.string/reverse (:name t)))}) [:id "backwardsName"]))

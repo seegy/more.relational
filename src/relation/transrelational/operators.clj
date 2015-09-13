@@ -239,7 +239,7 @@
                   sorted)]
      (distinct-tr (tr attrs new-fvt new-rrt))))
 
-
+(defn asort [amap order] (conj {} (select-keys amap order)))
 
 
 (defn project+
@@ -249,7 +249,7 @@
     (throw (IllegalArgumentException. "Update map contains illegal attribute.")))
   (let [to-delete (filterv #(not (contains? (set attrs) %)) (keyorder trans-table))
         converted (convert trans-table)
-        new-converted (distinct (map (fn [m](sort-by (apply juxt attrs) (apply dissoc m to-delete))) converted))]
+        new-converted (distinct (map (fn [m] (asort (apply dissoc m to-delete) attrs)) converted))]
      (tr new-converted)))
 
 
@@ -264,7 +264,6 @@ people
 
 
 
-
 (time (project people [ :id :name ]))
 
 (time (project people [:status :city ]))
@@ -276,8 +275,8 @@ people
 (convert (time (project people [:name :city ])))
  (time (project+ people [:name :city ]))
 
-(time (project people [ :city :name]))
- (time (project+ people [ :city :name]))
+(convert(time (project people [ :city :name])))
+(convert (time (project+ people [ :city :name])))
 
 
 (defn extend

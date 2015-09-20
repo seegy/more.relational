@@ -17,10 +17,10 @@
   optimisation."
   [args body]
   (with-meta (list 'fn args body)
-              {:origBody (list 'quote body)}))
+              {:original (list 'quote body)}))
 
 
-(tr-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris") (= (:name t) (:city t))))
+
 
 
  (defn travel [rrt row column steps]
@@ -239,7 +239,6 @@
                   sorted)]
      (distinct-tr (tr attrs new-fvt new-rrt))))
 
-(defn asort [amap order] (conj {} (select-keys amap order)))
 
 
 (defn project+
@@ -247,36 +246,12 @@
   [trans-table attrs]
   (when (not-any? #(contains? (set (keyorder trans-table)) %) attrs)
     (throw (IllegalArgumentException. "Update map contains illegal attribute.")))
-  (let [to-delete (filterv #(not (contains? (set attrs) %)) (keyorder trans-table))
-        converted (convert trans-table)
-        new-converted (distinct (map (fn [m] (asort (apply dissoc m to-delete) attrs)) converted))]
+  (let [converted (convert trans-table)
+        new-converted (distinct (map (fn [m] (select-keys m attrs)) converted))]
      (tr new-converted)))
 
 
 
-(def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
-      {:id "S2" :name "Jones" :status 10 :city "Paris"}
-      {:id "S3" :name "Blake" :status 30 :city "Paris"}
-      {:id "S4" :name "Clark" :status 20 :city "London"}
-      {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
-
-people
-
-
-
-(time (project people [ :id :name ]))
-
-(time (project people [:status :city ]))
-(time (project+ people [:status :city ]))
-
-(time (project people [:id :name :city]))
-
-
-(convert (time (project people [:name :city ])))
- (time (project+ people [:name :city ]))
-
-(convert(time (project people [ :city :name])))
-(convert (time (project+ people [ :city :name])))
 
 
 (defn extend
@@ -286,4 +261,117 @@ people
        extended (map (fn [row]( reduce (fn [m [k v]] (assoc m k (v m))) row preds )) table)]
     (tr extended)))
 
-(convert (project (extend people {"backwardsName" (tr-fn [t] (clojure.string/reverse (:name t)))}) [:id "backwardsName"]))
+
+
+(defn union
+  ""
+  [tr1 & more]
+   (tr (flatten (apply conj  (convert tr1) (map convert more)))))
+
+
+
+
+(defn intersection
+  ""
+  [tr1 & more]
+  (tr (apply clojure.set/intersection (set (convert tr1)) (map #(set (convert %)) more))))
+
+
+
+
+(defn difference
+  ""
+  [tr1 & more]
+  (tr (clojure.set/difference (set (convert tr1))  (map #(set (convert %)) more))))
+
+
+
+
+
+(defmacro tr-fn
+  "Behaves like fn, but stores the source code in the metadata to allow
+  optimisation."
+  [args body]
+  (with-meta (list 'fn args body)
+              {:body (list 'quote body)
+               :args (list 'quote args)}))
+
+#_(
+(defn restrict
+  ""
+  [trans-table f]
+  (let [rest-rec (fn[f] (map #((do(println % ) (restrict trans-table (tr-fn [t] %)))) (rest (:body (meta f)))))
+          ]
+    (println (:body (meta f)))
+    (case (first (:body (meta f)))
+      and  (rest-rec f)
+      or  (rest-rec f)
+      > trans-table
+      < trans-table
+      >= trans-table
+      <= trans-table
+      = trans-table
+      not= trans-table
+       '(:body (meta f)))))
+
+
+
+
+(def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
+      {:id "S2" :name "Jones" :status 10 :city "Paris"}
+      {:id "S3" :name "Blake" :status 30 :city "Paris"}
+      {:id "S4" :name "Clark" :status 20 :city "London"}
+      {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
+
+
+
+
+
+(def f (tr-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris") (= (:name t) (:city t)))))
+
+
+
+#_(def f (tr-fn [t] (and (+ 1 1) (- 2 3))))
+
+
+
+(meta f)
+
+(map println  (rest (:body (meta f))))
+
+(macroexpand (:body (meta f)))
+
+
+(defmacro restrict-fn
+  ""
+  [args body]
+  (with-meta (list 'fn args body)
+              {:body (list 'quote (replace ['intersection] body))}))
+
+
+
+
+(meta (restrict-fn [t] (and (+ 1 1) (- 2 3))))
+
+
+(defmacro code-critic
+  "phrases are courtesy Hermes Conrad from Futurama"
+  [{:keys [good bad]}]
+  (list 'do
+        (list 'println
+              "Great squid of Madrid, this is bad code:"
+              (list 'quote bad))
+        (list 'println
+              "Sweet gorilla of Manila, this is good code:"
+              (list 'quote good))))
+
+(code-critic {:good (+ 1 1) :bad (1 + 1)})
+
+(defmacro tr-fn
+  "Behaves like fn, but stores the source code in the metadata to allow
+  optimisation."
+  [args body]
+  (with-meta (list 'fn args body)
+              {:body (list 'quote body)
+               :args (list 'quote args)}))
+)

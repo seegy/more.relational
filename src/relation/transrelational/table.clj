@@ -54,11 +54,12 @@
   prebuildes structure of keyorder, field value table and record reconstrution table."
 
   ([table]
-  (let [table (distinct table)
-        keyorder  (into [] (keys (first table)))
+  (let [table (distinct (vec table))
+        keyorder  (into [] (distinct (flatten (map keys table))))
         recordtuples (map (fn[record] (into {}
-                                            (map (fn[[k v]] [k [v (.indexOf table record)]]))
-                                            record)) table)
+                                            (map (fn[k]
+                                                   (let[v (get record k)] [k [v (.indexOf table record)]]))
+                                            keyorder))) table)
         permutation (into {} (map (fn[head] [head (sort-by first
                                                      (map #(get % head)
                                                           recordtuples))])) keyorder)
@@ -75,14 +76,16 @@
                   zigzagTo (fn [[a b]] (mapv (fn[recnr] (.indexOf b recnr)) a))
                   fromPerm (mapv (fn[x](get perm x)) keyorder)
                   toPerm (conj (vec (rest fromPerm)) (first fromPerm))
-                  mergePerms (fn [m from to]
-                               (if (empty? from)
-                                 m
-                                 (let [ffrom (first from)
-                                       fto (first to)]
-                                   (recur (conj m [ffrom fto]) (rest from) (rest to)))))
-                  pre-consist-rrt (into [] (comp (map zigzagTo) ) (mergePerms [] fromPerm toPerm))]
-              (map (fn[column](let[columnName (nth keyorder (.indexOf pre-consist-rrt column))]
+                  mergePerms (loop [m []
+                                    from fromPerm
+                                    to toPerm]
+                                     (if (empty? from)
+                                       m
+                                       (let [ffrom (first from)
+                                             fto (first to)]
+                                         (recur (conj m [ffrom fto]) (rest from) (rest to)))))
+                  pre-consist-rrt (into [] (comp (map zigzagTo) ) mergePerms)]
+               (map (fn[column](let[columnName (nth keyorder (.indexOf pre-consist-rrt column))]
                                 (map (fn[cell] [(let[valueColumn (get fvt columnName)
                                                      index (.indexOf column cell)]
                                                   (.indexOf valueColumn
@@ -91,6 +94,9 @@
      (Transrelation. keyorder fvt rrt)))
   ([keyorder fvt rrt]
    (Transrelation. keyorder fvt rrt)))
+
+
+
 
 
 

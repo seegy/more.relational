@@ -92,12 +92,6 @@
 
 
 
-;TODO gibts im orig. Script garnicht!
-(defn project
-  ""
-  [batObj c]
-  (bat (map (fn [bun](assoc bun :tail c) ) (buns batObj))))
-
 
 
 (defn slice
@@ -195,14 +189,23 @@
     (bat (map (fn[bun]{:head (:tail bun)
                       :tail (select AA (fn [x l h] (and (>= x l) (<= x h))) (:head bun) (:tail bun))}) batCD))))
 
-; Brauchbar? Wofür n?
+
+
+
 (defn split
   ""
   [batObj n]
-    (let [allPairs  (flatten (map (fn [bunA](map (fn [bunB]{:head (:head bunA) :tail (:head bunB) }) batObj )) batObj))]
-      (into [] (comp
-                (filter #(<= (:head %) (:tail %))))
-            allPairs)))
+    (let [m (count batObj)
+          boundarySize (int (Math/ceil (/ m n)))
+          heads (sort (map :head batObj))
+          from-to (loop [h heads
+                         result []]
+                    (if (<=  (count h) boundarySize)
+                      (conj result {:head (first h)
+                                    :tail (last h)})
+                      (recur (drop boundarySize h) (conj result {:head (nth h 0)
+                                                                 :tail (nth h (dec boundarySize))}))))]
+      (bat from-to)))
 
 
 

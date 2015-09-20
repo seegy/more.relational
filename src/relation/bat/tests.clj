@@ -137,7 +137,44 @@
 
 
   (split AB 4)
+  (def AB (bat [{:head 1 :tail \a}
+                {:head 2 :tail \b}
+                {:head 3 :tail \c}
+                {:head 4 :tail \d}
+                {:head 5 :tail \e}
+                {:head 6 :tail \f}
+                {:head 7 :tail \g}
+                {:head 8 :tail \h} ]))
 
+
+  (split AB 3)
+  (split AB 2)
+ (split AB 1)
+  (split AB 9)
+
+   (def CD (bat [{:head 1 :tail \a}
+                {:head 4 :tail \b}
+                {:head 5 :tail \c}
+                {:head 76 :tail \d}
+                {:head 34 :tail \e}
+                {:head 52 :tail \f}
+                {:head 23 :tail \g}
+                {:head 1 :tail \h}
+                {:head 34 :tail \e}
+                {:head 1 :tail \f}
+                {:head 23 :tail \g}
+                {:head 8 :tail \h}
+                {:head 1232 :tail \e}
+                {:head 42352 :tail \f}
+                {:head 233 :tail \g}
+                {:head 234 :tail \h}
+                {:head 34 :tail \e}
+                {:head 4 :tail \f}
+                {:head 2321 :tail \g}
+                {:head 86 :tail \h}]))
+
+
+(split CD 6)
 
 
 (def names (bat [{:head 1 :tail "Roland"}

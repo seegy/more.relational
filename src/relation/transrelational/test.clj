@@ -256,3 +256,106 @@ people
 
 
 
+
+
+(def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
+      {:id "S2" :name "Jones" :status 10 :city "Paris"}
+      {:id "S3" :name "Blake" :status 30 :city "Paris"}
+      {:id "S4" :name "Clark" :status 20 :city "London"}
+      {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
+
+people
+
+
+
+(time (project people [ :id :name ]))
+
+(time (project people [:status :city ]))
+(time (project+ people [:status :city ]))
+
+(time (project people [:id :name :city]))
+
+
+(convert (time (project people [:name :city ])))
+ (time (project+ people [:name :city ]))
+
+(convert(time (project people [ :city :name])))
+(convert (time (project+ people [ :city :name])))
+
+
+(convert (project (extend people {"backwardsName"
+                                  (tr-fn [t] (clojure.string/reverse (:name t)))}) [:name "backwardsName"]))
+
+
+
+(def p1 (tr [ {:id "S1" :name "Smith"}
+      {:id "S2" :name "Jones" :city "Paris"}
+      {:id "S3" :name "Blake" :status 30 }
+      {:id "S4" :status 20 }
+      {:id "S5"}]))
+
+(def p2 (tr [
+             {:id "S3" :name "Blake" :status 30 }
+             {:id "S6" :name "Smith" :status 20 :city "London"}
+      {:id "S7" :name "Jones" :status 10 :city "Paris"}
+      {:id "S8" :name "Blake" :status 30 :city "Paris"}
+      {:id "S9" :name "Clark" :status 20 :city "London"}
+      {:id "S10" :name "Adams" :status 30 :city "Athens"}]))
+
+(time (convert (union p1 p2)))
+(union p1 p2 p3)
+
+(intersection p1 p2)
+
+
+
+
+(def p1 (tr [ {:id "S1" :name "Smith"}
+      {:id "S2" :name "Jones" :city "Paris"}
+      {:id "S3" :name "Blake" :status 30 }
+      {:id "S4" :status 20 }
+      {:id "S5"}]))
+
+(def p2 (tr [
+             {:id "S3" :name "Blake" :status 30 }
+             {:id "S6" :name "Smith" :status 20 :city "London"}
+      {:id "S7" :name "Jones" :status 10 :city "Paris"}
+     ]))
+
+
+(def p3 (tr [ {:id "S8" :name "Blake" :status 30 :city "Paris"}
+      {:id "S9" :name "Clark" :status 20 :city "London"}
+      {:id "S10" :name "Adams" :status 30 :city "Athens"}
+              {:id "S3" :name "Blake" :status 30 }]))
+
+
+(intersection p1 p2 p3)
+
+
+(def p1 (tr [ {:id "S1" :name "Smith"}
+      {:id "S2" :name "Jones" :city "Paris"}
+      {:id "S3" :name "Blake" :status 30 }
+      {:id "S4" :status 20 }
+      {:id "S5"}]))
+
+(def p2 (tr [
+             {:id "S3" :name "Blake" :status 30 }
+             {:id "S6" :name "Smith" :status 20 :city "London"}
+      {:id "S7" :name "Jones" :status 10 :city "Paris"}
+     ]))
+
+
+(def p3 (tr [ {:id "S8" :name "Blake" :status 30 :city "Paris"}
+      {:id "S9" :name "Clark" :status 20 :city "London"}
+      {:id "S10" :name "Adams" :status 30 :city "Athens"}]))
+
+(union p1 p2 p3)
+
+(intersection p1 p2 p3)
+
+
+(difference p1 p2 p3)
+
+
+(tr-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris") (= (:name t) (:city t))))
+

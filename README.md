@@ -21,7 +21,7 @@ your option) any later version.
 # Notizen Relation
 
 
-## Hashrel
+## HashRel
 
 - Mischung von Incanter und Bader
 
@@ -32,9 +32,10 @@ your option) any later version.
 - kein Multibag!
 - Group-Operation liefert bats in bat
 - Multijoin mit einem Bat als param für Bats in Bat
+- Split wurde nach wagen verständnis entwickelt
 
 
 
-## Transrelation
+## TransRelation
 
 - kein Multibag!

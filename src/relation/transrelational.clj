@@ -13,9 +13,13 @@
   recordReconst
   fieldValueOf]
  [relation.transrelational.operators
+  tr-fn
   retrieve
   convert
   insert
   delete
-  update]
+  update
+  project
+  project+
+  extend]
  [relation.transrelational.transref])

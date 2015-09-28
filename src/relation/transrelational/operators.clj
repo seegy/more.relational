@@ -426,8 +426,7 @@
 
 (defmacro map-key-of-tr?
   [tr-alias terms]
-  (let [check (fn [term]  (println :penis term)
-                          (cond
+  (let [check (fn [term]  (cond
                              (and (coll? term)
                                   (= 2 (count term))
                                   (keyword? (first term))
@@ -445,9 +444,7 @@
 
 (map-key-of-tr? t (<=  (:k45ey t) (:key t) (:kewerty t) (get t "blabla")))
 
-(if :234
-  true
-  false)
+
 
 
 
@@ -455,6 +452,7 @@
   ""
   [arg ast]
   (let []
+    (println ast)
     (cond
        (and (coll? ast) (contains? #{ 'and 'or} (first ast)))
             (reverse (into
@@ -499,6 +497,8 @@
 
 (meta (restrict-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris") (= (:name t) (:city t)))))
 
+
+(= >= >=)
 
  (area-search people :status >=  30)
   (area-search people :status < 30)

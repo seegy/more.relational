@@ -9,5 +9,6 @@
                  [org.clojure/data.json "0.2.6"]
                  [net.mikera/core.matrix "0.37.0"]
                  [net.mikera/vectorz-clj "0.33.0"]
+                 [org.clojure/tools.trace "0.7.5"]
                  ]
   )

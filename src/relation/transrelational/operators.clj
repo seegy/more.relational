@@ -2,6 +2,9 @@
   (:use [relation.transrelational.table]))
 
 
+(require 'clojure.tools.trace)
+
+
 ;; #######################################################################################################################################
 ;; Tools
 ;; #######################################################################################################################################
@@ -59,10 +62,11 @@
 (defn retrieve
   "Get a row of data by the numeric position of one of the cells in the transrelational table.  "
   [trans-table row column]
-  (let [attrs  (keyorder trans-table)
-        attrs (apply conj (vec (drop column attrs)) (drop-last (- (count attrs) column ) attrs))
+  (let [orig-attrs  (keyorder trans-table)
+        attrs (apply conj (vec (drop column orig-attrs)) (drop-last (- (count orig-attrs) column ) orig-attrs))
         indizes (zigzag trans-table row column)]
- (into {} (map (fn [attr index][attr (fieldValueOf trans-table index attr)] ) attrs indizes))))
+   (conj {} (select-keys (into {} (map (fn [attr index][attr (fieldValueOf trans-table index attr)] ) attrs indizes)) orig-attrs))))
+
 
 
 
@@ -193,9 +197,6 @@
 ;; #######################################################################################################################################
 
 
-(defn restrict
-  ""
-  [trans-table pred])
 
 
 (defn project
@@ -296,24 +297,6 @@
               {:body (list 'quote body)
                :args (list 'quote args)}))
 
-#_(
-(defn restrict
-  ""
-  [trans-table f]
-  (let [rest-rec (fn[f] (map #((do(println % ) (restrict trans-table (tr-fn [t] %)))) (rest (:body (meta f)))))
-          ]
-    (println (:body (meta f)))
-    (case (first (:body (meta f)))
-      and  (rest-rec f)
-      or  (rest-rec f)
-      > trans-table
-      < trans-table
-      >= trans-table
-      <= trans-table
-      = trans-table
-      not= trans-table
-       '(:body (meta f)))))
-
 
 
 
@@ -327,51 +310,200 @@
 
 
 
-(def f (tr-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris") (= (:name t) (:city t)))))
 
 
 
-#_(def f (tr-fn [t] (and (+ 1 1) (- 2 3))))
+(def replace-map
+  '{and intersection
+    or union})
+
+
+(replace replace-map '(or (+ 1 1) (- 2 3)))
 
 
 
-(meta f)
+(defn- down-to-up-scan
+  ""
+  [column f right-value]
+  (loop [c column
+         result []]
+    (if (and (not-empty c) (f (:value (last c)) right-value))
+      (recur (drop-last c) (conj result (last c)))
+      result)))
 
-(map println  (rest (:body (meta f))))
 
-(macroexpand (:body (meta f)))
+
+
+(defn- up-to-down-scan
+  ""
+  [column f right-value]
+  (loop [c column
+         result []]
+    (if (and (not-empty c) (f (:value (first c)) right-value))
+      (recur (rest c) (conj result (first c)))
+      result)))
+
+
+
+
+(defn- not=-scan
+  ""
+  [column value]
+  (let [ops (if (string? value)
+              [#(neg? (compare %1 %2)) #(pos? (compare %1 %2))]
+              [< >])]
+  (apply conj (up-to-down-scan column (first ops) value) (down-to-up-scan column (second ops) value))))
+
+
+
+(defn- area-search
+  ""
+  [trans-table attr f right-value]
+  (let [up-to-down #{<= <}
+        down-to-up #{>= >}
+        column (get (fieldValues trans-table) attr)]
+    (map #(retrieve trans-table % (.indexOf (keyorder trans-table) attr))
+    (flatten (map (fn [n] (range (:from n) (inc (:to n))))
+       (cond
+         (contains? up-to-down f) (up-to-down-scan column f right-value)
+         (contains? down-to-up f) (down-to-up-scan column f right-value)
+         (= not= f) (not=-scan column right-value)
+         :else []))))))
+
+
+
+
+(defn- point-search
+  ""
+  [trans-table attr value]
+  (let [binary-search (fn [column value] (java.util.Collections/binarySearch column value #(compare (:value %1) %2)))
+        found (binary-search (get (fieldValues trans-table) attr) value)]
+    (if (neg? found)
+      '()
+      (let [entry (nth  (get (fieldValues trans-table) attr) found)]
+        (map #(retrieve trans-table % (.indexOf (keyorder trans-table) attr)) (range (:from entry) (inc (:to entry))))))))
+
+
+
+(def flip-compare-map  {< >=
+                        > <=
+                        >= <
+                        <= >
+                        = =
+                        not= not=})
+
+
+
+(defmacro dbg[x] `(let [x# ~x] (println "dbg:" '~x "=" x#) x#))
+
+
+(defmacro unflat
+  [ast]
+  (let [op (first ast)
+        args (rest ast)
+        pairs (map (fn [arg1 arg2] (list op arg1 arg2)) args (rest args))
+        new-ast (conj pairs 'and)]
+    (list 'quote new-ast)))
+
+
+
+(defmacro key-of-tr?
+  [tr-alias term]
+  (cond
+   (and (= 2 (count term))
+        (keyword? (first term))
+        (= tr-alias (second term))) true
+   (and (= 3 (count term))
+        (= 'get (first term))
+        (= tr-alias (second term))) true
+   :else false))
+
+
+
+
+
+(use 'clojure.tools.trace)
+
+(defmacro map-key-of-tr?
+  [tr-alias terms]
+  (let [check (fn [term]  (println :penis term)
+                          (cond
+                             (and (coll? term)
+                                  (= 2 (count term))
+                                  (keyword? (first term))
+                                  (= tr-alias (second term))) (first term),
+                             (and (coll? term)
+                                  (= 3 (count term))
+                                  (= 'get (first term))
+                                  (= tr-alias (second term))) (last term),
+                             :else nil))
+        result (map check terms)]
+                    (list 'quote result)))
+
+
+
+
+(map-key-of-tr? t (<=  (:k45ey t) (:key t) (:kewerty t) (get t "blabla")))
+
+(if :234
+  true
+  false)
+
+
+
+(defn- optimize
+  ""
+  [arg ast]
+  (let []
+    (cond
+       (and (coll? ast) (contains? #{ 'and 'or} (first ast)))
+            (reverse (into
+              (case (first ast)
+                and '(intersection)
+                or '(union))
+              (map #(optimize arg %) (rest ast)))),
+
+       (and (coll? ast) (contains? #{'< '> '<= '>= '= 'not=} (first ast)))
+         (if
+           (< 2 (count (rest ast)))
+           (optimize arg '(unflat ast))
+           (let [key-map (map-key-of-tr? arg (rest ast))]
+             (if
+               (some #(not (nil? %)) key-map)
+                (let [f (if (last key-map)
+                            (get flip-compare-map arg)
+                            arg)
+                      ast (if (last key-map)
+                             (reverse (rest ast))
+                             (rest ast))]
+                              (cond
+                                (contains? (keys flip-compare-map) (first ast)) (apply conj '() (last ast) (first ast) 'area-search)
+                                (= '= (first ast))  (apply conj '() (last ast) (first ast) 'point-search)
+                                (= 'not= (first ast)) (apply conj 'not=-scan)))
+               ast))), ;TODO compare without tuple
+
+       (coll? ast) '(), ;TODO not our business
+
+       :else ast))) ;TODO const
+
+
 
 
 (defmacro restrict-fn
   ""
-  [args body]
-  (with-meta (list 'fn args body)
-              {:body (list 'quote (replace ['intersection] body))}))
+  [arg body]
+  (with-meta (list 'fn arg body)
+              {:body (let[new-list (optimize arg body)]
+                       (list 'quote  new-list))}))
 
 
+(meta (restrict-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris") (= (:name t) (:city t)))))
 
 
-(meta (restrict-fn [t] (and (+ 1 1) (- 2 3))))
+ (area-search people :status >=  30)
+  (area-search people :status < 30)
+  (area-search people :city not= "London")
 
 
-(defmacro code-critic
-  "phrases are courtesy Hermes Conrad from Futurama"
-  [{:keys [good bad]}]
-  (list 'do
-        (list 'println
-              "Great squid of Madrid, this is bad code:"
-              (list 'quote bad))
-        (list 'println
-              "Sweet gorilla of Manila, this is good code:"
-              (list 'quote good))))
+ (point-search people :city "London")
 
-(code-critic {:good (+ 1 1) :bad (1 + 1)})
-
-(defmacro tr-fn
-  "Behaves like fn, but stores the source code in the metadata to allow
-  optimisation."
-  [args body]
-  (with-meta (list 'fn args body)
-              {:body (list 'quote body)
-               :args (list 'quote args)}))
-)

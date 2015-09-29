@@ -289,36 +289,10 @@
 
 
 
-(defmacro tr-fn
-  "Behaves like fn, but stores the source code in the metadata to allow
-  optimisation."
-  [args body]
-  (with-meta (list 'fn args body)
-              {:body (list 'quote body)
-               :args (list 'quote args)}))
-
-
-
-
-(def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
-      {:id "S2" :name "Jones" :status 10 :city "Paris"}
-      {:id "S3" :name "Blake" :status 30 :city "Paris"}
-      {:id "S4" :name "Clark" :status 20 :city "London"}
-      {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
-
-
-
-
-
-
-
-
 (def replace-map
   '{and intersection
     or union})
 
-
-(replace replace-map '(or (+ 1 1) (- 2 3)))
 
 
 
@@ -362,7 +336,7 @@
   (let [up-to-down #{<= <}
         down-to-up #{>= >}
         column (get (fieldValues trans-table) attr)]
-    (map #(retrieve trans-table % (.indexOf (keyorder trans-table) attr))
+     (mapv #(retrieve trans-table % (.indexOf (keyorder trans-table) attr))
     (flatten (map (fn [n] (range (:from n) (inc (:to n))))
        (cond
          (contains? up-to-down f) (up-to-down-scan column f right-value)
@@ -378,71 +352,53 @@
   [trans-table attr value]
   (let [binary-search (fn [column value] (java.util.Collections/binarySearch column value #(compare (:value %1) %2)))
         found (binary-search (get (fieldValues trans-table) attr) value)]
-    (if (neg? found)
+   (if (neg? found)
       '()
       (let [entry (nth  (get (fieldValues trans-table) attr) found)]
-        (map #(retrieve trans-table % (.indexOf (keyorder trans-table) attr)) (range (:from entry) (inc (:to entry))))))))
+        (mapv #(retrieve trans-table % (.indexOf (keyorder trans-table) attr)) (range (:from entry) (inc (:to entry))))))))
 
 
 
-(def flip-compare-map  {< >=
-                        > <=
-                        >= <
-                        <= >
-                        = =
-                        not= not=})
+(def flip-compare-map  {'<    '>=
+                        '>    '<=
+                        '>=   '<
+                        '<=   '>
+                        '=    '=
+                        'not= 'not=})
 
 
 
-(defmacro dbg[x] `(let [x# ~x] (println "dbg:" '~x "=" x#) x#))
 
-
-(defmacro unflat
+(defn unflat
   [ast]
   (let [op (first ast)
         args (rest ast)
         pairs (map (fn [arg1 arg2] (list op arg1 arg2)) args (rest args))
         new-ast (conj pairs 'and)]
-    (list 'quote new-ast)))
+    new-ast))
 
 
 
-(defmacro key-of-tr?
+
+(defn key-of-tr?
   [tr-alias term]
   (cond
-   (and (= 2 (count term))
+   (and (coll? term)
+        (= 2 (count term))
         (keyword? (first term))
-        (= tr-alias (second term))) true
-   (and (= 3 (count term))
+        (= tr-alias (second term))) (first term)
+   (and (coll? term)
+        (= 3 (count term))
         (= 'get (first term))
-        (= tr-alias (second term))) true
-   :else false))
+        (= tr-alias (second term))) (last term)
+   :else nil))
 
+(map #(key-of-tr? 't %) (rest '(= (:city t) Paris)))
 
 
 
 
 (use 'clojure.tools.trace)
-
-(defmacro map-key-of-tr?
-  [tr-alias terms]
-  (let [check (fn [term]  (cond
-                             (and (coll? term)
-                                  (= 2 (count term))
-                                  (keyword? (first term))
-                                  (= tr-alias (second term))) (first term),
-                             (and (coll? term)
-                                  (= 3 (count term))
-                                  (= 'get (first term))
-                                  (= tr-alias (second term))) (last term),
-                             :else nil))
-        result (map check terms)]
-                    (list 'quote result)))
-
-
-
-
-(map-key-of-tr? t (<=  (:k45ey t) (:key t) (:kewerty t) (get t "blabla")))
 
 
 
@@ -464,21 +420,34 @@
        (and (coll? ast) (contains? #{'< '> '<= '>= '= 'not=} (first ast)))
          (if
            (< 2 (count (rest ast)))
-           (optimize arg '(unflat ast))
-           (let [key-map (map-key-of-tr? arg (rest ast))]
-             (if
-               (some #(not (nil? %)) key-map)
-                (let [f (if (last key-map)
-                            (get flip-compare-map arg)
-                            arg)
-                      ast (if (last key-map)
-                             (reverse (rest ast))
-                             (rest ast))]
+           (optimize arg (unflat ast))
+           (let [key-map (map #(key-of-tr? (first arg) %) (rest ast))]
+             (println :preprecond key-map)
+             (cond
+               (every? #(not (nil? %)) key-map) nil ; TODO specialfall für  (= (:name t) (:city t)) u.ä.
+
+
+               (not-every? nil? key-map)
+                (let [ f (if (last key-map)
+                            (get flip-compare-map (first ast))
+                            (first ast))
+                      [left right] (if (last key-map)
+                                     [(last key-map) (second ast)]
+                                     [(first key-map) (last ast)])]
+                              (println :precond f (first arg) left right)
                               (cond
-                                (contains? (keys flip-compare-map) (first ast)) (apply conj '() (last ast) (first ast) 'area-search)
-                                (= '= (first ast))  (apply conj '() (last ast) (first ast) 'point-search)
-                                (= 'not= (first ast)) (apply conj 'not=-scan)))
-               ast))), ;TODO compare without tuple
+                                (contains? #{'< '> '<= '>=} f)
+                                   (seq ['area-search (first arg) left f right])
+
+                                (= '= f)
+                                   (seq [ 'point-search (first arg) left right])
+
+                                (= 'not= f)
+                                   (apply conj right left (first arg) 'not=-scan)
+
+                               :else (println :else f left right)))
+
+               :else ast))), ;TODO compare without tuple
 
        (coll? ast) '(), ;TODO not our business
 
@@ -486,21 +455,40 @@
 
 
 
-
 (defmacro restrict-fn
   ""
   [arg body]
-  (with-meta (list 'fn arg body)
-              {:body (let[new-list (optimize arg body)]
-                       (list 'quote  new-list))}))
+  (let [optimized (optimize arg body)]
+    (with-meta (list 'fn arg optimized)
+                {:body (list 'quote optimized)})))
 
+
+(meta (restrict-fn [t] (and (>= 30 (:status t)) (= (:city t) "Paris"))))
 
 (meta (restrict-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris") (= (:name t) (:city t)))))
 
 
-(= >= >=)
+(def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
+      {:id "S2" :name "Jones" :status 10 :city "Paris"}
+      {:id "S3" :name "Blake" :status 30 :city "Paris"}
+      {:id "S4" :name "Clark" :status 20 :city "London"}
+      {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
 
- (area-search people :status >=  30)
+
+(intersection (tr (area-search people :status < 30)) (tr(point-search people :city "Paris")))
+
+(convert (point-search people :city "Paris"))
+
+
+(defn restriction
+  ""
+  [trans-table rfn]
+  (rfn trans-table))
+
+(restriction people (restrict-fn [t] (and (>= 30 (:status t)) (= (:city t) "Paris"))))
+
+
+ (tr (area-search people :status >=  30))
   (area-search people :status < 30)
   (area-search people :city not= "London")
 

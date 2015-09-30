@@ -40,7 +40,6 @@
 
 
 
-
 (defn zigzag
   "Get a row of data by the numeric position of one of the cells in the transrelational table."
   [trans-table row column]
@@ -343,7 +342,7 @@
          (cond
            (contains? up-to-down f) (up-to-down-scan column f right-value)
            (contains? down-to-up f) (down-to-up-scan column f right-value)
-           (= not= f) (do (println  :qwe) (not=-scan column right-value))
+           (= not= f) (not=-scan column right-value)
            :else [])))))))
 
 
@@ -395,8 +394,56 @@
         (= tr-alias (second term))) (last term)
    :else nil))
 
-(map #(key-of-tr 't %) (rest '(= (:city t) Paris)))
 
+
+
+(defn- inner-compare
+  ""
+  [trans-table  f left right]
+  (when (not-any? #(contains? (set (keyorder trans-table)) %) [left right])
+    (throw (IllegalArgumentException. "Key not exists in tr.")))
+  (let [left-column (get (fieldValues trans-table) left)
+        right-column (get (fieldValues trans-table) right)
+        filtered-left (filter (fn[l] (loop [r right-column]
+                                       (cond
+                                          (empty? r) false
+                                          (f (:value l) (:value (first r))) true
+                                          :else (recur (rest r))))) left-column)
+        filtered-right (filter (fn[r] (loop [l filtered-left]
+                                        (cond
+                                         (empty? l) false
+                                         (f (:value (first l)) (:value r)) true
+                                         :else (recur (rest l))))) right-column)
+        keyorder (keyorder trans-table)
+        l-index  (.indexOf keyorder  left)
+        r-index  (.indexOf keyorder right)
+        steps-left-to-right (mod (- r-index l-index) (count keyorder))
+        steps-right-to-left (mod (- l-index r-index) (count keyorder))
+        actual-numbers (fn[column] (flatten (map #(range (:from %) (inc (:to %))) column)))
+
+        travel-check (fn[from-column from-idx from-left? to-column steps]
+                       (let[start-set  (actual-numbers from-column)
+                            target-set (into #{} (actual-numbers to-column))]
+                         (filter (fn[row]
+                                   (let[traveled (travel (recordReconst trans-table) row from-idx steps)]
+                                    (and (contains? target-set (first traveled))
+                                         (let[start-value (:value (first (filter #(and (<= row (:to %))
+                                                                                       (<= (:from %) row))
+                                                                                 from-column)))
+                                              travel-value (:value (first (filter #(and (<= (first traveled) (:to %))
+                                                                                        (<= (:from %) (first traveled)))
+                                                                                  to-column)))]
+                                         (if from-left?
+                                            (f start-value travel-value )
+                                            (f travel-value start-value ))))))
+                                 start-set)))
+
+        [result-column-index
+         result-column-rows]  (if (< steps-left-to-right steps-right-to-left)
+                                  [l-index (travel-check filtered-left l-index true filtered-right steps-left-to-right)]
+                                  [r-index (travel-check filtered-right r-index false filtered-left steps-right-to-left)])
+                      ]
+    (tr(reduce #(conj %1 (retrieve trans-table %2 result-column-index)) [] result-column-rows))))
 
 
 
@@ -407,7 +454,6 @@
   ""
   [arg ast]
   (let []
-    (println ast)
     (cond
        (and (coll? ast) (contains? #{ 'and 'or} (first ast)))
             (reverse (into
@@ -416,15 +462,14 @@
                 or '(union))
               (map #(optimize arg %) (rest ast)))),
 
-       (and (coll? ast) (contains? #{'< '> '<= '>= '= 'not=} (first ast)))
+       (and (coll? ast))
          (if
            (< 2 (count (rest ast)))
            (optimize arg (unflat ast))
            (let [key-map (map #(key-of-tr (first arg) %) (rest ast))]
-             (println :preprecond key-map)
              (cond
-               (every? #(not (nil? %)) key-map) nil ; TODO specialfall für  (= (:name t) (:city t)) u.ä.
-
+               (every? #(not (nil? %)) key-map)
+                  (seq [ 'inner-compare (first arg) (first ast) (first key-map) (second key-map)])
 
                (not-every? nil? key-map)
                 (let [ f (if (last key-map)
@@ -433,7 +478,6 @@
                       [left right] (if (last key-map)
                                      [(last key-map) (second ast)]
                                      [(first key-map) (last ast)])]
-                              (println :precond f (first arg) left right)
                               (cond
                                 (contains? #{'< '> '<= '>=} f)
                                    (seq ['area-search (first arg) left f right])
@@ -446,9 +490,7 @@
 
                                :else (println :else f left right)))
 
-               :else ast))), ;TODO compare without tuple
-
-       (coll? ast) '(), ;TODO not our business
+               :else '()))), ;TODO compare without tuple
 
        :else ast))) ;TODO const
 
@@ -464,7 +506,7 @@
 
 (meta (restrict-fn [t] (and (>= 30 (:status t)) (= (:city t) "Paris"))))
 
-(meta (restrict-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris") (= (:name t) (:city t)))))
+(meta (restrict-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris") (#(= (last %1 ) (last %2)) (:name t) (:city t)))))
 
 
 (def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
@@ -474,13 +516,6 @@
       {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
 
 
-
-
-(intersection
-  (area-search people :status < 30)
-  (point-search people :city "Paris"))
-
-(convert (point-search people :city "Paris"))
 
 
 (defn restriction
@@ -493,11 +528,13 @@
 (restriction people
              (restrict-fn [t] (and (>= 30 (:status t)) (= (:city t) "Paris"))))
 
-
+(restriction people
+             (restrict-fn [t] (and (= (:city t) "Paris")
+                                   (#(= (last %1 ) (last %2)) (:name t) (:city t)))))
 
 
 (area-search people :status >=  30)
 (area-search people :status < 30)
 (area-search people :city not= "London")
 (point-search people :city "London")
-
+(inner-compare people  #(= (last %1 ) (last %2)) :name :city)

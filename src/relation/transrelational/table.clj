@@ -11,20 +11,23 @@
 
 
 (defn keyorder
+  "Returns key order of the transrelational table"
   [tr]
     (.keyorder tr))
 
 
 
 (defn fieldValues
+  "Returns field value table of the transrelational table"
   [tr]
     (.fvt tr))
 
 
 
 (defn recordReconst
-  ([tr]
-   (.rrt tr)))
+  "Returns record reconstrution table order of the transrelational table"
+  [tr]
+   (.rrt tr))
 
 
 
@@ -47,54 +50,76 @@
 
 
 
+(defn- keyorder-of-table
+  "creates vector of all keys in the table."
+  [table]
+  (into [] (distinct (flatten (map keys table)))))
 
 
-(defn tr
-  "Creates a transrelational table by a collection of hash-maps with the same keys or by a
-  prebuildes structure of keyorder, field value table and record reconstrution table."
 
-  ([table]
-  (let [table (distinct (vec table))
-        keyorder  (into [] (distinct (flatten (map keys table))))
-        recordtuples (map (fn[record] (into {}
+(defn- create-raw-permutation
+  "Creates a map of groups of attributes and their index of the origin data row."
+  [table keyorder]
+  (let [recordtuples (map (fn[record] (into {}
                                             (map (fn[k]
-                                                   (let[v (get record k)] [k [v (.indexOf table record)]]))
-                                            keyorder))) table)
-        permutation (into {} (map (fn[head] [head (sort-by first
-                                                     (map #(get % head)
-                                                          recordtuples))])) keyorder)
+                                                   (let[v (get record k)]
+                                                     [k [v (.indexOf table record)]]))
+                                            keyorder))) table)]
+    (into {} (map (fn[head] [head (sort-by first(map #(get % head) recordtuples))])) keyorder)))
 
-        fvt (into {} (map (fn[[k v]] [ k (let [ values (map first v)]
+
+
+(defn- create-fvt-by-raw-perm
+  "Creates the field value table by the permutation map."
+  [permutation]
+  (into {} (map (fn[[k v]] [ k (let [ values (map first v)]
                                               (sequence (comp
                                                            (distinct)
                                                            (map (fn[v] {:value v
                                                                         :from (.indexOf values v)
                                                                         :to (.lastIndexOf values v)})))
-                                                        values))]) permutation))
+                                                        values))]) permutation)))
 
-        rrt (let [perm  (into {} (map (fn[[k v]] [k (map second v)]) permutation))
-                  zigzagTo (fn [[a b]] (mapv (fn[recnr] (.indexOf b recnr)) a))
-                  fromPerm (mapv (fn[x](get perm x)) keyorder)
-                  toPerm (conj (vec (rest fromPerm)) (first fromPerm))
-                  mergePerms (loop [m []
-                                    from fromPerm
-                                    to toPerm]
-                                     (if (empty? from)
-                                       m
-                                       (let [ffrom (first from)
-                                             fto (first to)]
-                                         (recur (conj m [ffrom fto]) (rest from) (rest to)))))
-                  pre-consist-rrt (into [] (comp (map zigzagTo) ) mergePerms)]
-               (map (fn[column](let[columnName (nth keyorder (.indexOf pre-consist-rrt column))]
+
+(defn- create-rrt
+  "Creates the record reconstruction table by the permutation map, predefined key order and the field value table."
+  [permutation keyorder fvt]
+  (let [perm  (into {} (map (fn[[k v]] [k (map second v)]) permutation))
+        zigzagTo (fn [[a b]] (mapv (fn[recnr] (.indexOf b recnr)) a))
+        fromPerm (mapv (fn[x](get perm x)) keyorder)
+        toPerm (conj (vec (rest fromPerm)) (first fromPerm))
+        mergePerms (loop [m []
+                          from fromPerm
+                          to toPerm]
+                     (if (empty? from)
+                       m
+                       (let [ffrom (first from)
+                             fto (first to)]
+                         (recur (conj m [ffrom fto]) (rest from) (rest to)))))
+        pre-consist-rrt (mapv (fn[a b] [b (zigzagTo a)]) mergePerms (range (count mergePerms)))]
+                (map (fn [[index column]]
+                       (let[columnName (nth keyorder index)]
                                 (map (fn[cell] [(let[valueColumn (get fvt columnName)
                                                      index (.indexOf column cell)]
-                                                  (.indexOf valueColumn
+                                                     (.indexOf valueColumn
                                                            (first (filter #(and (<= index (:to %)) (>= index (:from %))) valueColumn))))
-                                                cell]) column))) pre-consist-rrt))]
+                                                cell]) column))) pre-consist-rrt)))
+
+
+
+
+(defn tr
+  "Creates a transrelational table by a collection of hash-maps with the same keys or by a
+  prebuildes structure of keyorder, field value table and record reconstrution table."
+  ([table]
+  (let [table (distinct (vec table))
+        keyorder  (keyorder-of-table table)
+        permutation (create-raw-permutation table keyorder)
+        fvt (create-fvt-by-raw-perm permutation)
+        rrt (create-rrt permutation keyorder fvt)]
      (Transrelation. keyorder fvt rrt)))
   ([keyorder fvt rrt]
    (Transrelation. keyorder fvt rrt)))
-
 
 
 

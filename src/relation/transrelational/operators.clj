@@ -3,6 +3,8 @@
 
 
 (require 'clojure.tools.trace)
+(use 'clojure.tools.trace)
+
 
 
 ;; #######################################################################################################################################
@@ -336,13 +338,13 @@
   (let [up-to-down #{<= <}
         down-to-up #{>= >}
         column (get (fieldValues trans-table) attr)]
-     (mapv #(retrieve trans-table % (.indexOf (keyorder trans-table) attr))
-    (flatten (map (fn [n] (range (:from n) (inc (:to n))))
-       (cond
-         (contains? up-to-down f) (up-to-down-scan column f right-value)
-         (contains? down-to-up f) (down-to-up-scan column f right-value)
-         (= not= f) (not=-scan column right-value)
-         :else []))))))
+    (tr (mapv #(retrieve trans-table % (.indexOf (keyorder trans-table) attr))
+      (flatten (map (fn [n] (range (:from n) (inc (:to n))))
+         (cond
+           (contains? up-to-down f) (up-to-down-scan column f right-value)
+           (contains? down-to-up f) (down-to-up-scan column f right-value)
+           (= not= f) (do (println  :qwe) (not=-scan column right-value))
+           :else [])))))))
 
 
 
@@ -352,10 +354,10 @@
   [trans-table attr value]
   (let [binary-search (fn [column value] (java.util.Collections/binarySearch column value #(compare (:value %1) %2)))
         found (binary-search (get (fieldValues trans-table) attr) value)]
-   (if (neg? found)
+   (tr (if (neg? found)
       '()
       (let [entry (nth  (get (fieldValues trans-table) attr) found)]
-        (mapv #(retrieve trans-table % (.indexOf (keyorder trans-table) attr)) (range (:from entry) (inc (:to entry))))))))
+        (mapv #(retrieve trans-table % (.indexOf (keyorder trans-table) attr)) (range (:from entry) (inc (:to entry)))))))))
 
 
 
@@ -369,7 +371,7 @@
 
 
 
-(defn unflat
+(defn- unflat
   [ast]
   (let [op (first ast)
         args (rest ast)
@@ -380,7 +382,7 @@
 
 
 
-(defn key-of-tr?
+(defn- key-of-tr
   [tr-alias term]
   (cond
    (and (coll? term)
@@ -393,12 +395,9 @@
         (= tr-alias (second term))) (last term)
    :else nil))
 
-(map #(key-of-tr? 't %) (rest '(= (:city t) Paris)))
+(map #(key-of-tr 't %) (rest '(= (:city t) Paris)))
 
 
-
-
-(use 'clojure.tools.trace)
 
 
 
@@ -421,7 +420,7 @@
          (if
            (< 2 (count (rest ast)))
            (optimize arg (unflat ast))
-           (let [key-map (map #(key-of-tr? (first arg) %) (rest ast))]
+           (let [key-map (map #(key-of-tr (first arg) %) (rest ast))]
              (println :preprecond key-map)
              (cond
                (every? #(not (nil? %)) key-map) nil ; TODO specialfall für  (= (:name t) (:city t)) u.ä.
@@ -475,7 +474,11 @@
       {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
 
 
-(intersection (tr (area-search people :status < 30)) (tr(point-search people :city "Paris")))
+
+
+(intersection
+  (area-search people :status < 30)
+  (point-search people :city "Paris"))
 
 (convert (point-search people :city "Paris"))
 
@@ -485,13 +488,16 @@
   [trans-table rfn]
   (rfn trans-table))
 
-(restriction people (restrict-fn [t] (and (>= 30 (:status t)) (= (:city t) "Paris"))))
 
 
- (tr (area-search people :status >=  30))
-  (area-search people :status < 30)
-  (area-search people :city not= "London")
+(restriction people
+             (restrict-fn [t] (and (>= 30 (:status t)) (= (:city t) "Paris"))))
 
 
- (point-search people :city "London")
+
+
+(area-search people :status >=  30)
+(area-search people :status < 30)
+(area-search people :city not= "London")
+(point-search people :city "London")
 

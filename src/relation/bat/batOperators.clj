@@ -29,7 +29,6 @@
            CD (map (fn[bun] (clojure.set/rename-keys bun {:head :key})) (buns batCD))
            ks #{:key}
            idx (clojure.set/index AB ks)]
-       (println idx)
       (if (= f =)
         (if (and (>= (count params) 2) (not (apply = params)))
           (bat [])
@@ -37,7 +36,7 @@
                (let [filtered-idx  (if (empty? params)
                                      idx
                                      (select-keys idx [{:key (first params)}]))
-                     found       (filtered-idx (select-keys x ks))] (println  filtered-idx)
+                     found       (filtered-idx (select-keys x ks))]
                  (if found
                    (reduce #(conj %1 (dissoc  (merge %2 x) :key)) ret found)
                    ret)))

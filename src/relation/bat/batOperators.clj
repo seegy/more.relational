@@ -43,15 +43,14 @@
              [] CD)))
 
        (bat (reduce (fn [ret x]
-             (let [found (first (filter not-empty (map (fn [[k v]]
-                                                          (if  (apply f (:key k) (:key x) params)
-                                           v
-                                           nil)) idx)))]
-               (if found
-                (reduce #(conj %1 (dissoc  (merge %2 x) :key)) ret found)
-                 ret)))
+             (let [found  (reduce (fn [m [k v]]
+                                   (if  (apply f (:key k) (:key x) params)
+                                     (apply conj m v)
+                                     m)) #{} idx)]
+               (if (empty? found)
+                 ret
+                 (reduce #(conj %1 (dissoc (merge %2 x) :key)) ret found))))
            [] CD)))))
-
 
 
 

@@ -69,6 +69,7 @@
 (join NameRelationBAT nameBAT = 2 2)
 (join NameRelationBAT nameBAT <)
 (join NameRelationBAT nameBAT < 4 5)
+(join NameRelationBAT nameBAT (fn[& _] true))
 
 
 (reverse nameBAT)

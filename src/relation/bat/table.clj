@@ -24,9 +24,15 @@
 
 (defn bat
   ([tuple-vec]
-   (let [data (into #{} (comp
-                          (filter #(= 2 (count %))))  (seq tuple-vec))]
-     (BAT. data)))
+   (if (coll? tuple-vec)
+     (let [data (into #{} (comp
+                            (filter map?)
+                            (filter #(= 2 (count %)))
+                            (filter #(contains? (set (keys %)) :head))
+                            (filter #(contains? (set (keys %)) :tail)))
+                      (seq tuple-vec))]
+       (BAT. data))
+     (BAT. #{})))
   ([one & more]
    (let [tails (map #(assoc {} :tail %) (conj (seq more) one))
          heads (map #(assoc {} :head %) (rest (take (inc (count tails)) (range))))

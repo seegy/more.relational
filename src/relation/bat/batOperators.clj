@@ -44,13 +44,15 @@
 
        (bat (reduce (fn [ret x]
              (let [found  (reduce (fn [m [k v]]
-                                   (if  (apply f (:key k) (:key x) params)
+                                   (if (apply f (:key k) (:key (first x)) params)
                                      (apply conj m v)
-                                     m)) #{} idx)]
+                                     m)) #{} idx)] (println x  idx found )
                (if (empty? found)
                  ret
-                 (reduce #(conj %1 (dissoc (merge %2 x) :key)) ret found))))
-           [] CD)))))
+                 (reduce #(apply conj %1
+                                 (map (fn[y] (dissoc (merge %2 y) :key))
+                                      (second x))) ret found))))
+           [] (clojure.set/index CD ks))))))
 
 
 

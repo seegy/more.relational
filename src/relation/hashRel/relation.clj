@@ -56,9 +56,9 @@
 
 
 (defn scheme
-  "Returns the scheme (= set of attributes) of the relation."
+  "Returns the scheme (= vector of attributes) of the relation."
   [relation]
-  (set (.head relation)))
+    (.head relation))
 
 (defn body
   "Returns the set of value tuples of the relation. Each tuple is a vector with
@@ -89,7 +89,8 @@
 
 (defmethod print-method HashRelation
   [rel writer]
-  (.write writer (str "#rel " (pr-str  (scheme rel) (body rel)) )))
+  (.write writer (str "#rel "  (.head rel)
+                      "\n" (body rel)) ))
 
 
 (defn rel

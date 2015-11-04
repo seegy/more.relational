@@ -23,7 +23,6 @@
    reverse
    mirror
    mark
-   project
    slice
    sum
    max

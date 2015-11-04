@@ -20,45 +20,39 @@
     (bat newBat)))
 
 
+
+
 (defn join
   "Returns a BAT of [tailAB tailCD] by connecting heads of batAB and batCD. Function f for matching pairs can have additinal parameters (f tail_of_AB tail_of_CD & more)."
-  ([batAB batCD f & more]
-  (let [ AB (map (fn[bun] (clojure.set/rename-keys bun {:tail :key})) (buns batAB))
-         CD (map (fn[bun] (clojure.set/rename-keys bun {:head :key})) (buns batCD))
-         ks #{:key}
-         idx (clojure.set/index AB ks)]
-    (bat (reduce (fn [ret x]
-           (let [found (first (filter not-empty (map (fn [[k v]]
-                                                        (if (apply f (:key k) (:key x) more)
-                                         v
-                                         nil)) idx)))]
-             (if found
-              (reduce #(conj %1 (dissoc  (merge %2 x) :key)) ret found)
-               ret)))
-         [] CD))))
-   ([batAB batCD f]
+  [batAB batCD f & params]
      (let [ AB (map (fn[bun] (clojure.set/rename-keys bun {:tail :key})) (buns batAB))
            CD (map (fn[bun] (clojure.set/rename-keys bun {:head :key})) (buns batCD))
            ks #{:key}
            idx (clojure.set/index AB ks)]
+       (println idx)
       (if (= f =)
-
-        (bat (reduce (fn [ret x]
-             (let [found (idx (select-keys x ks))]
-               (if found
-                 (reduce #(conj %1 (dissoc  (merge %2 x) :key)) ret found)
-                 ret)))
-           [] CD))
+        (if (and (>= (count params) 2) (not (apply = params)))
+          (bat [])
+          (bat (reduce (fn [ret x]
+               (let [filtered-idx  (if (empty? params)
+                                     idx
+                                     (select-keys idx [{:key (first params)}]))
+                     found       (filtered-idx (select-keys x ks))] (println  filtered-idx)
+                 (if found
+                   (reduce #(conj %1 (dissoc  (merge %2 x) :key)) ret found)
+                   ret)))
+             [] CD)))
 
        (bat (reduce (fn [ret x]
              (let [found (first (filter not-empty (map (fn [[k v]]
-                                                          (if  (f (:key k) (:key x))
+                                                          (if  (apply f (:key k) (:key x) params)
                                            v
                                            nil)) idx)))]
                (if found
                 (reduce #(conj %1 (dissoc  (merge %2 x) :key)) ret found)
                  ret)))
-           [] CD))))))
+           [] CD)))))
+
 
 
 

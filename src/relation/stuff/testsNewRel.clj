@@ -1,5 +1,5 @@
 (ns relation.tests
-  (:use [relation.newRel.relational]))
+  (:use [relation.hashRel]))
 
  ;; ######################## BIG TEST ############################
 
@@ -53,6 +53,7 @@
 
 
 
+
  (println "andere operationen")
 ;; Andere Operationen
 (time (rename employees {:emp_no :id}))
@@ -60,3 +61,12 @@
 (time (group employees {:dates #{:birth_date :hire_date}}))
 (time (summarize employees #{:emp_no} {:scount (relfn [r] (count r))}))
 (time (summarize employees #{} {:quantitysum (relfn [r] (reduce + (:emp_no r)))}))
+
+
+(def first-10000 (take 10000  employees-data))
+(def next-10000 (take-last 10000 employees-data))
+
+(def a (rel [:emp_no :birth_date :first_name :last_name :gender :hire_date] first-10000))
+(def b (rel [:emp_no :birth_date :first_name :last_name :gender :hire_date] next-10000))
+
+(time (union a b))

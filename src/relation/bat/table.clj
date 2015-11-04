@@ -39,7 +39,9 @@
 
 (defmethod print-method BAT
   [rel writer]
-  (.write writer (str "#BAT " (pr-str  (buns rel)) )))
+  (.write writer (apply str "#BAT \n"
+                      (map #(str (:head %) " - " (:tail %) "\n") (buns rel)))))
+
 
 (defn bat?
   [x]

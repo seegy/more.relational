@@ -4,6 +4,30 @@
 
 
 
+
+
+(rel [:sno :sname :status :scity]
+         ['("S1" "Smith" 20 "London")
+          '("S2" "Jones" 10 "Paris")
+          '("S3" "Blake" 30 "Paris")
+          '("S4" "Clark" 10 "London")
+          '("S5" "Adams" 30 "Athen")])
+
+
+(rel [{:sno "S1" :sname "Smith" :status 20 :scity "London"}
+      {:sno "S2" :sname "Jones" :status 10 :scity "Paris"}
+      {:sno "S3" :sname "Blake" :status 30 :scity "Paris"}
+      {:sno "S4" :sname "Clark" :status 10 :scity "London"}
+      {:sno "S5" :sname "Adams" :status 30 :scity "Athen"}])
+
+
+(rel [:sno :sname :status :scity]
+     [{:sno "S1" :sname "Smith" :status 20 :scity "London"}
+      {:sno "S2" :sname "Jones" :status 10 :scity "Paris"}
+      {:sno "S3" :sname "Blake" :status 30 :scity "Paris"}
+      {:sno "S4" :sname "Clark" :status 10 :scity "London"}
+      {:sno "S5" :sname "Adams" :status 30 :scity "Athen"}])
+
 (def r (rel #{ {:id 1, :name "Arthur", :address "somewhere"} {:id 2, :name "Betty" :address "nowhere"} }))
 (def s (rel #{{:sid 1 :description "Scrows"}, {:sid 2 :description "Hammer"}, {:sid 3, :description "Nail"}}))
 r

@@ -124,8 +124,13 @@
                                          entry-infos rrt)
                       new-rrt (mapv (fn [[_ value-link next-link is-deleted] column]
                                      ( map (fn[[cell-value cell-next]]
-                                            [(if (and is-deleted (> cell-value value-link)) (dec cell-value) cell-value)
-                                             (if (> cell-next next-link) (dec cell-next) cell-next)]) column)) entry-infos filtered-rrt)]
+                                            [(if (and is-deleted (> cell-value value-link))
+                                               (dec cell-value)
+                                               cell-value)
+                                             (if (> cell-next next-link)
+                                               (dec cell-next)
+                                               cell-next
+                                               )]) column)) entry-infos filtered-rrt)]
                   (apply conj (vec (drop (- (count rrt) column ) new-rrt)) (drop-last  column new-rrt)))]
    (tr (keyorder trans-table)  new-fvt new-rrt)))
 

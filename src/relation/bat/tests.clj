@@ -65,7 +65,11 @@
 (join (reverse nameBAT)  postal-codes =)
 (join NameRelationBAT nameBAT =)
 (join NameRelationBAT nameBAT = 2)
+(join NameRelationBAT nameBAT = 2 3)
+(join NameRelationBAT nameBAT = 2 2)
 (join NameRelationBAT nameBAT <)
+(join NameRelationBAT nameBAT < 4 5)
+
 
 (reverse nameBAT)
 
@@ -75,7 +79,7 @@
 (mark nameBAT  10)
 (mark nameBAT 0)
 
-(project nameBAT "Test")
+;:(project nameBAT "Test")
 
 (slice nameBAT 1 1)
 (slice nameBAT 0 0)

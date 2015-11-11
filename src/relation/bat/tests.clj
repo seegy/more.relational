@@ -251,7 +251,9 @@
 
 
 
-
+(bat 10 10 20 20 30 40 40)
+(group (bat 10 10 20 20 30 40 40))
+(multijoin sum (group (bat 10 10 20 20 30 40 40)))
 
 (def bestellungen [{:id 1 :name "Peter" :artikel "Nagel" :menge 10 :datum "1.1.01"}
                    {:id 2 :name "Max" :artikel "Nagel" :menge 20 :datum "1.2.01"}
@@ -268,7 +270,7 @@ oid_nil_wherenagel
 (def oid_name_wherenagel (join (mirror oid_nil_wherenagel) (:name bestellungenBat) =))
 oid_name_wherenagel
 
-(def groupoid_oid_namegroup_wherenagel (groupV2 oid_name_wherenagel ))
+(def groupoid_oid_namegroup_wherenagel (group oid_name_wherenagel ))
 groupoid_oid_namegroup_wherenagel
 
 (def groupid_menge_namegroup_wherenagel (multijoin #(join (mirror %) (:menge bestellungenBat) =) groupoid_oid_namegroup_wherenagel))
@@ -282,10 +284,10 @@ oid_menge
 
 
 ;Select name, artikel, sum(Menge) As Menge FROM bestellungen GROUP BY name, artikel
-(def groupuid_name (groupV2 (:name bestellungenBat)))
+(def groupuid_name (group (:name bestellungenBat)))
 groupuid_name
 
-(def groupuid_name_and_article (groupV2 groupuid_name (:artikel bestellungenBat)))
+(def groupuid_name_and_article (group groupuid_name (:artikel bestellungenBat)))
 groupuid_name_and_article
 
 (def groupid_menge (multijoin #(join (mirror %) (:menge bestellungenBat) =) groupuid_name_and_article))
@@ -315,19 +317,19 @@ oid_menge
 
 
 
-(groupV2 (bat [{:head 1 :tail 22}
+(group (bat [{:head 1 :tail 22}
                {:head 1 :tail 33}
                {:head 2 :tail 22}
                {:head 3 :tail 33} ]))
 
-(multijoin sum (groupV2 (bat [{:head 1 :tail 22}
+(multijoin sum (group (bat [{:head 1 :tail 22}
                {:head 1 :tail 33}
                {:head 2 :tail 22}
                {:head 3 :tail 33} ])))
 
 
 
-(groupV2 (groupV2 (bat [ {:head 1 :tail 22}
+(group (group (bat [ {:head 1 :tail 22}
                          {:head 2 :tail 22}
                          {:head 2 :tail 33}
                          {:head 3 :tail 33}

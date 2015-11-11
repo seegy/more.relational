@@ -31,7 +31,6 @@
    union
    intersect
    group
-   groupV2
    fragment
    split
    multijoin

@@ -130,7 +130,7 @@
   [batObjAB batObjCD]
   (bat (clojure.set/intersection (set (buns batObjAB)) (set (buns batObjCD)))))
 
-(defn group
+#_(defn group
   ""
   ([batObj]
    (let [id (fn [tail] (:head (first (filter #(= ( :tail %) tail) batObj))))]
@@ -150,7 +150,7 @@
 
 
 
-(defn groupV2
+(defn group
   ""
   ([batObj]
    (let [tails (distinct (map (fn[tuple](:tail tuple)) batObj))

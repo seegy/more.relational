@@ -274,7 +274,12 @@ people
 (time (project+ people [:status :city ]))
 
 (time (project people [:id :name :city]))
+(project people [ :city :name])
+(project people [ :name :city ])
+ (project people [ :city :name])
 
+(convert(insert (project people [ :id :city :name]) {:id "GASD" :name "GGGGG"  :city "44444"}))
+(convert(delete (project people [ :id :city :name]) 1 0))
 
 (convert (time (project people [:name :city ])))
  (time (project+ people [:name :city ]))

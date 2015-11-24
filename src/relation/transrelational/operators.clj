@@ -44,13 +44,15 @@
   "Get a row of data by the numeric position of one of the cells in the transrelational table."
   [trans-table row column]
   (let [rrt (recordReconst trans-table)
-        rrt (apply conj (vec (drop column rrt)) (drop-last  (- (count rrt) column ) rrt))
-        recMakeTuple (fn[rrt row result]
-                       (if (empty? rrt)
-                         result
-                         (let [[value-link next-row] (nth (first rrt) row)]
-                           (recur (rest rrt) next-row (conj result value-link)))))]
-  (recMakeTuple rrt row [])))
+        rrt (apply conj (vec (drop column rrt)) (drop-last  (- (count rrt) column ) rrt))]
+     (loop [rrt rrt
+            row row
+            result []]
+       (if (empty? rrt)
+           result
+           (let [[value-link next-row] (nth (first rrt) row)]
+                (recur (rest rrt) next-row (conj result value-link)))))))
+
 
 
 

@@ -1,6 +1,6 @@
-# core.relational.usage
+# more.relational
 
-A Clojure library to collect some usages for core.relational.
+A Clojure library to collect concepts of relational algebra.
 
 ## Usage
 

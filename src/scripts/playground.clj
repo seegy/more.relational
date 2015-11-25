@@ -87,3 +87,95 @@
 
 
 
+
+  #{{:head 7,  :tail "London"  }
+    {:head 5,  :tail "Athens"  }
+    {:head 9,  :tail "London"  }
+    {:head 10, :tail "New York"}
+    {:head 6,  :tail "Paris"   }
+    {:head 8,  :tail "London"  }
+    {:head 3,  :tail "Paris"   }
+    {:head 4,  :tail "Paris"   }
+    {:head 2,  :tail "Athens"  }
+    {:head 1,  :tail "London"  }}
+
+
+
+
+
+  #{{:head 2,  :tail 30}
+    {:head 6,  :tail 10}
+    {:head 3,  :tail 30}
+    {:head 1,  :tail 20}
+    {:head 10, :tail 30}
+    {:head 9,  :tail 20}
+    {:head 7,  :tail 20}
+    {:head 4,  :tail 30}
+    {:head 5,  :tail 30}
+    {:head 8,  :tail 20}}
+
+
+
+
+
+   (clojure.set/index  #{{:head 20, :tail 8}
+                        {:head 10, :tail 6}
+                        {:head 20, :tail 9}
+                        {:head 30, :tail 4}
+                        {:head 20, :tail 1}
+                        {:head 30, :tail 3}
+                        {:head 30, :tail 10}
+                        {:head 20, :tail 7}
+                        {:head 30, :tail 2}
+                        {:head 30, :tail 5}}
+                       #{:head})
+
+
+
+
+  (clojure.set/index   #{{:head 2, :tail 30}
+                          {:head 6, :tail 10}
+                          {:head 3, :tail 30}
+                          {:head 1, :tail 20}
+                          {:head 10, :tail 30}
+                          {:head 9, :tail 20}
+                          {:head 7, :tail 20}
+                          {:head 4, :tail 30}
+                          {:head 5, :tail 30}
+                          {:head 8, :tail 20}}
+                        #{:tail})
+
+
+
+
+
+                           {{:tail 30}
+   #{{:head 2,  :tail 30}
+     {:head 3,  :tail 30}
+     {:head 10, :tail 30}
+     {:head 4,  :tail 30}
+     {:head 5,  :tail 30}},
+                            {:tail 10}
+   #{{:head 6,  :tail 10}},
+                            {:tail 20}
+   #{{:head 1,  :tail 20}
+     {:head 9,  :tail 20}
+     {:head 7,  :tail 20}
+     {:head 8,  :tail 20}}}
+
+
+
+
+
+
+  {{:head 20}  #{{:head 20, :tail 8}
+                 {:head 20, :tail 9}
+                 {:head 20, :tail 1}
+                 {:head 20, :tail 7}},
+   {:head 10}  #{{:head 10, :tail 6}},
+   {:head 30}  #{{:head 30, :tail 4}
+                 {:head 30, :tail 3}
+                 {:head 30, :tail 10}
+                 {:head 30, :tail 2}
+                 {:head 30, :tail 5}}}
+

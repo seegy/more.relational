@@ -10,5 +10,6 @@
                  [net.mikera/core.matrix "0.37.0"]
                  [net.mikera/vectorz-clj "0.33.0"]
                  [org.clojure/tools.trace "0.7.5"]
+                 [core.relational "0.1.0-SNAPSHOT"]
                  ]
   )

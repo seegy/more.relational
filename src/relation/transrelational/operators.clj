@@ -511,17 +511,6 @@
                 {:body (list 'quote optimized)})))
 
 
-(meta (restrict-fn [t] (and (>= 30 (:status t)) (= (:city t) "Paris"))))
-
-(meta (restrict-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris") (#(= (last %1 ) (last %2)) (:name t) (:city t)))))
-
-
-(def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
-      {:id "S2" :name "Jones" :status 10 :city "Paris"}
-      {:id "S3" :name "Blake" :status 30 :city "Paris"}
-      {:id "S4" :name "Clark" :status 20 :city "London"}
-      {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
-
 
 
 
@@ -529,6 +518,22 @@
   ""
   [trans-table rfn]
   (rfn trans-table))
+
+
+
+
+;##################### Restriktions-Problem
+
+
+
+(meta (restrict-fn [t] (and (>= 30 (:status t)) (= (:city t) "Paris"))))
+
+(meta (restrict-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris") (#(= (last %1 ) (last %2)) (:name t) (:city t)))))
+(def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
+      {:id "S2" :name "Jones" :status 10 :city "Paris"}
+      {:id "S3" :name "Blake" :status 30 :city "Paris"}
+      {:id "S4" :name "Clark" :status 20 :city "London"}
+      {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
 
 
 

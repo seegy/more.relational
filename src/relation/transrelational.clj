@@ -21,5 +21,10 @@
   update
   project
   project+
-  extend]
+  extend
+  restrict-fn
+  intersection
+  union
+  difference
+  restriction]
  [relation.transrelational.transref])

@@ -7,7 +7,7 @@
   (defn rename [relation smap]
     (rel
      (replace smap (.head relation))
-     (map #(clojure.set/rename-keys % smap) (.body relation))))
+     (set (map #(clojure.set/rename-keys % smap) (.body relation)))))
 
 
   (defn rename* [relation match-exp replace-str]
@@ -19,7 +19,7 @@
 
 
   (defn restrict [relation predicate]
-            (rel (into {} (filter predicate) (.body relation))))
+            (rel (set (filter predicate (.body relation)))))
 
 
 

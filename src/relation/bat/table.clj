@@ -5,6 +5,8 @@
   ([a b] (+ (* 31 a) b))
   ([a b & more] (apply hashCalcHelper (hashCalcHelper a b) more)))
 
+
+
 (deftype BAT [buns]
 
   clojure.lang.Seqable
@@ -20,6 +22,9 @@
   (hashCode [this]
     (let [hashs (conj (map hash (.buns this)) 17)]
       (apply hashCalcHelper  hashs))))
+
+
+
 
 
 (defn bat
@@ -40,8 +45,12 @@
      (BAT. both))))
 
 
+
+
 (defn buns [bat]
   (.buns bat))
+
+
 
 (defmethod print-method BAT
   [rel writer]
@@ -49,9 +58,11 @@
                       (map #(str (:head %) " - " (:tail %) "\n") (buns rel)))))
 
 
+
 (defn bat?
   [x]
  (= (type x) relation.bat.table.BAT))
+
 
 
 

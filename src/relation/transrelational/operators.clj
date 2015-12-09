@@ -147,38 +147,68 @@
 
 
 
+(defn- point-search-without-tr
+  ""
+  [trans-table attr value]
+  (let [binary-search (fn [column value] (java.util.Collections/binarySearch column value #(compare (:value %1) %2)))
+        found (binary-search (get (fieldValues trans-table) attr) value)]
+   (if (neg? found)
+      #{}
+      (let [entry (nth  (get (fieldValues trans-table) attr) found)]
+        (set (map #(retrieve trans-table % (.indexOf (keyorder trans-table) attr)) (range (:from entry) (inc (:to entry)))))))))
+
+
+
+
+
+(defn- get-most-present-attr [tr]
+  (let [counts (map #(first (last %)) (recordReconst tr))]
+    (get (keyorder tr) (.indexOf counts (apply max counts)))))
+
+(defn- tupel-in-tr-not-rec
+  [trans-table tupel]
+  (let [mpa (get-most-present-attr trans-table)
+        x (point-search-without-tr trans-table mpa (get tupel mpa))]
+    (contains? x tupel)))
+
+
+
+
+
 
 (defn insert
   "Returns the given transrelational table with the included datarow. The datarow has to be a map."
   [trans-table data-row]
   (when-not (= (set (keys data-row)) (set (keyorder trans-table)))
     (throw (IllegalArgumentException. "DataRow has not the same schema as the table")))
-  (let [fvt-manipulation (reduce (fn [m [k v]](assoc m k
-                                       (let[old-column (get  (fieldValues trans-table) k)
-                                            untouched (filter #(neg? (compare (:value %) v)) old-column)
-                                            increased (sequence (comp
-                                                                 (map (fn[cell] (merge-with + cell {:from 1 :to 1})))
-                                                                 (filter #(pos? (compare (:value %) v)))
-                                                                 ) old-column)
-                                            target (let[found (first (filter #(= (:value %) v) old-column))]
-                                                     (if (nil? found)
-                                                       (let [index (if (empty? untouched) 0 (inc (:to (last untouched))))]{:value v :from index :to index})
-                                                       (merge-with + found {:to 1})))]
-                                          [(concat untouched [target] increased) [target (count untouched)]]))) {}  data-row )
-        new-fvt (reduce (fn[m [k [ v _ ]]] (assoc m k v)) {} fvt-manipulation)
-        new-rrt (let [inserts (reduce (fn[m [k [ _ v ]]] (assoc m k v)) {} fvt-manipulation)
-                      inserts-in-order (map #(get inserts %) (keyorder trans-table))
-                      entry-infos (mapv (fn [a b] [ (second a)
-                                                    (:to (first a))
-                                                    (:to (first b))
-                                                    (= (:to (first a)) (:from (first a)))] )
-                                        inserts-in-order (conj (vec (rest inserts-in-order)) (first inserts-in-order)))]
-                  (mapv (fn[column [a-value-index a-next-pointer b-next-pointer a-is-new]]
-                          (let [prepared-column (map (fn [[ a b ]] [ (if (and (>= a a-value-index) a-is-new) (inc a) a)
-                                                                     (if (>= b b-next-pointer) (inc b) b) ]) column)]
-                                                 (concat (take a-next-pointer prepared-column) [[a-value-index b-next-pointer]] (drop a-next-pointer prepared-column) )))
-                        (recordReconst trans-table) entry-infos))]
-    (distinct-tr (tr (keyorder trans-table) new-fvt new-rrt))))
+  (if (tupel-in-tr trans-table data-row)
+    trans-table
+    (let [fvt-manipulation (reduce (fn [m [k v]](assoc m k
+                                         (let[old-column (get  (fieldValues trans-table) k)
+                                              untouched (filter #(neg? (compare (:value %) v)) old-column)
+                                              increased (sequence (comp
+                                                                   (map (fn[cell] (merge-with + cell {:from 1 :to 1})))
+                                                                   (filter #(pos? (compare (:value %) v)))
+                                                                   ) old-column)
+                                              target (let[found (first (filter #(= (:value %) v) old-column))]
+                                                       (if (nil? found)
+                                                         (let [index (if (empty? untouched) 0 (inc (:to (last untouched))))]{:value v :from index :to index})
+                                                         (merge-with + found {:to 1})))]
+                                            [(concat untouched [target] increased) [target (count untouched)]]))) {}  data-row )
+          new-fvt (reduce (fn[m [k [ v _ ]]] (assoc m k v)) {} fvt-manipulation)
+          new-rrt (let [inserts (reduce (fn[m [k [ _ v ]]] (assoc m k v)) {} fvt-manipulation)
+                        inserts-in-order (map #(get inserts %) (keyorder trans-table))
+                        entry-infos (mapv (fn [a b] [ (second a)
+                                                      (:to (first a))
+                                                      (:to (first b))
+                                                      (= (:to (first a)) (:from (first a)))] )
+                                          inserts-in-order (conj (vec (rest inserts-in-order)) (first inserts-in-order)))]
+                    (mapv (fn[column [a-value-index a-next-pointer b-next-pointer a-is-new]]
+                            (let [prepared-column (map (fn [[ a b ]] [ (if (and (>= a a-value-index) a-is-new) (inc a) a)
+                                                                       (if (>= b b-next-pointer) (inc b) b) ]) column)]
+                                                   (concat (take a-next-pointer prepared-column) [[a-value-index b-next-pointer]] (drop a-next-pointer prepared-column) )))
+                          (recordReconst trans-table) entry-infos))]
+       (tr (keyorder trans-table) new-fvt new-rrt))))
 
 
 (defn update
@@ -358,12 +388,7 @@
 (defn- point-search
   ""
   [trans-table attr value]
-  (let [binary-search (fn [column value] (java.util.Collections/binarySearch column value #(compare (:value %1) %2)))
-        found (binary-search (get (fieldValues trans-table) attr) value)]
-   (tr (if (neg? found)
-      '()
-      (let [entry (nth  (get (fieldValues trans-table) attr) found)]
-        (mapv #(retrieve trans-table % (.indexOf (keyorder trans-table) attr)) (range (:from entry) (inc (:to entry)))))))))
+  (tr (point-search-without-tr trans-table attr value)))
 
 
 

@@ -364,3 +364,45 @@ people
 
 (tr-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris") (= (:name t) (:city t))))
 
+(def p (tr #{{:id "S1"  :name "Smith"    :status 20  :city "London"   :gender "male"  }
+            {:id "S2"  :name "Jones"    :status 10  :city "Paris"    :gender "female"}
+            {:id "S3"  :name "Blake"    :status 30  :city "Paris"    :gender "male"  }
+            {:id "S4"  :name "Clark"    :status 20  :city "London"   :gender "female"}
+            {:id "S5"  :name "Adams"    :status 30  :city "Athens"   :gender "male"  }
+            {:id "S6"  :name "Miller"   :status 30  :city "Paris"    :gender "male"  }
+            {:id "S7"  :name "Thomas"   :status 20  :city "London"   :gender "female"}
+            {:id "S8"  :name "Enderson" :status 30  :city "Athens"   :gender "male"  }
+            {:id "S9"  :name "Simpson"  :status 20  :city "London"   :gender "female"}
+            {:id "S10" :name "Woods"    :status 30  :city "New York" :gender "male"  }}))
+(tupel-in-tr p  {:id "S2"  :name "Jones"    :status 10  :city "Paris"    :gender "female"})
+(tupel-in-tr p  {:id "S2"  :name "Smith"    :status 30  :city "Lomdon"    :gender "male"})
+
+(def employees-data (take 10000 (set (read-string  (str "[" (slurp  "resources/employees.clj" ) "]" )))))
+
+
+(def xrel (map #(zipmap [:emp_no :birth_date :first_name :last_name :gender :hire_date] %) employees-data))
+
+(time (def employees (tr xrel)))
+
+
+(time (tupel-in-tr-rec employees {:emp_no 0, :birth_date "", :first_name "", :last_name "", :gender "", :hire_date ""}))
+(time (tupel-in-tr-rec employees {:emp_no 438441, :birth_date "1952-07-16", :first_name "Kiyokazu", :last_name "Mahmud", :gender "M", :hire_date "1985-12-15"}))
+
+(time (tupel-in-tr-not-rec employees {:emp_no 0, :birth_date "", :first_name "", :last_name "", :gender "", :hire_date ""}))
+(time (tupel-in-tr-not-rec employees { :gender "M", :hire_date "1985-12-15", :emp_no 438441, :birth_date "1952-07-16", :first_name "Kiyokazu", :last_name "Mahmud",}))
+
+
+(def p (tr #{{:id "S1"  :name "Smith"    :status 20  :city "London"   :gender "male"  }
+            {:id "S2"  :name "Jones"    :status 10  :city "Paris"    :gender "female"}
+            {:id "S3"  :name "Blake"    :status 30  :city "Paris"    :gender "male"  }
+            {:id "S4"  :name "Clark"    :status 20  :city "London"   :gender "female"}
+            {:id "S5"  :name "Adams"    :status 30  :city "Athens"   :gender "male"  }
+            {:id "S6"  :name "Miller"   :status 30  :city "Paris"    :gender "male"  }
+            {:id "S7"  :name "Thomas"   :status 20  :city "London"   :gender "female"}
+            {:id "S8"  :name "Enderson" :status 30  :city "Athens"   :gender "male"  }
+            {:id "S9"  :name "Simpson"  :status 20  :city "London"   :gender "female"}
+            {:id "S10" :name "Woods"    :status 30  :city "New York" :gender "male"  }}))
+(time (tupel-in-tr p  {:id "S2"  :name "Jones"    :status 10  :city "Paris"    :gender "female"}))
+(time (tupel-in-tr p  {:id "S2"  :name "Smith"    :status 30  :city "London"    :gender "male"}))
+(time (tupel-in-tr p  {:status 30  :city "London" }))
+

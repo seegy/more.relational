@@ -1,4 +1,5 @@
-(ns example)
+(ns example
+  (:use [relation.transrelational :as transRel]))
 
 (def p #{{:id "S1" :name "Smith" :status 20 :city "London" :gender "male" :size 10 :hair "black" :eyes "brown" }
       {:id "S2" :name "Jones" :status 10 :city "Paris" :gender "female" :size 10 :hair "blond" :eyes "brown" }
@@ -178,4 +179,37 @@
                  {:head 30, :tail 10}
                  {:head 30, :tail 2}
                  {:head 30, :tail 5}}}
+
+
+
+
+
+(def employees-data (take 10000 (set (read-string  (str "[" (slurp  "resources/employees.clj" ) "]" )))))
+
+
+(def xrel (map #(zipmap [:emp_no :birth_date :first_name :last_name :gender :hire_date] %) employees-data))
+
+(time (def transrel-employees (transRel/tr xrel)))
+
+
+(time (transRel/insert transrel-employees  {:emp_no 0, :birth_date "", :first_name "", :last_name "", :gender "", :hire_date ""}))
+
+(time (transRel/insert transrel-employees  {:emp_no 99999999999, :birth_date "zzzzzzzzzzzzzzzzzzzzzzzzzz", :first_name "zzzzzzzzzzzzzzzzzzzzzzzzzz", :last_name "zzzzzzzzzzzzzzzzzzzzzzzzzz", :gender "zzzzzzzzzzzzzzzzzzzzzzzzzz", :hire_date "zzzzzzzzzzzzzzzzzzzzzzzzzz"}))
+
+
+(defn alter-insert
+  [table tupel]
+  (let [converted   (transRel/convert table)
+        manipulated (conj converted tupel)]
+    (transRel/tr manipulated)))
+
+
+(time (alter-insert transrel-employees  {:emp_no 0, :birth_date "", :first_name "", :last_name "", :gender "", :hire_date ""}))
+
+(time (alter-insert transrel-employees  {:emp_no 99999999999, :birth_date "zzzzzzzzzzzzzzzzzzzzzzzzzz", :first_name "zzzzzzzzzzzzzzzzzzzzzzzzzz", :last_name "zzzzzzzzzzzzzzzzzzzzzzzzzz", :gender "zzzzzzzzzzzzzzzzzzzzzzzzzz", :hire_date "zzzzzzzzzzzzzzzzzzzzzzzzzz"}))
+
+
+
+
+
 

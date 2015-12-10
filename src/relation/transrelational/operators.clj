@@ -165,13 +165,11 @@
   (let [counts (map #(first (last %)) (recordReconst tr))]
     (get (keyorder tr) (.indexOf counts (apply max counts)))))
 
-(defn- tupel-in-tr-not-rec
+(defn- tupel-in-tr
   [trans-table tupel]
   (let [mpa (get-most-present-attr trans-table)
         x (point-search-without-tr trans-table mpa (get tupel mpa))]
     (contains? x tupel)))
-
-
 
 
 

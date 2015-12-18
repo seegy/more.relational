@@ -147,7 +147,7 @@
 
 
 
-(defn- point-search-without-tr
+(defn- point-search
   ""
   [trans-table attr value]
   (let [binary-search (fn [column value] (java.util.Collections/binarySearch column value #(compare (:value %1) %2)))
@@ -168,7 +168,7 @@
 (defn- tupel-in-tr
   [trans-table tupel]
   (let [mpa (get-most-present-attr trans-table)
-        x (point-search-without-tr trans-table mpa (get tupel mpa))]
+        x (point-search trans-table mpa (get tupel mpa))]
     (contains? x tupel)))
 
 
@@ -326,8 +326,8 @@
 
 
 (def replace-map
-  '{and intersection
-    or union})
+  '{and clojure.set/intersection
+    or clojure.set/union})
 
 
 
@@ -372,21 +372,15 @@
   (let [up-to-down #{<= <}
         down-to-up #{>= >}
         column (get (fieldValues trans-table) attr)]
-    (tr (mapv #(retrieve trans-table % (.indexOf (keyorder trans-table) attr))
+     (mapv #(retrieve trans-table % (.indexOf (keyorder trans-table) attr))
       (flatten (map (fn [n] (range (:from n) (inc (:to n))))
          (cond
            (contains? up-to-down f) (up-to-down-scan column f right-value)
            (contains? down-to-up f) (down-to-up-scan column f right-value)
            (= not= f) (not=-scan column right-value)
-           :else [])))))))
+           :else []))))))
 
 
-
-
-(defn- point-search
-  ""
-  [trans-table attr value]
-  (tr (point-search-without-tr trans-table attr value)))
 
 
 
@@ -473,7 +467,7 @@
                                   [l-index (travel-check filtered-left l-index true filtered-right steps-left-to-right)]
                                   [r-index (travel-check filtered-right r-index false filtered-left steps-right-to-left)])
                       ]
-    (tr(reduce #(conj %1 (retrieve trans-table %2 result-column-index)) [] result-column-rows))))
+     (reduce #(conj %1 (retrieve trans-table %2 result-column-index)) [] result-column-rows)))
 
 
 
@@ -488,8 +482,8 @@
        (and (coll? ast) (contains? #{ 'and 'or} (first ast)))
             (reverse (into
               (case (first ast)
-                and '(intersection)
-                or '(union))
+                and '(clojure.set/intersection)
+                or '(clojure.set/union))
               (map #(optimize arg %) (rest ast)))),
 
        (and (coll? ast))

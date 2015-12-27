@@ -268,6 +268,26 @@ people
 
 
 
+(def some-tupel (tr #{{:id "S1"  :name "Smith"    :status 20  :city "London"   :gender "male"  }
+            {:id "S2"  :name "Jones"    :status 10  :city "Paris"    :gender "female"}
+            {:id "S3"  :name "Blake"    :status 30  :city "Paris"    :gender "male"  }
+            {:id "S4"  :name "Clark"    :status 20  :city "London"   :gender "female"}
+            {:id "S5"  :name "Adams"    :status 30  :city "Athens"   :gender "male"  }
+            {:id "S6"  :name "Miller"   :status 30  :city "Paris"    :gender "male"  }
+            {:id "S7"  :name "Thomas"   :status 20  :city "London"   :gender "female"}
+            {:id "S8"  :name "Enderson" :status 30  :city "Athens"   :gender "male"  }
+            {:id "S9"  :name "Simpson"  :status 20  :city "London"   :gender "female"}
+            {:id "S10" :name "Woods"    :status 30  :city "New York" :gender "male"  }}))
+(def employees-data (set (read-string  (str "[" (slurp  "resources/employees.clj" ) "]" ))))
+(def many-tupel (tr (map #(zipmap [:emp_no :birth_date :first_name :last_name :gender :hire_date] %) (take 10000 employees-data))))
+
+(time (project some-tupel [  :name :status]))
+(time  (project many-tupel [ :gender]))
+
+
+(convert (project many-tupel [:emp_no :birth_date :gender]))
+
+
 (time (project people [ :id :name ]))
 
 (time (project people [:status :city ]))

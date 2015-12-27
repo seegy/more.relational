@@ -100,12 +100,14 @@
                 (apply conj (vec (drop column attrs)) (drop-last (- (count attrs) column ) attrs)))
         rrt (let [ rrt (recordReconst trans-table)]
               (apply conj (vec (drop column rrt)) (drop-last  (- (count rrt) column ) rrt)))
-        recMakeTuple (fn[attrs rrt row result]
+        indizes (loop [attrs attrs
+                       rrt rrt
+                       row row
+                       result {}]
                        (if (empty? attrs)
                          result
                          (let [ cell  (nth (first rrt) row)]
-                           (recur (rest attrs) (rest rrt) (second cell) (assoc result (first attrs) cell)))))
-        indizes (recMakeTuple attrs rrt row {})
+                           (recur (rest attrs) (rest rrt) (second cell) (assoc result (first attrs) [(first cell) row])))))
         delete-Value (fn [attr index]
                        (let[untouched (take index (get (fieldValues trans-table) attr))
                             target (let [zwerg (merge-with - (nth (get (fieldValues trans-table) attr) index) {:to 1} )]
@@ -118,7 +120,7 @@
         fvt-manipulation (map (fn [[attr [index _]]] (delete-Value attr index)) indizes)
         new-fvt (apply merge (mapv (fn [attr [column _]] {attr column}) attrs fvt-manipulation))
         entry-infos (let [indizes (map #(get indizes %) attrs)]
-                      (mapv (fn [[_ a] [b c d ]] [a b c d])
+                      (mapv (fn [[_ a] [b c d ]] [c b a d])
                             (apply conj [(last indizes)] (drop-last indizes))
                             (mapv (fn [[a b] c] [a b c])  indizes (map second fvt-manipulation))))
         new-rrt (let [filtered-rrt (mapv (fn [[index _ _ _] column]
@@ -138,12 +140,39 @@
 
 
 
-(defn distinct-tr
-  "Creates set consistency in the table by deleting duplicated data rows."
+
+
+
+
+
+(defn find-duplicates
   [trans-table]
-  (let [indezes (vals (clojure.set/map-invert (into (sorted-map-by >) (map (fn [x] [x (zigzag trans-table x 0)]) (range (count trans-table))))))
-        to-delete (filter #(not (contains? (set indezes) %)) (range (count trans-table)))]
-    (reduce (fn [tr index] (delete tr index 0)) trans-table to-delete)))
+  (let [column-duplicates (loop [fvt-columns (fieldValues trans-table)
+                                 result []]
+                            (if (empty? fvt-columns)
+                              result
+                              (let [column-duplicates  (filter #(not= (:from %) (:to %)) (second (first fvt-columns)))]
+                                (if (empty? column-duplicates)
+                                  '()
+                                  (recur (rest fvt-columns) (conj result (map (fn [entry] (range (:from entry) (inc (:to entry)))) column-duplicates)))))))]
+    (if (some empty? column-duplicates)
+      [0 '()]
+      (let [column-info  (map (fn [x] [ (.indexOf column-duplicates x) (apply + (map count  x)) x]) column-duplicates)
+            few-duplicates (first (sort-by second column-info))]
+        [(first few-duplicates) (flatten (map (fn [rows ] (map #(map first (rest (second %)))
+                           (group-by second
+                                   (map (fn[row][ row (zigzag trans-table row (first few-duplicates))]) rows)))) (last few-duplicates)))]))))
+
+
+
+(defn distinct-tr [trans-table]
+  (let [[column rows] (find-duplicates trans-table)]
+    (if (empty? rows)
+      trans-table
+      (let [ row-set (set rows)
+             unique-tuples (filter #(not (contains? row-set %))  (range (count trans-table)))]
+    (tr (map #(retrieve trans-table % column) unique-tuples))))))
+
 
 
 
@@ -275,6 +304,47 @@
                                       pair-vector)))]
                   sorted)]
      (distinct-tr (tr attrs new-fvt new-rrt))))
+
+
+
+(defn project
+    ""
+  [trans-table attrs]
+  (when (not-any? #(contains? (set (keyorder trans-table)) %) attrs)
+    (throw (IllegalArgumentException. "Update map contains illegal attribute.")))
+  (let [to-delete (filterv #(not (contains? (set attrs) %)) (keyorder trans-table))
+        new-ko (filterv #(contains? (set attrs) %) (keyorder trans-table))
+        new-fvt (reduce (fn[m attr] (dissoc m attr)) (fieldValues trans-table) to-delete)
+        new-rrt (let [delete-indizes (map (fn[attr] (.indexOf (keyorder trans-table) attr)) to-delete)
+                      change-indizes (map #(mod (dec %) (count (keyorder trans-table))) delete-indizes)
+                      melted (sort  (mapv (fn [a b] [a b]) change-indizes delete-indizes ))
+                      merged (reduce (fn[m [a b]] (if (contains?  m b)
+                                                    (assoc (dissoc m b) a (get m b))
+                                                    (if (contains? (set (vals m)) a)
+                                                      (assoc m (get (clojure.set/map-invert m) a)  b)
+                                                      (assoc m a b)))) {} melted )
+                      replace-link (fn[column-index steps]
+                                     (let [columns (map #(nth (recordReconst trans-table) (mod %  (count (keyorder trans-table))))
+                                                        (range (inc column-index) (+ column-index steps 1)))
+                                           rec-replace (fn[base columns]
+                                                         (if (empty? columns)
+                                                           base
+                                                           (recur
+                                                            (map (fn [[a b]] [a (second (nth (first columns) b))]) base)
+                                                            (rest columns))))]
+                                       (rec-replace (nth (recordReconst trans-table) column-index) columns)))
+                      manipulated-columns (reduce (fn[m [a b] ] (assoc m a (replace-link a (mod (- b a) (count (keyorder trans-table)))))) {} merged)
+                      new-rrt (let [ with-new-colums (reduce (fn[m [k v]](assoc m k v)) (vec (recordReconst trans-table)) manipulated-columns )]
+                                (filter #(not (contains? (set delete-indizes) (.indexOf with-new-colums %))) with-new-colums))
+                      ]
+                  new-rrt)]
+     (distinct-tr-new (tr attrs new-fvt new-rrt))))
+
+
+
+
+
+
 
 
 

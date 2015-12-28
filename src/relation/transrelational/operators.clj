@@ -338,7 +338,7 @@
                                 (filter #(not (contains? (set delete-indizes) (.indexOf with-new-colums %))) with-new-colums))
                       ]
                   new-rrt)]
-     (distinct-tr-new (tr attrs new-fvt new-rrt))))
+     (distinct-tr (tr attrs new-fvt new-rrt))))
 
 
 
@@ -454,10 +454,10 @@
 
 
 
-(def flip-compare-map  {'<    '>=
-                        '>    '<=
-                        '>=   '<
-                        '<=   '>
+(def flip-compare-map  {'<    '>
+                        '>    '<
+                        '>=   '<=
+                        '<=   '>=
                         '=    '=
                         'not= 'not=})
 
@@ -479,11 +479,11 @@
   [tr-alias term]
   (cond
    (and (coll? term)
-        (= 2 (count term))
+        (= 2 (count term))     ; (:something t)
         (keyword? (first term))
         (= tr-alias (second term))) (first term)
    (and (coll? term)
-        (= 3 (count term))
+        (= 3 (count term))     ; (get t :something)
         (= 'get (first term))
         (= tr-alias (second term))) (last term)
    :else nil))
@@ -582,7 +582,7 @@
                                 (= 'not= f)
                                    (apply conj right left (first arg) 'not=-scan)
 
-                               :else (println :else f left right)))
+                               :else (f left right)))
 
                :else '()))), ;TODO compare without tuple
 
@@ -615,7 +615,11 @@
 
 (meta (restrict-fn [t] (and (>= 30 (:status t)) (= (:city t) "Paris"))))
 
-(meta (restrict-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris") (#(= (last %1 ) (last %2)) (:name t) (:city t)))))
+(meta (restrict-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris")
+                             (#(= (last %1 ) (last %2)) (:name t) "Paris"))))
+
+
+
 (def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
       {:id "S2" :name "Jones" :status 10 :city "Paris"}
       {:id "S3" :name "Blake" :status 30 :city "Paris"}
@@ -630,6 +634,10 @@
 (restriction people
              (restrict-fn [t] (and (= (:city t) "Paris")
                                    (#(= (last %1 ) (last %2)) (:name t) (:city t)))))
+
+(restriction people
+             (restrict-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris")
+                            (#(= (last %1 ) \s) (:name t)))))
 
 
 (area-search people :status >=  30)

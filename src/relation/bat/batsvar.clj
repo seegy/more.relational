@@ -16,79 +16,79 @@
 
 (defn assign!
   ""
-  [batRef batMap]
+  [batVar batMap]
   (dosync
-    (when-not (= (set (keys @batRef)) (set (keys batMap)))
+    (when-not (= (set (keys @batVar)) (set (keys batMap)))
       (throw (IllegalArgumentException. "Schema of map of BATs are not equal.")))
-    (ref-set batRef batMap)
-    batRef))
+    (ref-set batVar batMap)
+    batVar))
 
 
 
 (defn insert!
   ""
-  ([batRef attr head tail]
+  ([batVar attr head tail]
     (dosync
-     (def temp (OP/insert (get @batRef attr) head tail))
-     (def newBatMap (assoc @batRef attr temp))
-     (ref-set batRef newBatMap)
-     batRef))
-  ([batRef tuple]
-   (when-not (= (set (keys tuple)) (set (keys @batRef)))
+     (def temp (OP/insert (get @batVar attr) head tail))
+     (def newBatMap (assoc @batVar attr temp))
+     (ref-set batVar newBatMap)
+     batVar))
+  ([batVar tuple]
+   (when-not (= (set (keys tuple)) (set (keys @batVar)))
        (throw (IllegalArgumentException. "Schemas of map of BATs are not equal.")))
-   (let[ newId (inc (apply clojure.core/max(map (fn[[_ bat]] (max (reverse bat))) @batRef)))]
-     (map (fn[[name value]] (insert! batRef name newId value)) tuple))))
+   (let[ newId (inc (apply clojure.core/max(map (fn[[_ bat]] (max (reverse bat))) @batVar)))]
+     (map (fn[[name value]] (insert! batVar name newId value)) tuple))))
 
 
 (defn update!
   ""
-  ([batRef attr head oldTail newTail]
+  ([batVar attr head oldTail newTail]
    (dosync
-    (def temp (OP/update (get @batRef attr) head oldTail newTail))
-    (def newBatMap (assoc @batRef attr temp))
-    (ref-set batRef newBatMap)
-    batRef))
-  ([batRef attr old new]
+    (def temp (OP/update (get @batVar attr) head oldTail newTail))
+    (def newBatMap (assoc @batVar attr temp))
+    (ref-set batVar newBatMap)
+    batVar))
+  ([batVar attr old new]
    (dosync
-    (def toDelete (select (get @batRef attr) #(= % old)))
+    (def toDelete (select (get @batVar attr) #(= % old)))
     (println toDelete)
-    (def newBat  (reduce (fn[bat d] (insert (delete bat (:head d) old) (:head d) new)) (get @batRef attr) toDelete))
-    (def newBatMap (assoc @batRef attr newBat))
-    (ref-set batRef newBatMap)
-    batRef)))
+    (def newBat  (reduce (fn[bat d] (insert (delete bat (:head d) old) (:head d) new)) (get @batVar attr) toDelete))
+    (def newBatMap (assoc @batVar attr newBat))
+    (ref-set batVar newBatMap)
+    batVar)))
 
 
 (defn delete!
   ""
-  ([batRef attr head tail]
+  ([batVar attr head tail]
    (dosync
-    (def temp (OP/delete (get @batRef attr) head tail))
-    (def newBatMap (assoc  @batRef attr temp))
-    (ref-set batRef newBatMap)
-    batRef))
-  ([batRef tuple]
+    (def temp (OP/delete (get @batVar attr) head tail))
+    (def newBatMap (assoc  @batVar attr temp))
+    (ref-set batVar newBatMap)
+    batVar))
+  ([batVar tuple]
    (dosync
-    (def bunsSeq (map (fn[attr] (select (get @batRef attr) #( = % (get tuple attr)))) (keys tuple)))
+    (def bunsSeq (map (fn[attr] (select (get @batVar attr) #( = % (get tuple attr)))) (keys tuple)))
     (def joined (reduce (fn[a b] (mirror (join a b =))) (mirror (first bunsSeq)) (rest bunsSeq)))
-    (def newBatMap (reduce (fn[m [attr bat]](assoc m attr (reduce (fn[bat bun](delete bat (:head bun) (get tuple attr))) bat joined))) @batRef @batRef))
-    (ref-set batRef newBatMap)
-    batRef)))
+    (def newBatMap (reduce (fn[m [attr bat]](assoc m attr (reduce (fn[bat bun](delete bat (:head bun) (get tuple attr))) bat joined))) @batVar @batVar))
+    (ref-set batVar newBatMap)
+    batVar)))
 
 
 
 (defn makeTable!
-  ([orderseq batRef]
-   (let [keySeq (vec (keys @batRef))
-         batSeq (vec (map (fn[k] (get @batRef k)) keySeq))]
+  ([orderseq batVar]
+   (let [keySeq (vec (keys @batVar))
+         batSeq (vec (map (fn[k] (get @batVar k)) keySeq))]
      (TAB/makeTable orderseq keySeq batSeq)))
-  ([batRef]
-   (makeTable! [] batRef)))
+  ([batVar]
+   (makeTable! [] batVar)))
 
 
 (defn save-batvar
   ""
-  [batRef file]
-  (spit file (str "#batvar "(prn-str @batRef))))
+  [batVar file]
+  (spit file (str "#batvar "(prn-str @batVar))))
 
 
 (defn load-batvar

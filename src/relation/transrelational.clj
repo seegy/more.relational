@@ -26,5 +26,11 @@
   intersection
   union
   difference
-  restriction]
+  restriction
+  inner-compare
+  area-search
+  not=-scan
+  up-to-down-scan
+  down-to-up-scan
+  point-search]
  [relation.transrelational.transref])

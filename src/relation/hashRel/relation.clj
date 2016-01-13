@@ -121,7 +121,7 @@
   ([tuple-set]
     (let [tuples (if (or (empty? tuple-set) (nil? tuple-set))
                    #{}
-                   (if (map? tuple-set) #{tuple-set} tuple-set))]
+                   (if (map? tuple-set) #{tuple-set} (set tuple-set)))]
       (let [head (vec (keys (first tuples)))]
        (HashRelation.
          head

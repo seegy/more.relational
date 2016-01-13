@@ -176,7 +176,7 @@
 
 
 
-(defn- point-search
+(defn point-search
   ""
   [trans-table attr value]
   (let [binary-search (fn [column value] (java.util.Collections/binarySearch column value #(compare (:value %1) %2)))
@@ -402,7 +402,7 @@
 
 
 
-(defn- down-to-up-scan
+(defn down-to-up-scan
   ""
   [column f right-value]
   (loop [c column
@@ -414,7 +414,7 @@
 
 
 
-(defn- up-to-down-scan
+(defn up-to-down-scan
   ""
   [column f right-value]
   (loop [c column
@@ -426,7 +426,7 @@
 
 
 
-(defn- not=-scan
+(defn not=-scan
   ""
   [column value]
   (let [ops (if (string? value)
@@ -436,7 +436,7 @@
 
 
 
-(defn- area-search
+(defn area-search
   ""
   [trans-table attr f right-value]
   (let [up-to-down #{<= <}
@@ -491,7 +491,7 @@
 
 
 
-(defn- inner-compare
+(defn inner-compare
   ""
   [trans-table  f left right]
   (when (not-any? #(contains? (set (keyorder trans-table)) %) [left right])
@@ -604,7 +604,7 @@
 (defn restriction
   ""
   [trans-table rfn]
-  (rfn trans-table))
+  (tr (rfn trans-table)))
 
 
 
@@ -615,8 +615,7 @@
 
 (meta (restrict-fn [t] (and (>= 30 (:status t)) (= (:city t) "Paris"))))
 
-(meta (restrict-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris")
-                             (#(= (last %1 ) (last %2)) (:name t) "Paris"))))
+;(meta (restrict-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris") (#(= (last %1 ) (last %2)) (:name t) "Paris"))))
 
 
 
@@ -645,3 +644,33 @@
 (area-search people :city not= "London")
 (point-search people :city "London")
 (inner-compare people  #(= (last %1 ) (last %2)) :name :city)
+
+
+
+(def employees-data (take 10000 (set (read-string  (str "[" (slurp  "resources/employees.clj" ) "]" )))))
+(def xrel (map #(zipmap [:emp_no :birth_date :first_name :last_name :gender :hire_date] %) employees-data))
+
+(time (def tr-employees (tr xrel)))
+
+(time (convert (restriction tr-employees (restrict-fn [t] (= (:emp_no t) 485652)))))
+
+(time (convert (restriction tr-employees (restrict-fn [t] (= (:gender t) "F")))))
+
+  (time (convert (restriction tr-employees (restrict-fn [t] (and (= (:gender t) "F" ) (= "1952-11-09" (:birth_date t)))))))
+
+
+   (time (convert (restriction tr-employees (restrict-fn [t] (and (and (= (:gender t) "M" )
+                                                              (= "1952-11-09" (:birth_date t)))
+                                                         (or (= (:first_name t) "Genta")
+                                                              (> (:emp_no t) 35000)))))))
+
+
+
+
+
+  (def toInsert {:emp_no 0, :birth_date "", :first_name "", :last_name "", :gender "", :hire_date ""})
+  (time (insert tr-employees toInsert))
+
+  (time (delete tr-employees 0 0))
+
+

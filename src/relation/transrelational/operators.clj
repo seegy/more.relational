@@ -1,5 +1,6 @@
 (ns relation.transrelational.operators
-  (:use [relation.transrelational.table]))
+  (:use [relation.transrelational.table])
+   (:refer-clojure :exclude [extend update]))
 
 
 (require 'clojure.tools.trace)

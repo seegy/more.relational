@@ -24,6 +24,17 @@
       (apply hashCalcHelper  hashs))))
 
 
+#_(defrecord BAT [buns]
+
+   clojure.lang.Seqable
+   (seq [this]
+      ; just make a sequence
+      (seq (.buns this)))
+
+  clojure.lang.Counted
+  (count [this]
+    (count (.buns this)))
+  )
 
 
 

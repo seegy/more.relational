@@ -1,7 +1,8 @@
 (ns relation.bat.batsvar
    (:use [ relation.bat.batOperators :as OP ])
    (:use [ relation.bat.table :as TAB ])
-   (:require [clojure.edn    :as edn]))
+   (:require [clojure.edn    :as edn])
+  (:refer-clojure :exclude [find reverse slice min max update load]))
 
 
 (defn batvar

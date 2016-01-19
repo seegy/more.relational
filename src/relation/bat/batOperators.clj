@@ -1,6 +1,7 @@
 (ns relation.bat.batOperators
    (:use [relation.bat.table])
-   (:require [clojure.edn    :as edn]))
+   (:require [clojure.edn    :as edn])
+  (:refer-clojure :exclude [find reverse slice min max update load]))
 
  (defn find
    "Returns the tail value of first bun for head, or nil if not exists."

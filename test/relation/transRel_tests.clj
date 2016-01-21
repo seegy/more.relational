@@ -15,7 +15,6 @@
 
 
 
-
 (deftest convert-test
   (testing "create relation"
     (let [relation (tr people)]
@@ -26,6 +25,22 @@
     (let [relation (tr people)
           converted-result (convert relation)]
       (is (= (set converted-result) (set people))))))
+
+
+
+(deftest insert-test
+  (testing "new tuple"
+     (let [relation (tr people)
+          tuple {:id "S6" :name "Jeff" :status 10 :city "Berlin"}
+          inserted (insert relation tuple)]
+       (is (= (count relation) (dec (count inserted))))
+       (is (= (set (convert inserted)) (conj people tuple)))))
+  (testing "duplicate"
+    (let [relation (tr people)
+          tuple {:id "S5" :name "Adams" :status 30 :city "Athens"}
+          inserted (insert relation tuple)]
+      (is (= relation inserted)))))
+
 
 
 
@@ -56,7 +71,7 @@
 
 
 
-(deftest aggregats
+(deftest aggregat-test
   (testing "max"
     (let [relation (tr people)]
       (is (= 30 (max relation :status)))))

@@ -1,5 +1,6 @@
 (ns relation.transrelational.operators
-  (:use [relation.transrelational.table]))
+  (:use [relation.transrelational.table])
+   (:refer-clojure :exclude [extend update]))
 
 
 (require 'clojure.tools.trace)
@@ -442,13 +443,13 @@
   (let [up-to-down #{<= <}
         down-to-up #{>= >}
         column (get (fieldValues trans-table) attr)]
-     (mapv #(retrieve trans-table % (.indexOf (keyorder trans-table) attr))
+     (set (map #(retrieve trans-table % (.indexOf (keyorder trans-table) attr))
       (flatten (map (fn [n] (range (:from n) (inc (:to n))))
          (cond
            (contains? up-to-down f) (up-to-down-scan column f right-value)
            (contains? down-to-up f) (down-to-up-scan column f right-value)
            (= not= f) (not=-scan column right-value)
-           :else []))))))
+           :else [])))))))
 
 
 
@@ -590,13 +591,33 @@
 
 
 
-(defmacro restrict-fn
+(defmacro restrict-fn-analytic
   ""
   [arg body]
   (let [optimized (optimize arg body)]
-    (with-meta (list 'fn arg optimized)
+    (with-meta (list 'quote optimized)
                 {:body (list 'quote optimized)})))
 
+
+
+
+
+
+(defmacro restrict-fn
+  ""
+  [args body]
+  (with-meta (list 'fn args body)
+             {:args (list 'quote args)
+              :body (list 'quote body)}))
+
+
+
+(defn- pred-search
+  ""
+  [trans-table rfn]
+  (let [pred (list 'fn (:args (meta rfn))
+                  (optimize (:args (meta rfn)) (:body (meta rfn))))]
+   ((binding [*ns* (the-ns 'relation.transrelational.operators)] (eval pred)) trans-table)))
 
 
 
@@ -604,73 +625,7 @@
 (defn restriction
   ""
   [trans-table rfn]
-  (tr (rfn trans-table)))
+  (tr (pred-search trans-table rfn)))
 
-
-
-
-;##################### Restriktions-Problem
-
-
-
-(meta (restrict-fn [t] (and (>= 30 (:status t)) (= (:city t) "Paris"))))
-
-;(meta (restrict-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris") (#(= (last %1 ) (last %2)) (:name t) "Paris"))))
-
-
-
-(def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
-      {:id "S2" :name "Jones" :status 10 :city "Paris"}
-      {:id "S3" :name "Blake" :status 30 :city "Paris"}
-      {:id "S4" :name "Clark" :status 20 :city "London"}
-      {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
-
-
-
-(restriction people
-             (restrict-fn [t] (and (>= 30 (:status t)) (= (:city t) "Paris"))))
-
-(restriction people
-             (restrict-fn [t] (and (= (:city t) "Paris")
-                                   (#(= (last %1 ) (last %2)) (:name t) (:city t)))))
-
-(restriction people
-             (restrict-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris")
-                            (#(= (last %1 ) \s) (:name t)))))
-
-
-(area-search people :status >=  30)
-(area-search people :status < 30)
-(area-search people :city not= "London")
-(point-search people :city "London")
-(inner-compare people  #(= (last %1 ) (last %2)) :name :city)
-
-
-
-(def employees-data (take 10000 (set (read-string  (str "[" (slurp  "resources/employees.clj" ) "]" )))))
-(def xrel (map #(zipmap [:emp_no :birth_date :first_name :last_name :gender :hire_date] %) employees-data))
-
-(time (def tr-employees (tr xrel)))
-
-(time (convert (restriction tr-employees (restrict-fn [t] (= (:emp_no t) 485652)))))
-
-(time (convert (restriction tr-employees (restrict-fn [t] (= (:gender t) "F")))))
-
-  (time (convert (restriction tr-employees (restrict-fn [t] (and (= (:gender t) "F" ) (= "1952-11-09" (:birth_date t)))))))
-
-
-   (time (convert (restriction tr-employees (restrict-fn [t] (and (and (= (:gender t) "M" )
-                                                              (= "1952-11-09" (:birth_date t)))
-                                                         (or (= (:first_name t) "Genta")
-                                                              (> (:emp_no t) 35000)))))))
-
-
-
-
-
-  (def toInsert {:emp_no 0, :birth_date "", :first_name "", :last_name "", :gender "", :hire_date ""})
-  (time (insert tr-employees toInsert))
-
-  (time (delete tr-employees 0 0))
 
 

@@ -2,7 +2,8 @@
   (:use [potemkin])
   (:require  [relation.transrelational.table]
              [relation.transrelational.operators]
-             [relation.transrelational.transref]))
+             [relation.transrelational.transref])
+   (:refer-clojure :exclude [extend update]))
 
 
 (import-vars

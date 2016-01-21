@@ -5,7 +5,9 @@
             [clojure.edn    :as edn]
             [relation.bat.batsvar]
             [relation.bat.table]
-            [relation.bat.batOperators]))
+            [relation.bat.batOperators])
+
+  (:refer-clojure :exclude [find reverse slice min max update load]))
 
 
 

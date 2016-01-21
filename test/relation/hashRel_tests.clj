@@ -89,8 +89,8 @@
 
 
 
-
-(deftest join-test
+;TODO
+#_(deftest join-test
   (testing "join"
     (let [r-rs (join r rs)]
         (is (= #{:id :name :address :sid :quantity} (set (scheme r-rs))))

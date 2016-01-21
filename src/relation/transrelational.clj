@@ -3,7 +3,7 @@
   (:require  [relation.transrelational.table]
              [relation.transrelational.operators]
              [relation.transrelational.transref])
-   (:refer-clojure :exclude [extend update]))
+   (:refer-clojure :exclude [extend update max min ]))
 
 
 (import-vars
@@ -33,5 +33,8 @@
   not=-scan
   up-to-down-scan
   down-to-up-scan
-  point-search]
+  point-search
+  max
+  min
+  sum]
  [relation.transrelational.transref])

@@ -1,16 +1,32 @@
 (ns relation.transRel-tests
    (:use clojure.test)
    (:require [relation.transrelational :refer :all])
-   (:refer-clojure :exclude [extend update]))
+   (:refer-clojure :exclude [extend update max min]))
 
 
 
 
-(def people [{:id "S1" :name "Smith" :status 20 :city "London"}
+(def people #{{:id "S1" :name "Smith" :status 20 :city "London"}
       {:id "S2" :name "Jones" :status 10 :city "Paris"}
       {:id "S3" :name "Blake" :status 30 :city "Paris"}
       {:id "S4" :name "Clark" :status 20 :city "London"}
-      {:id "S5" :name "Adams" :status 30 :city "Athens"}])
+      {:id "S5" :name "Adams" :status 30 :city "Athens"}})
+
+
+
+
+
+(deftest convert-test
+  (testing "create relation"
+    (let [relation (tr people)]
+      (is (-> relation keyorder empty? not))
+      (is (-> relation fieldValues empty? not))
+      (is (-> relation recordReconst empty? not))))
+  (testing "convert relation"
+    (let [relation (tr people)
+          converted-result (convert relation)]
+      (is (= (set converted-result) (set people))))))
+
 
 
 (deftest search-test
@@ -22,14 +38,34 @@
             result (restriction relation pred)
             converted-result (convert result)]
         (is (= 2 (count result)))
+        (is (= 2 (count converted-result)))
         (is (every? pred converted-result)))
 
       (let [pred (restrict-fn [t] (and (= "Paris" (:city t)) (<= 30 (:status t))))
             result (restriction relation pred)
             converted-result (convert result)]
         (is (= 1 (count result)))
-        (is (every? pred converted-result))))))
+        (is (= 1 (count converted-result)))
+        (is (every? pred converted-result)))
 
+      (let [pred (restrict-fn [t] (< 30 (:status t)))
+            result (restriction relation pred)]
+        (is (= 0 (count result)))
+        (is (= (keyorder relation) (keyorder result)))))))
+
+
+
+
+(deftest aggregats
+  (testing "max"
+    (let [relation (tr people)]
+      (is (= 30 (max relation :status)))))
+  (testing "min"
+    (let [relation (tr people)]
+      (is (= 10 (min relation :status)))))
+  (testing "sum"
+    (let [relation (tr people)]
+      (is (= 110 (sum relation :status))))))
 
 
 #_(

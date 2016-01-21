@@ -1,6 +1,6 @@
 (ns relation.transrelational.operators
   (:use [relation.transrelational.table])
-   (:refer-clojure :exclude [extend update]))
+   (:refer-clojure :exclude [extend update max min ]))
 
 
 (require 'clojure.tools.trace)
@@ -17,6 +17,8 @@
 
 (defn- drop-index [col idx]
   (filter identity (map-indexed #(if (not= %1 idx) %2) col)))
+
+
 
 (defmacro tr-fn
   "Behaves like fn, but stores the source code in the metadata to allow
@@ -177,11 +179,20 @@
 
 
 
+  (defn- search
+   ""
+   [column value]
+    (let [found (filter #(= (:value %) value) column)]
+      (if (empty? found)
+        -1
+        (.indexOf column (first found)))))
+
+
+
 (defn point-search
   ""
   [trans-table attr value]
-  (let [binary-search (fn [column value] (java.util.Collections/binarySearch column value #(compare (:value %1) %2)))
-        found (binary-search (get (fieldValues trans-table) attr) value)]
+  (let [found (search (get (fieldValues trans-table) attr) value)]
    (if (neg? found)
       #{}
       (let [entry (nth  (get (fieldValues trans-table) attr) found)]
@@ -193,7 +204,7 @@
 
 (defn- get-most-present-attr [tr]
   (let [counts (map #(first (last %)) (recordReconst tr))]
-    (get (keyorder tr) (.indexOf counts (apply max counts)))))
+    (get (keyorder tr) (.indexOf counts (apply clojure.core/max counts)))))
 
 (defn- tupel-in-tr
   [trans-table tupel]
@@ -625,7 +636,74 @@
 (defn restriction
   ""
   [trans-table rfn]
-  (tr (pred-search trans-table rfn)))
+  (let[tuples (pred-search trans-table rfn)]
+      (tr (keyorder trans-table) tuples)))
 
 
+
+
+
+(defn max
+  ""
+  [trans-table attr]
+  (-> trans-table
+      fieldValues
+      (get attr)
+      last
+      :value))
+
+
+(defn min
+  ""
+  [trans-table attr]
+  (-> trans-table
+      fieldValues
+      (get attr)
+      first
+      :value))
+
+
+(defn sum
+  ""
+  [trans-table attr]
+  (reduce #(+ %1 (* (:value %2) (inc (- (:to %2) (:from %2))))) 0  (-> trans-table fieldValues (get attr))))
+
+
+
+
+; ############################################################################################################################
+#_(
+
+(def employees-data (take 10000 (set (read-string  (str "[" (slurp  "resources/employees.clj" ) "]" )))))
+(def xrel (map #(zipmap [:emp_no :birth_date :first_name :last_name :gender :hire_date] %) employees-data))
+(def tr-employees (tr xrel))
+
+ (time (restriction tr-employees (restrict-fn [t] (and (= (:gender t) "F" ) (= "1952-11-09" (:birth_date t))))))
+ (time (restriction tr-employees (restrict-fn [t] (= (:gender t) "F" ) )))
+ (time (restriction tr-employees (restrict-fn [t] (= "1952-11-09" (:birth_date t)))))
+
+
+(time (doall (map #(zigzag tr-employees % 0)  (range 10000))))
+(time (doall (map #(retrieve tr-employees % 0)  (range 10000))))
+
+
+(time (point-search  tr-employees :gender "F"))
+
+
+ (defn zigzag
+  "Get a row of data by the numeric position of one of the cells in the transrelational table."
+  [trans-table row column]
+  (let [rrt (recordReconst trans-table)
+        rrt (apply conj (vec (drop column rrt)) (drop-last  (- (count rrt) column ) rrt))]
+     (loop [rrt rrt
+            row row
+            result []]
+       (if (empty? rrt)
+           result
+           (let [[value-link next-row] (nth (first rrt) row)]
+                (recur (rest rrt) next-row (conj result value-link)))))))
+
+
+
+ )
 

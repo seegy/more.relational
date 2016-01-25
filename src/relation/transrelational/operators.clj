@@ -671,8 +671,65 @@
 
 
 
+
+(defn join
+  ""
+  [r s]
+  (let [common-attrs (remove nil? (map #(some #{%} (keyorder r)) (keyorder s)))
+
+        currently-relevant-attr (first common-attrs)
+        r-fvt-col (get (fieldValues r) currently-relevant-attr)
+        s-fvt-col (get (fieldValues s) currently-relevant-attr)
+        r-pos (.indexOf (keyorder r) currently-relevant-attr)
+        s-pos (.indexOf (keyorder s) currently-relevant-attr)
+        match-entries (loop [r (seq r-fvt-col)
+                             s (seq s-fvt-col)
+                             result []]
+                        (if (or (empty? r) (empty? s))
+                          result
+                          (let [rf (first r)
+                                s (drop-while #(->> % first :value (compare (:value rf)) neg?)  s)
+                                sf (first s)]
+                            (if (= (:value rf) (:value sf))
+                              (recur (rest r) (rest s) (conj result [rf sf]))
+                              (recur (rest r) s result)))))
+        match-indizes (map (fn [[r-entry s-entry]] [(range (:from r-entry) (inc (:to r-entry)))
+                                                    (range (:from s-entry) (inc (:to s-entry)))]) match-entries)
+        r-tuples (->> match-indizes (map first) flatten set (map (fn [x] [x (retrieve r x r-pos)])) (into {}))
+        s-tuples (->> match-indizes (map second) flatten set (map (fn[x] [x (retrieve s x s-pos)])) (into {}))
+        pairs-to-join (reduce (fn[result [[r-index _] s-indezes]]
+                         (reduce (fn[result s-index] (conj result [ (get r-tuples r-index)
+                                                                    (get s-tuples s-index) ]))
+                                 result s-indezes)) #{} match-indizes)
+        merged (set (remove nil? (map (fn [[r-tuple  s-tuple]] (if (= (select-keys r-tuple (rest common-attrs))
+                                                    (select-keys s-tuple (rest common-attrs)))
+                                               (merge r-tuple s-tuple)
+                                               nil)) pairs-to-join)))]
+    (tr merged)))
+
+
+
+
 ; ############################################################################################################################
 #_(
+   (def s (tr #{{:sid "S1" :name "Smith" :status 20 :city "London"}
+      {:sid "S2" :name "Jones" :status 10 :city "Paris"}
+      {:sid "S3" :name "Blake" :status 30 :city "Paris"}
+      {:sid "S4" :name "Clark" :status 20 :city "London"}
+      {:sid "S5" :name "Adams" :status 30 :city "Athens"}}))
+
+
+(def spj (tr #{{ :sid "S1" :pid "P1" :jid "J1" :qty 200}
+               { :sid "S1" :pid "P3" :jid "J2" :qty 100}
+               { :sid "S2" :pid "P1" :jid "J1" :qty 200}
+               { :sid "S2" :pid "P1" :jid "J2" :qty 500}
+               { :sid "S2" :pid "P2" :jid "J2" :qty 500}
+               { :sid "S3" :pid "P1" :jid "J1" :qty 100}
+               { :sid "S3" :pid "P2" :jid "J2" :qty 500}
+               { :sid "S3" :pid "P3" :jid "J1" :qty 200}
+               { :sid "S3" :pid "P3" :jid "J2" :qty 200}}))
+
+   (join s spj)
 
 (def employees-data (take 10000 (set (read-string  (str "[" (slurp  "resources/employees.clj" ) "]" )))))
 (def xrel (map #(zipmap [:emp_no :birth_date :first_name :last_name :gender :hire_date] %) employees-data))

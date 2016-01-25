@@ -12,10 +12,10 @@
       {:id "S4" :name "Clark" :status 20 :city "London"}
       {:id "S5" :name "Adams" :status 30 :city "Athens"}})
 
-(def sp #{{:sno "S1" :pno "P1" :qty 300}
-          {:sno "S2" :pno "P1" :qty 200}
-          {:sno "S1" :pno "P3" :qty 200}
-          {:sno "S2" :pno "P2" :qty 200}})
+(def sp #{{:id "S1" :pno "P1" :qty 300}
+          {:id "S2" :pno "P1" :qty 200}
+          {:id "S1" :pno "P3" :qty 200}
+          {:id "S2" :pno "P2" :qty 200}})
 
 
 (deftest convert-test
@@ -102,7 +102,7 @@
   (testing "join"
     (let [s (tr people)
           sp (tr sp)
-          s-sp (join s p)]
+          s-sp (join s sp)]
       (is (= (set (convert s-sp)) #{{:id "S1" :name "Smith" :status 20 :city "London" :pno "P1" :qty 300}
                                     {:id "S2" :name "Jones" :status 10 :city "Paris" :pno "P1" :qty 200}
                                     {:id "S1" :name "Smith" :status 20 :city "London" :pno "P3" :qty 200}

@@ -12,7 +12,10 @@
       {:id "S4" :name "Clark" :status 20 :city "London"}
       {:id "S5" :name "Adams" :status 30 :city "Athens"}})
 
-
+(def sp #{{:sno "S1" :pno "P1" :qty 300}
+          {:sno "S2" :pno "P1" :qty 200}
+          {:sno "S1" :pno "P3" :qty 200}
+          {:sno "S2" :pno "P2" :qty 200}})
 
 
 (deftest convert-test
@@ -20,7 +23,18 @@
     (let [relation (tr people)]
       (is (-> relation keyorder empty? not))
       (is (-> relation fieldValues empty? not))
-      (is (-> relation recordReconst empty? not))))
+      (is (-> relation recordReconst empty? not)))
+
+    (let [relation (tr people)
+          relation2 (tr  [:id :name :status :city]
+                         [["S1" "Smith" 20 "London"]
+                          {:id "S2" :name "Jones" :status 10 :city "Paris"}
+                          ["S3" "Blake" 30 "Paris"]
+                          ["S4" "Clark" 20 "London"]
+                          {:status 30 :name "Adams" :city "Athens" :id "S5"}])]
+
+      (is (= (set (convert relation)) (set (convert relation2)) (set people)))))
+
   (testing "convert relation"
     (let [relation (tr people)
           converted-result (convert relation)]
@@ -81,6 +95,18 @@
   (testing "sum"
     (let [relation (tr people)]
       (is (= 110 (sum relation :status))))))
+
+
+
+(deftest join-test
+  (testing "join"
+    (let [s (tr people)
+          sp (tr sp)
+          s-sp (join s p)]
+      (is (= (set (convert s-sp)) #{{:id "S1" :name "Smith" :status 20 :city "London" :pno "P1" :qty 300}
+                                    {:id "S2" :name "Jones" :status 10 :city "Paris" :pno "P1" :qty 200}
+                                    {:id "S1" :name "Smith" :status 20 :city "London" :pno "P3" :qty 200}
+                                    {:id "S2" :name "Jones" :status 10 :city "Paris" :pno "P2" :qty 200}})))))
 
 
 #_(

@@ -108,6 +108,17 @@
 
 
 
+(defn- format-table
+  [keyorder table]
+  (remove nil? (map (fn[tuple] (cond
+                                   (map? tuple)     (select-keys tuple keyorder)
+                                   (vector? tuple)  (zipmap keyorder tuple)
+                                   (seq? tuple)     (zipmap keyorder tuple)
+                                   :else nil))
+        table)))
+
+
+
 (defn tr
   "Creates a transrelational table by a collection of hash-maps with the same keys or by a
   prebuildes structure of keyorder, field value table and record reconstrution table."
@@ -119,7 +130,7 @@
           rrt (create-rrt permutation keyorder fvt)]
      (Transrelation. keyorder fvt rrt)))
   ([keyorder table]
-    (let [table (distinct (vec table))
+    (let [table (distinct (vec (format-table keyorder table)))
           permutation (create-raw-permutation table keyorder)
           fvt (create-fvt-by-raw-perm permutation)
           rrt (create-rrt permutation keyorder fvt)]

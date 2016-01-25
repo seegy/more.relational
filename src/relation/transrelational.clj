@@ -36,5 +36,6 @@
   point-search
   max
   min
-  sum]
+  sum
+  join]
  [relation.transrelational.transref])

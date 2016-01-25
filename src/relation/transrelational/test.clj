@@ -6,6 +6,29 @@
 
 
 
+(def s (tr [:sno :sname :status :scity]
+         [["S1" "Smith" 20 "London"]
+          ["S2" "Jones" 10 "Paris"]
+          ["S3" "Blake" 30 "Paris"]
+          ["S4" "Clark" 10 "London"]
+          ["S5" "Adams" 30 "Athen"]]))
+s
+
+
+
+(def sp (tr [:sno :pno :qty]
+                 [["S1" "P1" 300]
+                  ["S2" "P1" 200]
+                  ["S1" "P3" 200]
+                  ["S2" "P2" 200]]))
+sp
+
+(def p (tr [:pno :pname :color :weight :pcity]
+                [["P1" "Nut" "Red" 12 "London"]
+                 ["P2" "Bolt" "Green" 17 "Paris"]]))
+p
+
+
 (defn- melt [f a b & more]
   (let [args (filter #(not (nil? %)) (conj [] a b more))]
     (when-not (= (map count args))
@@ -109,28 +132,6 @@ after-insert
 
 
 
- (def people (tr [ {:id "S1" :name "Smith" :status 20 :city "London"}
-      {:id "S2" :name "Jones" :status 10 :city "Paris"}
-      {:id "S3" :name "Blake" :status 30 :city "Paris"}
-      {:id "S4" :name "Clark" :status 20 :city "London"}
-      {:id "S5" :name "Adams" :status 30 :city "Athens"}]))
- (recordReconst people)
-
-  (def toInsert {:id "S1" :name "Blake" :status 0 :city "Athens"})
-
- (def afterInsert (insert people toInsert))
- afterInsert
- (convert afterInsert)
-
-
-(= (vec(convert afterInsert))
-   [ {:id "S1" :name "Smith" :status 20 :city "London"}
-     {:id "S1" :name "Blake" :status 0 :city "Athens"}
-      {:id "S2" :name "Jones" :status 10 :city "Paris"}
-      {:id "S3" :name "Blake" :status 30 :city "Paris"}
-      {:id "S4" :name "Clark" :status 20 :city "London"}
-      {:id "S5" :name "Adams" :status 30 :city "Athens"}
-     ])
 
 
 

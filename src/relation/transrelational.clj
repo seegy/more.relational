@@ -28,12 +28,6 @@
   union
   difference
   restriction
-  inner-compare
-  area-search
-  not=-scan
-  up-to-down-scan
-  down-to-up-scan
-  point-search
   max
   min
   sum

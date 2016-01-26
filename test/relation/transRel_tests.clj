@@ -59,8 +59,6 @@
 
 
 (deftest search-test
-  (testing "point-search")
-  (testing "area-search")
   (testing "restriction"
     (let [relation (tr people)]
       (let [pred (restrict-fn [t] (<= 30 (:status t)))
@@ -80,6 +78,10 @@
       (let [pred (restrict-fn [t] (< 30 (:status t)))
             result (restriction relation pred)]
         (is (= 0 (count result)))
+        (is (= (keyorder relation) (keyorder result))))
+      (let [pred (restrict-fn [t] (#(= (last %1 ) (last %2)) (:name t) (:city t)))
+            result (restriction relation pred)]
+        (is (= 2 (count result)))
         (is (= (keyorder relation) (keyorder result)))))))
 
 
@@ -109,43 +111,3 @@
                                     {:id "S2" :name "Jones" :status 10 :city "Paris" :pno "P2" :qty 200}})))))
 
 
-#_(
-(meta (restrict-fn [t] (and (>= 30 (:status t)) (= (:city t) "Paris"))))
-
-;(meta (restrict-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris") (#(= (last %1 ) (last %2)) (:name t) "Paris"))))
-
-
-
-
-
-(restrict-fn-analytic [t] (and (= "Paris" (:city t))  (<= 30 (:status t))))
-
-
-(pred-search people
-             (restrict-fn [t] (and (= "Paris" (:city t)) (<= 30 (:status t)))))
-
-(restriction people
-             (restrict-fn [t] (and (= "Paris" (:city t)) (<= 30 (:status t)))))
-
-
-(clojure.set/intersection (point-search people :city "Paris") (area-search people :status >= 30))
-
-
-(restriction people
-             (restrict-fn [t] (and (>= 30 (:status t)) (= (:city t) "Paris"))))
-
-(restriction people
-             (restrict-fn [t] (and (= (:city t) "Paris")
-                                   (#(= (last %1 ) (last %2)) (:name t) (:city t)))))
-
-(restriction people
-             (restrict-fn [t] (and (>= (:status t) 30) (= (:city t) "Paris")
-                            (#(= (last %1 ) \s) (:name t)))))
-
-
-(area-search people :status >=  30)
-(area-search people :status < 30)
-(area-search people :city not= "London")
-(point-search people :city "London")
-(inner-compare people  #(= (last %1 ) (last %2)) :name :city)
-)

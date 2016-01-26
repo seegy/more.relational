@@ -673,7 +673,7 @@
 
 
 (defn join
-  ""
+  "Join relations r and s by their common attributes."
   [r s]
   (let [common-attrs (remove nil? (map #(some #{%} (keyorder r)) (keyorder s)))
 
@@ -712,40 +712,17 @@
 
 ; ############################################################################################################################
 #_(
-   (def s (tr #{{:sid "S1" :name "Smith" :status 20 :city "London"}
-      {:sid "S2" :name "Jones" :status 10 :city "Paris"}
-      {:sid "S3" :name "Blake" :status 30 :city "Paris"}
-      {:sid "S4" :name "Clark" :status 20 :city "London"}
-      {:sid "S5" :name "Adams" :status 30 :city "Athens"}}))
-
-
-(def spj (tr #{{ :sid "S1" :pid "P1" :jid "J1" :qty 200}
-               { :sid "S1" :pid "P3" :jid "J2" :qty 100}
-               { :sid "S2" :pid "P1" :jid "J1" :qty 200}
-               { :sid "S2" :pid "P1" :jid "J2" :qty 500}
-               { :sid "S2" :pid "P2" :jid "J2" :qty 500}
-               { :sid "S3" :pid "P1" :jid "J1" :qty 100}
-               { :sid "S3" :pid "P2" :jid "J2" :qty 500}
-               { :sid "S3" :pid "P3" :jid "J1" :qty 200}
-               { :sid "S3" :pid "P3" :jid "J2" :qty 200}}))
-
-   (join s spj)
 
 (def employees-data (take 10000 (set (read-string  (str "[" (slurp  "resources/employees.clj" ) "]" )))))
 (def xrel (map #(zipmap [:emp_no :birth_date :first_name :last_name :gender :hire_date] %) employees-data))
 (def tr-employees (tr xrel))
 
- (time (restriction tr-employees (restrict-fn [t] (and (= (:gender t) "F" ) (= "1952-11-09" (:birth_date t))))))
- (time (restriction tr-employees (restrict-fn [t] (= (:gender t) "F" ) )))
- (time (restriction tr-employees (restrict-fn [t] (= "1952-11-09" (:birth_date t)))))
 
+(def salaries-data (take 10000  (set (read-string  (str "[" (slurp  "resources/salaries.clj" ) "]" )))))
+(def xrel-sal (map #(zipmap [:emp_no :salary :from_date :to_date] %) salaries-data))
+(def tr-salaries (tr xrel-sal))
 
-(time (doall (map #(zigzag tr-employees % 0)  (range 10000))))
-(time (doall (map #(retrieve tr-employees % 0)  (range 10000))))
-
-
-(time (point-search  tr-employees :gender "F"))
-
+(join tr-employees tr-salaries)
 
  (defn zigzag
   "Get a row of data by the numeric position of one of the cells in the transrelational table."

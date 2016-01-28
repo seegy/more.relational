@@ -32,12 +32,12 @@
 
 
  (defn travel [rrt row column steps]
-   (let [columns (map #(nth rrt (mod %  (count rrt)))
+   (let [columns (mapv #(get rrt (mod %  (count rrt)))
                       (range  column (+ column steps 1)))
          rec-travel (fn [row columns ]
                       (if (empty? (rest columns))
-                        (nth (first columns) row)
-                        (recur (second (nth (first columns) row))  (rest columns))))]
+                        (get (first columns) row)
+                        (recur (second (get (first columns) row))  (rest columns))))]
      (rec-travel row columns)))
 
 
@@ -53,7 +53,7 @@
             result []]
        (if (empty? rrt)
            result
-           (let [[value-link next-row] (nth (first rrt) row)]
+           (let [[value-link next-row] (get (first rrt) row)]
                 (recur (rest rrt) next-row (conj result value-link)))))))
 
 
@@ -109,28 +109,28 @@
                        result {}]
                        (if (empty? attrs)
                          result
-                         (let [ cell  (nth (first rrt) row)]
+                         (let [ cell  (get (first rrt) row)]
                            (recur (rest attrs) (rest rrt) (second cell) (assoc result (first attrs) [(first cell) row])))))
         delete-Value (fn [attr index]
                        (let[untouched (take index (get (fieldValues trans-table) attr))
-                            target (let [zwerg (merge-with - (nth (get (fieldValues trans-table) attr) index) {:to 1} )]
+                            target (let [zwerg (merge-with - (get (get (fieldValues trans-table) attr) index) {:to 1} )]
                                      (if (< (:to zwerg ) (:from zwerg))
                                        '()
                                        [zwerg]))
                             tail (map (fn [m] (merge-with - m {:from 1 :to 1} )) (drop (inc index) (get (fieldValues trans-table) attr))) ]
-                         [(concat untouched target  tail)
+                         [(into [] (concat untouched target  tail))
                           (empty? target)]))
         fvt-manipulation (map (fn [[attr [index _]]] (delete-Value attr index)) indizes)
-        new-fvt (apply merge (mapv (fn [attr [column _]] {attr column}) attrs fvt-manipulation))
+        new-fvt (apply merge (map (fn [attr [column _]] {attr column}) attrs fvt-manipulation))
         entry-infos (let [indizes (map #(get indizes %) attrs)]
                       (mapv (fn [[_ a] [b c d ]] [c b a d])
-                            (apply conj [(last indizes)] (drop-last indizes))
+                            (vec (concat (rest indizes) [(first indizes)]))
                             (mapv (fn [[a b] c] [a b c])  indizes (map second fvt-manipulation))))
         new-rrt (let [filtered-rrt (mapv (fn [[index _ _ _] column]
                                            (concat (take index column) (drop (inc index) column)))
                                          entry-infos rrt)
                       new-rrt (mapv (fn [[_ value-link next-link is-deleted] column]
-                                     ( map (fn[[cell-value cell-next]]
+                                     ( mapv (fn[[cell-value cell-next]]
                                             [(if (and is-deleted (> cell-value value-link))
                                                (dec cell-value)
                                                cell-value)
@@ -140,9 +140,6 @@
                                                )]) column)) entry-infos filtered-rrt)]
                   (apply conj (vec (drop (- (count rrt) column ) new-rrt)) (drop-last  column new-rrt)))]
    (tr (keyorder trans-table)  new-fvt new-rrt)))
-
-
-
 
 
 
@@ -195,7 +192,7 @@
   (let [found (search (get (fieldValues trans-table) attr) value)]
    (if (neg? found)
       #{}
-      (let [entry (nth  (get (fieldValues trans-table) attr) found)]
+      (let [entry (get  (get (fieldValues trans-table) attr) found)]
         (set (map #(retrieve trans-table % (.indexOf (keyorder trans-table) attr)) (range (:from entry) (inc (:to entry)))))))))
 
 
@@ -225,7 +222,7 @@
     (let [fvt-manipulation (reduce (fn [m [k v]](assoc m k
                                          (let[old-column (get  (fieldValues trans-table) k)
                                               untouched (filter #(neg? (compare (:value %) v)) old-column)
-                                              increased (sequence (comp
+                                              increased (into [] (comp
                                                                    (map (fn[cell] (merge-with + cell {:from 1 :to 1})))
                                                                    (filter #(pos? (compare (:value %) v)))
                                                                    ) old-column)
@@ -233,7 +230,7 @@
                                                        (if (nil? found)
                                                          (let [index (if (empty? untouched) 0 (inc (:to (last untouched))))]{:value v :from index :to index})
                                                          (merge-with + found {:to 1})))]
-                                            [(concat untouched [target] increased) [target (count untouched)]]))) {}  data-row )
+                                            [(into [] (concat untouched [target] increased)) [target (count untouched)]]))) {}  data-row )
           new-fvt (reduce (fn[m [k [ v _ ]]] (assoc m k v)) {} fvt-manipulation)
           new-rrt (let [inserts (reduce (fn[m [k [ _ v ]]] (assoc m k v)) {} fvt-manipulation)
                         inserts-in-order (map #(get inserts %) (keyorder trans-table))
@@ -243,11 +240,13 @@
                                                       (= (:to (first a)) (:from (first a)))] )
                                           inserts-in-order (conj (vec (rest inserts-in-order)) (first inserts-in-order)))]
                     (mapv (fn[column [a-value-index a-next-pointer b-next-pointer a-is-new]]
-                            (let [prepared-column (map (fn [[ a b ]] [ (if (and (>= a a-value-index) a-is-new) (inc a) a)
+                            (let [prepared-column (mapv (fn [[ a b ]] [ (if (and (>= a a-value-index) a-is-new) (inc a) a)
                                                                        (if (>= b b-next-pointer) (inc b) b) ]) column)]
-                                                   (concat (take a-next-pointer prepared-column) [[a-value-index b-next-pointer]] (drop a-next-pointer prepared-column) )))
+                                                   (into [] (concat (take a-next-pointer prepared-column) [[a-value-index b-next-pointer]] (drop a-next-pointer prepared-column)))))
                           (recordReconst trans-table) entry-infos))]
        (tr (keyorder trans-table) new-fvt new-rrt))))
+
+
 
 
 (defn update
@@ -276,48 +275,6 @@
 
 
 
-(defn project
-    ""
-  [trans-table attrs]
-  (when (not-any? #(contains? (set (keyorder trans-table)) %) attrs)
-    (throw (IllegalArgumentException. "Update map contains illegal attribute.")))
-  (let [to-delete (filterv #(not (contains? (set attrs) %)) (keyorder trans-table))
-        new-ko (filterv #(contains? (set attrs) %) (keyorder trans-table))
-        new-fvt (reduce (fn[m attr] (dissoc m attr)) (fieldValues trans-table) to-delete)
-        new-rrt (let [delete-indizes (map (fn[attr] (.indexOf (keyorder trans-table) attr)) to-delete)
-                      change-indizes (map #(mod (dec %) (count (keyorder trans-table))) delete-indizes)
-                      melted (sort  (mapv (fn [a b] [a b]) change-indizes delete-indizes ))
-                      merged (reduce (fn[m [a b]] (if (contains?  m b)
-                                                    (assoc (dissoc m b) a (get m b))
-                                                    (if (contains? (set (vals m)) a)
-                                                      (assoc m (get (clojure.set/map-invert m) a)  b)
-                                                      (assoc m a b)))) {} melted )
-                      replace-link (fn[column-index steps]
-                                     (let [columns (map #(nth (recordReconst trans-table) (mod %  (count (keyorder trans-table))))
-                                                        (range (inc column-index) (+ column-index steps 1)))
-                                           rec-replace (fn[base columns]
-                                                         (if (empty? columns)
-                                                           base
-                                                           (recur
-                                                            (map (fn [[a b]] [a (second (nth (first columns) b))]) base)
-                                                            (rest columns))))]
-                                       (rec-replace (nth (recordReconst trans-table) column-index) columns)))
-                      manipulated-columns (reduce (fn[m [a b] ] (assoc m a (replace-link a (mod (- b a) (count (keyorder trans-table)))))) {} merged)
-                      new-rrt (let [ with-new-colums (reduce (fn[m [k v]](assoc m k v)) (vec (recordReconst trans-table)) manipulated-columns )]
-                                (filter #(not (contains? (set delete-indizes) (.indexOf with-new-colums %))) with-new-colums))
-                      sorted (if (= 0 (compare attrs new-ko))
-                               new-rrt
-                               (let [index-vector (map (fn[x] (.indexOf new-ko x)) attrs)
-                                     pair-vector (map (fn[ x y] [x y]) index-vector (flatten [(rest index-vector) (first index-vector)]))]
-                                    (map (fn[[a b]] (let[orig-column (nth new-rrt a)]
-                                                   (map (fn [[x y] i] [x  (second (travel new-rrt i a (mod (- b a 1) (count pair-vector))))])
-                                                        orig-column
-                                                        (range (count orig-column)))))
-                                      pair-vector)))]
-                  sorted)]
-     (distinct-tr (tr attrs new-fvt new-rrt))))
-
-
 
 (defn project
     ""
@@ -336,25 +293,21 @@
                                                       (assoc m (get (clojure.set/map-invert m) a)  b)
                                                       (assoc m a b)))) {} melted )
                       replace-link (fn[column-index steps]
-                                     (let [columns (map #(nth (recordReconst trans-table) (mod %  (count (keyorder trans-table))))
-                                                        (range (inc column-index) (+ column-index steps 1)))
-                                           rec-replace (fn[base columns]
-                                                         (if (empty? columns)
+                                     (let [columns (map #(get (recordReconst trans-table) (mod %  (count (keyorder trans-table))))
+                                                        (range (inc column-index) (+ column-index steps 1)))]
+                                       (loop [base (get (recordReconst trans-table) column-index)
+                                             columns  columns]
+                                         (if (empty? columns)
                                                            base
                                                            (recur
-                                                            (map (fn [[a b]] [a (second (nth (first columns) b))]) base)
-                                                            (rest columns))))]
-                                       (rec-replace (nth (recordReconst trans-table) column-index) columns)))
+                                                            (mapv (fn [[a b]] [a (second (get (first columns) b))]) base)
+                                                            (rest columns))))))
                       manipulated-columns (reduce (fn[m [a b] ] (assoc m a (replace-link a (mod (- b a) (count (keyorder trans-table)))))) {} merged)
-                      new-rrt (let [ with-new-colums (reduce (fn[m [k v]](assoc m k v)) (vec (recordReconst trans-table)) manipulated-columns )]
-                                (filter #(not (contains? (set delete-indizes) (.indexOf with-new-colums %))) with-new-colums))
+                      new-rrt (let [ with-new-colums (reduce (fn[m [k v]](assoc m k v)) (recordReconst trans-table) manipulated-columns )]
+                                (vec (filter #(not (contains? (set delete-indizes) (.indexOf with-new-colums %))) with-new-colums)))
                       ]
                   new-rrt)]
      (distinct-tr (tr attrs new-fvt new-rrt))))
-
-
-
-
 
 
 
@@ -377,7 +330,9 @@
   ""
   [trans-table preds]
   (let[table (convert trans-table)
-       extended (map (fn [row]( reduce (fn [m [k v]] (assoc m k (v m))) row preds )) table)]
+       extended (map (fn [row]( reduce (fn [m [k v]] (assoc m k (if (fn? v)
+                                                                  (v m)
+                                                                  v))) row preds )) table)]
     (tr extended)))
 
 
@@ -385,7 +340,7 @@
 (defn union
   ""
   [tr1 & more]
-   (tr (flatten (apply conj  (convert tr1) (map convert more)))))
+   (tr (keyorder tr1) (flatten (apply conj  (convert tr1) (map convert more)))))
 
 
 
@@ -393,7 +348,7 @@
 (defn intersection
   ""
   [tr1 & more]
-  (tr (apply clojure.set/intersection (set (convert tr1)) (map #(set (convert %)) more))))
+  (tr (keyorder tr1) (apply clojure.set/intersection (set (convert tr1)) (map #(set (convert %)) more))))
 
 
 
@@ -401,7 +356,7 @@
 (defn difference
   ""
   [tr1 & more]
-  (tr (clojure.set/difference (set (convert tr1))  (map #(set (convert %)) more))))
+  (tr (keyorder tr1) (apply clojure.set/difference (set (convert tr1))  (map #(set (convert %)) more))))
 
 
 
@@ -676,42 +631,40 @@
   "Join relations r and s by their common attributes."
   [r s]
   (let [common-attrs (remove nil? (map #(some #{%} (keyorder r)) (keyorder s)))
-
         currently-relevant-attr (first common-attrs)
-        r-fvt-col (get (fieldValues r) currently-relevant-attr)
-        s-fvt-col (get (fieldValues s) currently-relevant-attr)
         r-pos (.indexOf (keyorder r) currently-relevant-attr)
         s-pos (.indexOf (keyorder s) currently-relevant-attr)
-        match-entries (loop [r (seq r-fvt-col)
-                             s (seq s-fvt-col)
+        match-indizes (loop [r (get (fieldValues r) currently-relevant-attr)
+                             s (get (fieldValues s) currently-relevant-attr)
                              result []]
                         (if (or (empty? r) (empty? s))
                           result
                           (let [rf (first r)
-                                s (drop-while #(->> % first :value (compare (:value rf)) neg?)  s)
+                                s (drop-while #(->> % :value (compare (:value rf)) pos?)  s)
                                 sf (first s)]
                             (if (= (:value rf) (:value sf))
-                              (recur (rest r) (rest s) (conj result [rf sf]))
+                              (recur (rest r) (rest s) (conj result [(range (:from rf) (inc (:to rf)))
+                                                                     (range (:from sf) (inc (:to sf)))]))
                               (recur (rest r) s result)))))
-        match-indizes (map (fn [[r-entry s-entry]] [(range (:from r-entry) (inc (:to r-entry)))
-                                                    (range (:from s-entry) (inc (:to s-entry)))]) match-entries)
         r-tuples (->> match-indizes (map first) flatten set (map (fn [x] [x (retrieve r x r-pos)])) (into {}))
         s-tuples (->> match-indizes (map second) flatten set (map (fn[x] [x (retrieve s x s-pos)])) (into {}))
         pairs-to-join (reduce (fn[result [[r-index _] s-indezes]]
                          (reduce (fn[result s-index] (conj result [ (get r-tuples r-index)
                                                                     (get s-tuples s-index) ]))
                                  result s-indezes)) #{} match-indizes)
-        merged (set (remove nil? (map (fn [[r-tuple  s-tuple]] (if (= (select-keys r-tuple (rest common-attrs))
-                                                    (select-keys s-tuple (rest common-attrs)))
-                                               (merge r-tuple s-tuple)
-                                               nil)) pairs-to-join)))]
+        merged (into #{} (comp (map #(apply merge %))
+                                      (filter #(= (select-keys (first %) (rest common-attrs))
+                                                  (select-keys (second %) (rest common-attrs)))))
+                           pairs-to-join)]
     (tr merged)))
 
 
 
 
-; ############################################################################################################################
 #_(
+
+; ############################################################################################################################
+
 
 (def employees-data (take 10000 (set (read-string  (str "[" (slurp  "resources/employees.clj" ) "]" )))))
 (def xrel (map #(zipmap [:emp_no :birth_date :first_name :last_name :gender :hire_date] %) employees-data))
@@ -722,20 +675,14 @@
 (def xrel-sal (map #(zipmap [:emp_no :salary :from_date :to_date] %) salaries-data))
 (def tr-salaries (tr xrel-sal))
 
-(join tr-employees tr-salaries)
 
- (defn zigzag
-  "Get a row of data by the numeric position of one of the cells in the transrelational table."
-  [trans-table row column]
-  (let [rrt (recordReconst trans-table)
-        rrt (apply conj (vec (drop column rrt)) (drop-last  (- (count rrt) column ) rrt))]
-     (loop [rrt rrt
-            row row
-            result []]
-       (if (empty? rrt)
-           result
-           (let [[value-link next-row] (nth (first rrt) row)]
-                (recur (rest rrt) next-row (conj result value-link)))))))
+(recordReconst tr-salaries)
+(fieldValues tr-salaries)
+(time (zigzag tr-salaries 0 0))
+(time (retrieve tr-salaries 18 2))
+
+
+(count (time (join  tr-salaries tr-employees)))
 
 
 

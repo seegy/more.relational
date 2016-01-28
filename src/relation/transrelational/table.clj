@@ -34,10 +34,9 @@
 
 (defmethod print-method Transrelation
   [tr writer]
-  (.write writer (str "#TR Key order: " (keyorder  tr)
-                      "\n\n Field Value Table:\n" (fieldValues  tr)
-                      "\n\n Record Reconstruction Table:\n" (vec (recordReconst  tr)))))
-
+  (.write writer (str "#TR Key order:\n" (keyorder  tr)
+                      "\n\n Field Value Table:\n" (clojure.string/join "\n" (map (fn [[k v]] (str k "\n" (clojure.string/join "\n" v) "\n")) (fieldValues  tr)))
+                      "\n\n Record Reconstruction Table:\n" (clojure.string/join "\n" (apply mapv vector (recordReconst tr))))))
 
 
 
@@ -45,7 +44,7 @@
   "Returns the value of the cell by given positionl. The column can be defined as number or attribute name."
   [tr row column]
   (let [columnName (if (contains? (set (keyorder tr)) column) column (get (keyorder tr) column))
-        xf (comp #(:value %) #(nth % row) #(get % columnName))]
+        xf (comp #(:value %) #(get % row) #(get % columnName))]
      (xf (fieldValues tr))))
 
 
@@ -73,7 +72,7 @@
   "Creates the field value table by the permutation map."
   [permutation]
   (into {} (map (fn[[k v]] [ k (let [ values (map first v)]
-                                              (sequence (comp
+                                              (into [] (comp
                                                            (distinct)
                                                            (map (fn[v] {:value v
                                                                         :from (.indexOf values v)
@@ -97,9 +96,9 @@
                              fto (first to)]
                          (recur (conj m [ffrom fto]) (rest from) (rest to)))))
         pre-consist-rrt (mapv (fn[a b] [b (zigzagTo a)]) mergePerms (range (count mergePerms)))]
-                (map (fn [[index column]]
+                (mapv (fn [[index column]]
                        (let[columnName (nth keyorder index)]
-                                (map (fn[cell] [(let[valueColumn (get fvt columnName)
+                                (mapv (fn[cell] [(let[valueColumn (get fvt columnName)
                                                      index (.indexOf column cell)]
                                                      (.indexOf valueColumn
                                                            (first (filter #(and (<= index (:to %)) (>= index (:from %))) valueColumn))))
@@ -109,6 +108,7 @@
 
 
 (defn- format-table
+  "resolve input table format to xrel format."
   [keyorder table]
   (remove nil? (map (fn[tuple] (cond
                                    (map? tuple)     (select-keys tuple keyorder)

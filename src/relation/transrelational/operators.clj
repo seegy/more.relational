@@ -31,66 +31,9 @@
 
 
 
- (defn travel [rrt row column steps]
-   (let [columns (mapv #(get rrt (mod %  (count rrt)))
-                      (range  column (+ column steps 1)))
-         rec-travel (fn [row columns ]
-                      (if (empty? (rest columns))
-                        (get (first columns) row)
-                        (recur (second (get (first columns) row))  (rest columns))))]
-     (rec-travel row columns)))
-
-
-
-
-(defn zigzag
-  "Get a row of data by the numeric position of one of the cells in the transrelational table."
-  [trans-table row column]
-  (let [rrt (recordReconst trans-table)
-        rrt (apply conj (vec (drop column rrt)) (drop-last  (- (count rrt) column ) rrt))]
-     (loop [rrt rrt
-            row row
-            result []]
-       (if (empty? rrt)
-           result
-           (let [[value-link next-row] (get (first rrt) row)]
-                (recur (rest rrt) next-row (conj result value-link)))))))
-
-
-
-
 ;; #######################################################################################################################################
 ;; Basic operations
 ;; #######################################################################################################################################
-
-
-
-(defn retrieve
-  "Get a row of data by the numeric position of one of the cells in the transrelational table.  "
-  [trans-table row column]
-  (let [orig-attrs  (keyorder trans-table)
-        attrs (apply conj (vec (drop column orig-attrs)) (drop-last (- (count orig-attrs) column ) orig-attrs))
-        indizes (zigzag trans-table row column)]
-   (conj {} (select-keys (into {} (map (fn [attr index][attr (fieldValueOf trans-table index attr)] ) attrs indizes)) orig-attrs))))
-
-
-
-
-(defn convert
-  "Get a collection of all reconstructed rows by a transrelational table ordered by the first attribute or by a sequence of ordering attributes."
-  ([trans-table]
-   (map (fn[row] (retrieve trans-table  row 0)) (range (count trans-table))))
-  ([trans-table order]
-   (if (empty? order)
-     (convert trans-table)
-     (if (not-any? #(contains? (set (keyorder trans-table)) %) order)
-       (throw (IllegalArgumentException. "Order attribute not part of relation"))
-       (let [attrs (keyorder trans-table)
-             row-of-last (.indexOf attrs (last order))
-             preorderd-tr (map (fn[row] (retrieve trans-table  row row-of-last)) (range (count trans-table)))]
-         (if (empty? (drop-last 1 order))
-           preorderd-tr
-           (sort-by (apply juxt (drop-last 1 order) ) preorderd-tr )))))))
 
 
 

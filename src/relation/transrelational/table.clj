@@ -1,10 +1,75 @@
 (ns relation.transrelational.table)
 
 
+
+ (defn travel
+   [rrt row column steps]
+   (let [columns (mapv #(get rrt (mod %  (count rrt)))
+                      (range  column (+ column steps 1)))
+         rec-travel (fn [row columns ]
+                      (if (empty? (rest columns))
+                        (get (first columns) row)
+                        (recur (second (get (first columns) row))  (rest columns))))]
+     (rec-travel row columns)))
+
+
+
+ (defprotocol TR_Protocol
+   (fieldValueOf [this row column])
+   (zigzag [this row column])
+   (retrieve [this row column])
+   (convert [this] [this order]))
+
+
+
 (deftype Transrelation [keyorder fvt rrt]
    clojure.lang.Counted
     (count [this]
       (count (first (.rrt this))))
+
+
+    TR_Protocol
+    (fieldValueOf [this row column]
+      (let [columnName (if (contains? (set (.keyorder this)) column) column (get (.keyorder this) column))
+          xf (comp #(:value %) #(get % row) #(get % columnName))]
+       (xf (.fvt this))))
+
+    (zigzag [this row column]
+      (let [rrt (.rrt this)
+          rrt (apply conj (vec (drop column rrt)) (drop-last  (- (count rrt) column ) rrt))]
+       (loop [rrt rrt
+              row row
+              result []]
+         (if (empty? rrt)
+             result
+             (let [[value-link next-row] (get (first rrt) row)]
+                  (recur (rest rrt) next-row (conj result value-link)))))))
+
+    (retrieve [this row column]
+      (let [orig-attrs  (.keyorder this)
+            attrs (apply conj (vec (drop column orig-attrs)) (drop-last (- (count orig-attrs) column ) orig-attrs))
+            indizes (zigzag this row column)]
+       (conj {} (select-keys (into {} (map (fn [attr index][attr (fieldValueOf this index attr)] ) attrs indizes)) orig-attrs))))
+
+
+    (convert [this]
+     (map (fn[row] (retrieve this row 0)) (range (count this))))
+
+    (convert [this order]
+     (if (empty? order)
+       (convert this)
+       (if (not-any? #(contains? (set (.keyorder this)) %) order)
+         (throw (IllegalArgumentException. "Order attribute not part of relation"))
+         (let [attrs (.keyorder this)
+               row-of-last (.indexOf attrs (last order))
+               preorderd-tr (map (fn[row] (retrieve this  row row-of-last)) (range (count this)))]
+           (if (empty? (drop-last 1 order))
+             preorderd-tr
+             (sort-by (apply juxt (drop-last 1 order) ) preorderd-tr ))))))
+
+    clojure.lang.Seqable
+    (seq [this]
+         (convert this))
   )
 
 
@@ -139,5 +204,28 @@
    (Transrelation. keyorder fvt rrt)))
 
 
+#_(
+
+(def employees-data (take 10000 (set (read-string  (str "[" (slurp  "resources/employees.clj" ) "]" )))))
+(def xrel (map #(zipmap [:emp_no :birth_date :first_name :last_name :gender :hire_date] %) employees-data))
+(def tr-employees (tr xrel))
+
+ (seq tr-employees)
+ (set tr-employees)
+
+(defn- create-raw-permutation
+  "Creates a map of groups of attributes and their index of the origin data row."
+  [table keyorder]
+  (let [recordtuples (map (fn[record] (into {}
+                                            (map (fn[k]
+                                                   (let[v (get record k)]
+                                                     [k [v (.indexOf table record)]]))
+                                            keyorder))) table)]
+    (into {} (map (fn[head] [head (sort-by first(map #(get % head) recordtuples))])) keyorder)))
+
+(def keyorder (keyorder-of-table xrel))
+
+(time (create-raw-permutation xrel keyorder))
 
 
+)

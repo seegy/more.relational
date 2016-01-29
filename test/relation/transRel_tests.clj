@@ -33,7 +33,8 @@
                           ["S4" "Clark" 20 "London"]
                           {:status 30 :name "Adams" :city "Athens" :id "S5"}])]
 
-      (is (= (set (convert relation)) (set (convert relation2)) (set people)))))
+      (is (= (set (convert relation)) (set (convert relation2)) (set people)))
+      (is (= (set relation) (set  relation2) (set people)))))
 
   (testing "convert relation"
     (let [relation (tr people)
@@ -227,24 +228,24 @@
       (let [intersected (intersection p1 p2)]
         (is (= (keyorder p1) (keyorder intersected)))
         (is (= 1 (count intersected)))
-        (is (= (set (convert intersected)) #{{:id "S3" :name "Blake" :status 30 :city nil}})))
+        (is (= (set  intersected) #{{:id "S3" :name "Blake" :status 30 :city nil}})))
 
       (let [intersected (intersection p1 p2 p3)]
         (is (= (keyorder p1) (keyorder intersected)))
         (is (= 1 (count intersected)))
-        (is (= (set (convert intersected)) #{{:id "S3" :name "Blake" :status 30 :city nil}}))))
+        (is (= (set intersected) #{{:id "S3" :name "Blake" :status 30 :city nil}}))))
 
     (testing "difference"
       (let [diff (difference p1 p2)]
         (is (= (keyorder p1) (keyorder diff)))
-        (is (= (set (convert diff))   #{{:id "S1" :name "Smith" :status nil :city nil}
+        (is (= (set diff)   #{{:id "S1" :name "Smith" :status nil :city nil}
                                         {:id "S2" :name "Jones" :status nil :city "Paris"}
                                         {:id "S4" :name nil     :status 20  :city nil}
                                         {:id "S5" :name nil     :status nil :city nil}})))
 
       (let [diff (difference p1 p2 p3)]
         (is (= (keyorder p1) (keyorder diff)))
-        (is (= (set (convert diff))   #{{:id "S1" :name "Smith" :status nil :city nil}
+        (is (= (set  diff)   #{{:id "S1" :name "Smith" :status nil :city nil}
                                         {:id "S2" :name "Jones" :status nil :city "Paris"}
                                         {:id "S4" :name nil     :status 20  :city nil}
                                         {:id "S5" :name nil     :status nil :city nil}}))))))

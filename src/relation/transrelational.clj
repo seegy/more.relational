@@ -12,11 +12,14 @@
   keyorder
   fieldValues
   recordReconst
-  fieldValueOf]
+  fieldValueOf
+      retrieve
+      convert
+  ]
  [relation.transrelational.operators
   tr-fn
-  retrieve
-  convert
+;  retrieve
+;  convert
   insert
   delete
   update

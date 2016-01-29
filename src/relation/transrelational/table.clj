@@ -105,19 +105,11 @@
 
 
 
-(defn fieldValueOf
-  "Returns the value of the cell by given positionl. The column can be defined as number or attribute name."
-  [tr row column]
-  (let [columnName (if (contains? (set (keyorder tr)) column) column (get (keyorder tr) column))
-        xf (comp #(:value %) #(get % row) #(get % columnName))]
-     (xf (fieldValues tr))))
-
-
 
 (defn- keyorder-of-table
   "creates vector of all keys in the table."
   [table]
-  (into [] (distinct (flatten (map keys table)))))
+    (vec (distinct (reduce (fn[v ks] (apply conj v ks)) [] (mapv keys table)))))
 
 
 
@@ -204,16 +196,13 @@
    (Transrelation. keyorder fvt rrt)))
 
 
-#_(
 
+#_(
 (def employees-data (take 10000 (set (read-string  (str "[" (slurp  "resources/employees.clj" ) "]" )))))
 (def xrel (map #(zipmap [:emp_no :birth_date :first_name :last_name :gender :hire_date] %) employees-data))
-(def tr-employees (tr xrel))
 
- (seq tr-employees)
- (set tr-employees)
 
-(defn- create-raw-permutation
+  (defn- create-raw-permutation+
   "Creates a map of groups of attributes and their index of the origin data row."
   [table keyorder]
   (let [recordtuples (map (fn[record] (into {}
@@ -223,9 +212,10 @@
                                             keyorder))) table)]
     (into {} (map (fn[head] [head (sort-by first(map #(get % head) recordtuples))])) keyorder)))
 
-(def keyorder (keyorder-of-table xrel))
+(time (keyorder-of-table xrel))
+(def ko (keyorder-of-table xrel))
 
-(time (create-raw-permutation xrel keyorder))
-
+(time (create-raw-permutation xrel ko))
+(time (create-raw-permutation+ xrel ko))
 
 )

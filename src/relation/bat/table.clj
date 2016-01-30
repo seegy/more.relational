@@ -24,29 +24,15 @@
       (apply hashCalcHelper  hashs))))
 
 
-#_(defrecord BAT [buns]
-
-   clojure.lang.Seqable
-   (seq [this]
-      ; just make a sequence
-      (seq (.buns this)))
-
-  clojure.lang.Counted
-  (count [this]
-    (count (.buns this)))
-  )
-
 
 
 (defn bat
   ([tuple-vec]
    (if (coll? tuple-vec)
      (let [data (into #{} (comp
-                            (filter map?)
-                            (filter #(= 2 (count %)))
-                            (filter #(contains? (set (keys %)) :head))
-                            (filter #(contains? (set (keys %)) :tail)))
-                      (seq tuple-vec))]
+                          (filter #( or (= (keys %) '(:head :tail)) (= (keys %) '(:tail :head))))
+                           (filter map?))
+                       tuple-vec)]
        (BAT. data))
      (BAT. #{})))
   ([one & more]
@@ -54,7 +40,6 @@
          heads (map #(assoc {} :head %) (rest (take (inc (count tails)) (range))))
          both  (set (map (fn [pair] (apply merge pair)) (map vector heads tails)))]
      (BAT. both))))
-
 
 
 
@@ -112,6 +97,22 @@
         table (vec table)]
      (reduce (fn [m attr]
                (assoc m attr (bat
-                              (filter #(not (nil? (:tail %)))
-                                      (map (fn [entry] {:head (inc (.indexOf table entry)), :tail (get entry attr)}) table))))) {} heads)))
+                               (filter #(not (nil? (:tail %)))
+                                      (map-indexed (fn [i entry] {:head i,
+                                                                  :tail (get entry attr)}) table))))) {} heads)))
+
+
+#_(
+
+(def salaries-data (take 100000  (set (read-string  (str "[" (slurp  "resources/salaries.clj" ) "]" )))))
+(def xrel-sal (map #(zipmap [:emp_no :salary :from_date :to_date] %) salaries-data))
+
+
+
+
+
+(time (convertToBats xrel-sal))
+
+
+    )
 

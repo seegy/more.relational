@@ -113,38 +113,39 @@
 
 
 
+
 (defn- create-raw-permutation
   "Creates a map of groups of attributes and their index of the origin data row."
   [table keyorder]
-  (let [recordtuples (map (fn[record] (into {}
+  (let [recordtuples  (map-indexed (fn[ index record ] (into {}
                                             (map (fn[k]
                                                    (let[v (get record k)]
-                                                     [k [v (.indexOf table record)]]))
+                                                     [k [v index]]))
                                             keyorder))) table)]
-    (into {} (map (fn[head] [head (sort-by first(map #(get % head) recordtuples))])) keyorder)))
+     (into {} (map (fn[head] [head (sort-by first (map #(get % head) recordtuples))])) keyorder)))
+
+
 
 
 
 (defn- create-fvt-by-raw-perm
   "Creates the field value table by the permutation map."
   [permutation]
-  (into {} (map (fn[[k v]] [ k (let [ values (map first v)]
-                                              (into [] (comp
-                                                           (distinct)
-                                                           (map (fn[v] {:value v
-                                                                        :from (.indexOf values v)
-                                                                        :to (.lastIndexOf values v)})))
-                                                        values))]) permutation)))
-
+   (into {} (map (fn[[k v]] [ k (let [ values  (map-indexed (fn[index [value _]] {:value value  :index index}) v)
+                                       indexed   (clojure.set/index values [:value])]
+                                  (into [](sort-by :from (mapv (fn[[k entry]] {:value (:value k)
+                                                     :from (:index (apply min-key :index entry))
+                                                     :to (:index (apply max-key :index entry)) }) indexed))))]) permutation)))
 
 (defn- create-rrt
   "Creates the record reconstruction table by the permutation map, predefined key order and the field value table."
   [permutation keyorder fvt]
   (let [perm  (into {} (map (fn[[k v]] [k (map second v)]) permutation))
-        zigzagTo (fn [[a b]] (mapv (fn[recnr] (.indexOf b recnr)) a))
-        fromPerm (mapv (fn[x](get perm x)) keyorder)
-        toPerm (conj (vec (rest fromPerm)) (first fromPerm))
-        mergePerms (loop [m []
+        zigzagTo (fn [[a b]] (let[prepared-b (into {} (map-indexed (fn[i x] [x i]) b)) ]
+                               (mapv (fn[recnr] (get prepared-b recnr)) a)))
+        fromPerm  (mapv (fn[x](get perm x)) keyorder)
+        toPerm  (conj (vec (rest fromPerm)) (first fromPerm))
+        mergePerms  (loop [m []
                           from fromPerm
                           to toPerm]
                      (if (empty? from)
@@ -152,14 +153,15 @@
                        (let [ffrom (first from)
                              fto (first to)]
                          (recur (conj m [ffrom fto]) (rest from) (rest to)))))
-        pre-consist-rrt (mapv (fn[a b] [b (zigzagTo a)]) mergePerms (range (count mergePerms)))]
-                (mapv (fn [[index column]]
-                       (let[columnName (nth keyorder index)]
-                                (mapv (fn[cell] [(let[valueColumn (get fvt columnName)
-                                                     index (.indexOf column cell)]
-                                                     (.indexOf valueColumn
-                                                           (first (filter #(and (<= index (:to %)) (>= index (:from %))) valueColumn))))
-                                                cell]) column))) pre-consist-rrt)))
+        pre-consist-rrt  (vec (map-indexed (fn[b a] [b (zigzagTo a)]) mergePerms))]
+                 (mapv (fn [[index column]]
+                       (let[ columnName (get keyorder index)
+                             valueColumn (map-indexed (fn [i x] [ i x ]) (get fvt columnName))
+                             extended-value-table  (reduce (fn [hm entry]
+                                                                 (reduce (fn [hm index] (assoc hm index (first entry))) hm (range (:from (second entry)) (inc (:to (second entry)))))
+                                                                 ) {} valueColumn)]
+                            (vec (map-indexed (fn[index cell] [(get extended-value-table index)
+                                                              cell]) column)))) pre-consist-rrt)))
 
 
 
@@ -181,7 +183,7 @@
   prebuildes structure of keyorder, field value table and record reconstrution table."
   ([table]
    (let [table (distinct (vec table))
-          keyorder  (keyorder-of-table table)
+          keyorder   (keyorder-of-table table)
           permutation (create-raw-permutation table keyorder)
           fvt (create-fvt-by-raw-perm permutation)
           rrt (create-rrt permutation keyorder fvt)]
@@ -195,27 +197,3 @@
   ([keyorder fvt rrt]
    (Transrelation. keyorder fvt rrt)))
 
-
-
-#_(
-(def employees-data (take 10000 (set (read-string  (str "[" (slurp  "resources/employees.clj" ) "]" )))))
-(def xrel (map #(zipmap [:emp_no :birth_date :first_name :last_name :gender :hire_date] %) employees-data))
-
-
-  (defn- create-raw-permutation+
-  "Creates a map of groups of attributes and their index of the origin data row."
-  [table keyorder]
-  (let [recordtuples (map (fn[record] (into {}
-                                            (map (fn[k]
-                                                   (let[v (get record k)]
-                                                     [k [v (.indexOf table record)]]))
-                                            keyorder))) table)]
-    (into {} (map (fn[head] [head (sort-by first(map #(get % head) recordtuples))])) keyorder)))
-
-(time (keyorder-of-table xrel))
-(def ko (keyorder-of-table xrel))
-
-(time (create-raw-permutation xrel ko))
-(time (create-raw-permutation+ xrel ko))
-
-)

@@ -102,17 +102,3 @@
                                                                   :tail (get entry attr)}) table))))) {} heads)))
 
 
-#_(
-
-(def salaries-data (take 100000  (set (read-string  (str "[" (slurp  "resources/salaries.clj" ) "]" )))))
-(def xrel-sal (map #(zipmap [:emp_no :salary :from_date :to_date] %) salaries-data))
-
-
-
-
-
-(time (convertToBats xrel-sal))
-
-
-    )
-

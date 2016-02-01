@@ -13,13 +13,10 @@
   fieldValues
   recordReconst
   fieldValueOf
-      retrieve
-      convert
-  ]
+  retrieve
+  convert]
  [relation.transrelational.operators
   tr-fn
-;  retrieve
-;  convert
   insert
   delete
   update

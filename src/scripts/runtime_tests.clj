@@ -9,7 +9,7 @@
 (def xrel (map #(zipmap [:emp_no :birth_date :first_name :last_name :gender :hire_date] %) employees-data))
 
 
-(def salaries-data (take 10000  (set (read-string  (str "[" (slurp  "resources/salaries.clj" ) "]" )))))
+(def salaries-data (take 100000  (set (read-string  (str "[" (slurp  "resources/salaries.clj" ) "]" )))))
 (def xrel-sal (map #(zipmap [:emp_no :salary :from_date :to_date] %) salaries-data))
 
 

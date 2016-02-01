@@ -119,20 +119,26 @@
 
 
 
-  (defn- search
-   ""
-   [column value]
-    (let [found (filter #(= (:value %) value) column)]
-      (if (empty? found)
-        -1
-        (.indexOf column (first found)))))
+(defn- binary-search
+  ""
+  [column value]
+  (loop [imin 0
+         imax (dec (count column))]
+    (if (< imax imin)
+      -1
+      (let [imid (long (/ (+ imin imax) 2))
+            comp-res (compare (:value (get column imid)) value)]
+        (cond
+          (pos? comp-res) (recur imin (dec imid))
+          (neg? comp-res) (recur (inc imid) imax)
+          :else imid)))))
 
 
 
 (defn point-search
   ""
   [trans-table attr value]
-  (let [found (search (get (fieldValues trans-table) attr) value)]
+  (let [found (binary-search (get (fieldValues trans-table) attr) value)]
    (if (neg? found)
       #{}
       (let [entry (get  (get (fieldValues trans-table) attr) found)]
@@ -609,25 +615,10 @@
 ; ############################################################################################################################
 
 
-(def employees-data (take 10000 (set (read-string  (str "[" (slurp  "resources/employees.clj" ) "]" )))))
+(def employees-data (take 100000 (set (read-string  (str "[" (slurp  "resources/employees.clj" ) "]" )))))
 (def xrel (map #(zipmap [:emp_no :birth_date :first_name :last_name :gender :hire_date] %) employees-data))
 (def tr-employees (tr xrel))
 
 
-(def salaries-data (take 10000  (set (read-string  (str "[" (slurp  "resources/salaries.clj" ) "]" )))))
-(def xrel-sal (map #(zipmap [:emp_no :salary :from_date :to_date] %) salaries-data))
-(def tr-salaries (tr xrel-sal))
-
-
-(recordReconst tr-salaries)
-(fieldValues tr-salaries)
-(time (zigzag tr-salaries 0 0))
-(time (retrieve tr-salaries 18 2))
-
-
-(count (time (join  tr-salaries tr-employees)))
-
-
-
- )
+)
 

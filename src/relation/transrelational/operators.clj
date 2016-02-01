@@ -318,15 +318,11 @@
 
 
 
+
 (defn down-to-up-scan
   ""
   [column f right-value]
-  (loop [c column
-         result []]
-    (if (and (not-empty c) (f (:value (last c)) right-value))
-      (recur (drop-last c) (conj result (last c)))
-      result)))
-
+  (vec (drop-while  #(not (f (:value %) right-value)) column)))
 
 
 
@@ -615,10 +611,76 @@
 ; ############################################################################################################################
 
 
-(def employees-data (take 100000 (set (read-string  (str "[" (slurp  "resources/employees.clj" ) "]" )))))
+(def employees-data (take 10000 (set (read-string  (str "[" (slurp  "resources/employees.clj" ) "]" )))))
 (def xrel (map #(zipmap [:emp_no :birth_date :first_name :last_name :gender :hire_date] %) employees-data))
 (def tr-employees (tr xrel))
+(def t tr-employees)
+
+
+
+
+
+
+(defn down-to-up-scan
+  ""
+  [column f right-value]
+  (println "down-to-up")
+  (time (loop [c column
+         result []]
+    (if (and (not-empty c) (f (:value (last c)) right-value))
+      (recur (drop-last c) (conj result (last c)))
+      result))))
+
+
+
+
+(defn up-to-down-scan
+  ""
+  [column f right-value]
+  (println "up-to-down")
+  (time (loop [c column
+         result []]
+    (if (and (not-empty c) (f (:value (first c)) right-value))
+      (recur (rest c) (conj result (first c)))
+      result))))
+
+
+
+
+(defn not=-scan
+  ""
+  [column value]
+  (time (let [ops (if (string? value)
+              [#(neg? (compare %1 %2)) #(pos? (compare %1 %2))]
+              [< >])]
+  (apply conj (up-to-down-scan column (first ops) value) (down-to-up-scan column (second ops) value)))))
+
+
+
+(defn area-search
+  ""
+  [trans-table attr f right-value]
+  (time (let [up-to-down #{<= <}
+        down-to-up #{>= >}
+        column (get (fieldValues trans-table) attr)]
+     (set (map #(retrieve trans-table % (.indexOf (keyorder trans-table) attr))
+      (flatten (map (fn [n] (range (:from n) (inc (:to n))))
+         (cond
+           (contains? up-to-down f) (up-to-down-scan column f right-value)
+           (contains? down-to-up f) (down-to-up-scan column f right-value)
+           (= not= f) (not=-scan column right-value)
+           :else []))))))))
+
+
+
+
+(time (down-to-up-scan+ (:emp_no (fieldValues t)) > 35000))
+(time (up-to-down-scan (:emp_no (fieldValues t)) < 35000))
+
+(time (area-search t :emp_no > 35000))
+
+
+
 
 
 )
-

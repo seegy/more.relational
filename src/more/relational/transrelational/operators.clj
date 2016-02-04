@@ -3,10 +3,6 @@
    (:refer-clojure :exclude [extend update max min ]))
 
 
-(require 'clojure.tools.trace)
-(use 'clojure.tools.trace)
-
-
 
 ;; #######################################################################################################################################
 ;; Tools

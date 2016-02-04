@@ -1,13 +1,13 @@
-(ns relation.hashRel
+(ns more.relational.hashRel
   (:use [potemkin])
-  (:require [relation.hashRel.relation]
-            [relation.hashRel.tools]
-            [relation.hashRel.relvar]
-            [relation.hashRel.operators]))
+  (:require [more.relational.hashRel.relation]
+            [more.relational.hashRel.tools]
+            [more.relational.hashRel.relvar]
+            [more.relational.hashRel.operators]))
 
 
 (import-vars
- [relation.hashRel.relation
+ [more.relational.hashRel.relation
    scheme
    body
    degree
@@ -19,7 +19,7 @@
    save-rel
    load-rel
    order]
- [relation.hashRel.operators
+ [more.relational.hashRel.operators
    rename
    rename*
    restrict
@@ -38,9 +38,9 @@
    unwrap
    summarize
    join]
- [relation.hashRel.tools
+ [more.relational.hashRel.tools
     relfn]
- [relation.hashRel.relvar
+ [more.relational.hashRel.relvar
     relvar
     assign!
     insert!

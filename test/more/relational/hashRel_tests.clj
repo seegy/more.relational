@@ -1,6 +1,6 @@
-(ns relation.hashRel-tests
+(ns more.relational.hashRel-tests
    (:use clojure.test)
-   (:require [relation.hashRel :refer :all]))
+   (:require [more.relational.hashRel :refer :all]))
 
 
 

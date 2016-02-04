@@ -1,6 +1,6 @@
-(ns relation.bat.batsvar
-   (:use [ relation.bat.batOperators :as OP ])
-   (:use [ relation.bat.table :as TAB ])
+(ns more.relational.bat.batsvar
+   (:use [ more.relational.bat.batOperators :as OP ])
+   (:use [ more.relational.bat.table :as TAB ])
    (:require [clojure.edn    :as edn])
   (:refer-clojure :exclude [find reverse slice min max update load]))
 
@@ -95,8 +95,8 @@
 (defn load-batvar
   ""
   [file]
-   (edn/read-string {:readers {'batvar relation.bat.batsvar/batvar
-                               'BAT   relation.bat.table/bat}}
+   (edn/read-string {:readers {'batvar more.relational.bat.batsvar/batvar
+                               'BAT   more.relational.bat.table/bat}}
                     (slurp file)))
 
 
@@ -115,6 +115,6 @@
 (defn load-db
   "Loads a database from the specified file."
   [file]
-  (eval (edn/read-string {:readers {'batvar relation.bat.batsvar/batvar
-                               'BAT   relation.bat.table/bat}}
+  (eval (edn/read-string {:readers {'batvar more.relational.bat.batsvar/batvar
+                               'BAT   more.relational.bat.table/bat}}
                     (slurp file))))

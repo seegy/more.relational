@@ -1,5 +1,5 @@
-(ns relation.transrelational.operators
-  (:use [relation.transrelational.table])
+(ns more.relational.transrelational.operators
+  (:use [more.relational.transrelational.table])
    (:refer-clojure :exclude [extend update max min ]))
 
 
@@ -528,7 +528,7 @@
   [trans-table rfn]
   (let [pred (list 'fn (:args (meta rfn))
                   (optimize (:args (meta rfn)) (:body (meta rfn))))]
-   ((binding [*ns* (the-ns 'relation.transrelational.operators)] (eval pred)) trans-table)))
+   ((binding [*ns* (the-ns 'more.relational.transrelational.operators)] (eval pred)) trans-table)))
 
 
 

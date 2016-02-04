@@ -1,6 +1,6 @@
-(ns relation.batRel-tests
+(ns more.relational.batRel-tests
    (:use clojure.test)
-   (:require [relation.bat :refer :all])
+   (:require [more.relational.bat :refer :all])
    (:refer-clojure :exclude [find reverse slice min max update load]))
 
 

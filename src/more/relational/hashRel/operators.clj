@@ -1,6 +1,6 @@
-(ns relation.hashRel.operators
-  (:use [relation.hashRel.relation ])
-  (:require [relation.hashRel.tools :as tools]
+(ns more.relational.hashRel.operators
+  (:use [more.relational.hashRel.relation ])
+  (:require [more.relational.hashRel.tools :as tools]
             [clojure.string :as str]))
 
 

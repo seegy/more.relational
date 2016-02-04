@@ -1,4 +1,4 @@
-(ns relation.hashRel.tools)
+(ns more.relational.hashRel.tools)
 
 (defmacro relfn
   "Behaves like fn, but stores the source code in the metadata to allow

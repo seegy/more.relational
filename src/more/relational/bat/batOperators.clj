@@ -1,5 +1,5 @@
-(ns relation.bat.batOperators
-   (:use [relation.bat.table])
+(ns more.relational.bat.batOperators
+   (:use [more.relational.bat.table])
    (:require [clojure.edn    :as edn])
   (:refer-clojure :exclude [find reverse slice min max update load]))
 
@@ -279,6 +279,6 @@
 (defn load
   ""
   [file]
-   (edn/read-string {:readers {'BAT   relation.bat.table/bat}}
+   (edn/read-string {:readers {'BAT   more.relational.bat.table/bat}}
                     (slurp file)))
 

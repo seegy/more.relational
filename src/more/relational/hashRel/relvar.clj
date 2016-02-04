@@ -1,7 +1,7 @@
-(ns relation.hashRel.relvar
-  (:use [relation.hashRel.relation ]
-            [relation.hashRel.operators ]
-            [relation.hashRel.tools ])
+(ns more.relational.hashRel.relvar
+  (:use [more.relational.hashRel.relation ]
+            [more.relational.hashRel.operators ]
+            [more.relational.hashRel.tools ])
   (:require [clojure.set    :as clj-set]
             [clojure.string :as str]
             [clojure.edn    :as edn]))
@@ -151,8 +151,8 @@
 (defn load-relvar
   "Loads a relvar from the specified file."
   [file]
-  (edn/read-string {:readers {'relvar relation.hashRel.relvar/relvar
-                              'rel    relation.hashRel.relation/rel}}
+  (edn/read-string {:readers {'relvar more.relational.hashRel.relvar/relvar
+                              'rel    more.relational.hashRel.relation/rel}}
                    (slurp file)))
 
 (defn save-db
@@ -170,6 +170,6 @@
 (defn load-db
   "Loads a database from the specified file."
   [file]
-  (eval (edn/read-string {:readers {'relvar relation.hashRel.relvar/relvar
-                                    'rel    relation.hashRel.relation/rel}}
+  (eval (edn/read-string {:readers {'relvar more.relational.hashRel.relvar/relvar
+                                    'rel    more.relational.hashRel.relation/rel}}
           (slurp file))))

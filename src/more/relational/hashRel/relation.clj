@@ -1,7 +1,7 @@
-(ns relation.hashRel.relation
-  (:use [relation.hashRel.tools])
+(ns more.relational.hashRel.relation
+  (:use [more.relational.hashRel.tools])
   (:require [clojure.edn    :as edn]
-            [relation.hashRel.tools]))
+            [more.relational.hashRel.tools]))
 
 (declare sort-rel)
 
@@ -154,7 +154,7 @@
 (defn load-rel
   "Loads a relation from the specified file."
   [file]
-  (edn/read-string {:readers {'rel relation.hashRel.relation/rel}} (slurp file)))
+  (edn/read-string {:readers {'rel more.relational.hashRel.relation/rel}} (slurp file)))
 
 
 (defn order

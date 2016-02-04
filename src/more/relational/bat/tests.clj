@@ -1,5 +1,5 @@
 (ns wayneBat
-  (:use [relation.bat]))
+  (:use [more.relational.bat]))
 
 
 

@@ -1,6 +1,6 @@
-(ns relation.transRel-tests
+(ns more.relational.transRel-tests
    (:use clojure.test)
-   (:require [relation.transrelational :refer :all])
+   (:require [more.relational.transrelational :refer :all])
    (:refer-clojure :exclude [extend update max min]))
 
 

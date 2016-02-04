@@ -1,4 +1,4 @@
-(ns relation.transrelational.table)
+(ns more.relational.transrelational.table)
 
 
 

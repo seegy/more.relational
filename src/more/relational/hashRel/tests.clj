@@ -1,5 +1,5 @@
 (ns wayneHashRel
-  (:use [relation.hashRel]))
+  (:use [more.relational.hashRel]))
 
 
 

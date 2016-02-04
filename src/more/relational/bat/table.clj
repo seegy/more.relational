@@ -1,4 +1,4 @@
-(ns relation.bat.table)
+(ns more.relational.bat.table)
 
 
 (defn- hashCalcHelper
@@ -57,7 +57,7 @@
 
 (defn bat?
   [x]
- (= (type x) relation.bat.table.BAT))
+ (= (type x) more.relational.bat.table.BAT))
 
 
 

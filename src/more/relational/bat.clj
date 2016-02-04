@@ -1,24 +1,24 @@
-(ns relation.bat
+(ns more.relational.bat
   (:use [potemkin])
   (:require [clojure.repl   :refer :all]
             [clojure.string :as str]
             [clojure.edn    :as edn]
-            [relation.bat.batsvar]
-            [relation.bat.table]
-            [relation.bat.batOperators])
+            [more.relational.bat.batsvar]
+            [more.relational.bat.table]
+            [more.relational.bat.batOperators])
 
   (:refer-clojure :exclude [find reverse slice min max update load]))
 
 
 
 (import-vars
- [relation.bat.table
+ [more.relational.bat.table
    bat
    buns
    bat?
    makeTable
    convertToBats]
- [relation.bat.batOperators
+ [more.relational.bat.batOperators
    find
    select
    join
@@ -42,7 +42,7 @@
    update
    save
    load]
- [relation.bat.batsvar
+ [more.relational.bat.batsvar
   batvar
   assign!
   insert!

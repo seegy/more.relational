@@ -1,5 +1,5 @@
 (ns wayne
-  (:use [relation.transrelational]
+  (:use [more.relational.transrelational]
         [clojure.core.matrix]))
 
 

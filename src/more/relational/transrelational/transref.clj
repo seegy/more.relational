@@ -59,7 +59,7 @@
   relfn to produce the predicate to enable optimization. It takes a single tuple
   as its argument."
   [tvar pred?]
-  (let [dif-rel (restrict @tvar pred?)]
+  (let [dif-rel (restriction @tvar pred?)]
     (assign! tvar (difference @tvar dif-rel))))
 
 

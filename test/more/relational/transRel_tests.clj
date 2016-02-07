@@ -76,25 +76,25 @@
 (deftest search-test
   (testing "restriction"
     (let [relation (tr people)]
-      (let [pred (restrict-fn [t] (<= 30 (:status t)))
+      (let [pred (tr-fn [t] (<= 30 (:status t)))
             result (restriction relation pred)
             converted-result (convert result)]
         (is (= 2 (count result)))
         (is (= 2 (count converted-result)))
         (is (every? pred converted-result)))
 
-      (let [pred (restrict-fn [t] (and (= "Paris" (:city t)) (<= 30 (:status t))))
+      (let [pred (tr-fn [t] (and (= "Paris" (:city t)) (<= 30 (:status t))))
             result (restriction relation pred)
             converted-result (convert result)]
         (is (= 1 (count result)))
         (is (= 1 (count converted-result)))
         (is (every? pred converted-result)))
 
-      (let [pred (restrict-fn [t] (< 30 (:status t)))
+      (let [pred (tr-fn [t] (< 30 (:status t)))
             result (restriction relation pred)]
         (is (= 0 (count result)))
         (is (= (keyorder relation) (keyorder result))))
-      (let [pred (restrict-fn [t] (#(= (last %1 ) (last %2)) (:name t) (:city t)))
+      (let [pred (tr-fn [t] (#(= (last %1 ) (last %2)) (:name t) (:city t)))
             result (restriction relation pred)]
         (is (= 2 (count result)))
         (is (= (keyorder relation) (keyorder result)))))))
@@ -249,6 +249,30 @@
                                         {:id "S2" :name "Jones" :status nil :city "Paris"}
                                         {:id "S4" :name nil     :status 20  :city nil}
                                         {:id "S5" :name nil     :status nil :city nil}}))))))
+
+
+
+
+(deftest reftest
+  (testing "creating tvar"
+    (let [ relation (tr people)
+           tvar (transvar relation)]
+      (is (= @tvar relation)))
+    (let [ relation (tr people)
+           constraints #{{:key :id}
+                         (tr-fn [rel] (and (<= 10 (min rel :status)) (>= 30 (max rel :status))))}
+           tvar (transvar relation constraints)]
+      (is (= @tvar relation))
+      (is (thrown? IllegalArgumentException (transvar (insert relation {:id "S1" :name nil :status nil :city nil}) constraints)))
+      (is (thrown? IllegalArgumentException (transvar (insert relation {:id "S10" :name nil :status 31 :city nil}) constraints)))))
+  (testing "assign!"
+    (let [relation (tr people)
+          tvar (transvar relation)
+          rel2 (restriction relation (tr-fn [t] (< 10 (:status t))))
+          reassigned (assign! tvar rel2)]
+      (is (not (= @tvar relation)))
+      (is (= @tvar rel2))
+      (is (thrown? IllegalArgumentException (assign! tvar (tr [:id :name] {})))))))
 
 
 

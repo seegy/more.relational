@@ -23,7 +23,6 @@
   project
   project+
   extend
-  restrict-fn
   intersection
   union
   difference
@@ -32,4 +31,6 @@
   min
   sum
   join]
- [more.relational.transrelational.transref])
+ [more.relational.transrelational.transref
+  transvar
+  assign!])

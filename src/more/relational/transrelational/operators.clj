@@ -21,7 +21,9 @@
   optimisation."
   [args body]
   (with-meta (list 'fn args body)
-              {:original (list 'quote body)}))
+              {:args (list 'quote args)
+               :body (list 'quote body)}))
+
 
 
 
@@ -509,13 +511,6 @@
 
 
 
-
-(defmacro restrict-fn
-  ""
-  [args body]
-  (with-meta (list 'fn args body)
-             {:args (list 'quote args)
-              :body (list 'quote body)}))
 
 
 

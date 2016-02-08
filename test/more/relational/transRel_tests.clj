@@ -270,7 +270,7 @@
                          (tr-fn [rel] (and (<= 10 (min rel :status)) (>= 30 (max rel :status))))}
            tvar (transvar relation constraints)]
       (is (= @tvar relation))
-      (is (thrown? IllegalArgumentException (transvar (insert relation {:id "S1" :name nil :status nil :city nil}) constraints)))
+      (is (thrown? IllegalArgumentException (transvar (insert relation {:id "S1" :name nil :status 0 :city nil}) constraints)))
       (is (thrown? IllegalArgumentException (transvar (insert relation {:id "S10" :name nil :status 31 :city nil}) constraints))))))
 
 (deftest assignRef
@@ -324,13 +324,13 @@
                          (tr-fn [rel] (and (<= 10 (min rel :status)) (>= 30 (max rel :status))))}
           tvar (transvar relation constraints)]
       (constraint-reset! tvar nil)
-      (insert! tvar {:id "S1" :name nil :status nil :city nil})
+      (insert! tvar {:id "S1" :name nil :status 0 :city nil})
       (insert! tvar {:id "S10" :name nil :status 31 :city nil})
       (is (thrown? IllegalArgumentException (constraint-reset! tvar constraints))))))
 
 (deftest addConst
   (testing "add constraint"
-    (let [relation (insert (tr people) {:id "S1" :name nil :status nil :city nil})
+    (let [relation (insert (tr people) {:id "S1" :name nil :status 0 :city nil})
           tvar (transvar relation)]
       (is (thrown? IllegalArgumentException (add-constraint! tvar {:key :id}))))
     (let [relation (tr people)

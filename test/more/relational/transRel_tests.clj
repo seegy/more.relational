@@ -36,6 +36,13 @@
       (is (= (set (convert relation)) (set (convert relation2)) (set people)))
       (is (= (set relation) (set  relation2) (set people)))))
 
+    (let [xrel #{{:id "S1" :name "" :status 0 :city nil}
+                  {:id "S2" :name nil :status nil }
+                  {:id "S3" :name nil :status 30 :city "Paris"}}
+          relation (tr xrel)]
+      (is (= (count (convert relation)) (count xrel) 3)))
+
+
   (testing "convert relation"
     (let [relation (tr people)
           converted-result (convert relation)]
@@ -264,15 +271,76 @@
            tvar (transvar relation constraints)]
       (is (= @tvar relation))
       (is (thrown? IllegalArgumentException (transvar (insert relation {:id "S1" :name nil :status nil :city nil}) constraints)))
-      (is (thrown? IllegalArgumentException (transvar (insert relation {:id "S10" :name nil :status 31 :city nil}) constraints)))))
+      (is (thrown? IllegalArgumentException (transvar (insert relation {:id "S10" :name nil :status 31 :city nil}) constraints))))))
+
+(deftest bla
   (testing "assign!"
     (let [relation (tr people)
           tvar (transvar relation)
-          rel2 (restriction relation (tr-fn [t] (< 10 (:status t))))
-          reassigned (assign! tvar rel2)]
+          rel2 (restriction relation (tr-fn [t] (< 10 (:status t))))]
+      (assign! tvar rel2)
       (is (not (= @tvar relation)))
       (is (= @tvar rel2))
       (is (thrown? IllegalArgumentException (assign! tvar (tr [:id :name] {})))))))
+
+ (deftest blubb
+  (testing "insert!"
+    (let [relation (tr people)
+          tvar (transvar relation)
+          tuple {:id "S10" :name "bla" :status 31 :city "blubb"}]
+      (insert! tvar tuple)
+      (is (contains? (set @tvar) tuple))
+      (is (= @tvar (insert @tvar tuple))))
+    (let [relation (tr people)
+          tvar (transvar relation)
+          tuples [{:id "S8" :name "Blake" :status 30 :city "Paris"}
+                                        {:id "S9" :name "Clark" :status 20 :city "London"}
+                                        {:id "S10" :name "Adams" :status 30 :city "Athens"}]]
+      (insert! tvar tuples)
+      (is (every? #(contains? (set @tvar) %) tuples))
+      (is (every? #(contains? (set @tvar) %) people)))))
+
+(deftest raaa
+  (testing "delete!"
+    (let [relation (tr people)
+          tvar (transvar relation)]
+      (delete! tvar (tr-fn [t] (= "London" (:city t))))
+      (is (= (count @tvar) 3))
+      (is (every? #(not (= "London" (:city %))) (seq @tvar))))))
+
+(deftest lululu
+  (testing "update!"
+    (let [relation (tr people)
+          tvar (transvar relation)]
+      (update! tvar (tr-fn [t] (= "London" (:city t))) :city "Manchester")
+      (is (= (count @tvar) (count relation)))
+      (is (every? #(not (= "London" (:city %))) (set @tvar)))
+      (is (= 2 (count (restriction @tvar (tr-fn [t] (= "Manchester" (:city t))))))))))
+
+(deftest hhihi
+  (testing "reset constraints"
+    (let [relation (tr people)
+          constraints #{{:key :id}
+                         (tr-fn [rel] (and (<= 10 (min rel :status)) (>= 30 (max rel :status))))}
+          tvar (transvar relation constraints)]
+      (constraint-reset! tvar nil)
+      (insert! tvar {:id "S1" :name nil :status nil :city nil})
+      (insert! tvar {:id "S10" :name nil :status 31 :city nil})
+      (is (thrown? IllegalArgumentException (constraint-reset! tvar constraints))))))
+
+(deftest nanana
+  (testing "add constraint"
+    (let [relation (insert (tr people) {:id "S1" :name nil :status nil :city nil})
+          tvar (transvar relation)]
+      (is (thrown? IllegalArgumentException (add-constraint! tvar {:key :id}))))
+    (let [relation (tr people)
+          tvar (transvar relation {:key :id})]
+      (add-constraint! tvar (tr-fn [rel] (and (<= 10 (min rel :status)) (>= 30 (max rel :status)))))
+      (is (thrown? IllegalArgumentException (insert! tvar {:id "S10" :name "bla" :status 31 :city "blubb"}))))))
+
+
+
+
 
 
 

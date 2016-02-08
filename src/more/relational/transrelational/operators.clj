@@ -287,7 +287,7 @@
 (defn union
   ""
   [tr1 & more]
-   (tr (keyorder tr1) (flatten (apply conj  (convert tr1) (map convert more)))))
+   (tr (keyorder tr1) (flatten (apply conj  (seq tr1) (map seq more)))))
 
 
 
@@ -295,7 +295,7 @@
 (defn intersection
   ""
   [tr1 & more]
-  (tr (keyorder tr1) (apply clojure.set/intersection (set (convert tr1)) (map #(set (convert %)) more))))
+  (tr (keyorder tr1) (apply clojure.set/intersection (set  tr1) (map #(set  %) more))))
 
 
 
@@ -303,7 +303,7 @@
 (defn difference
   ""
   [tr1 & more]
-  (tr (keyorder tr1) (apply clojure.set/difference (set (convert tr1))  (map #(set (convert %)) more))))
+  (tr (keyorder tr1) (apply clojure.set/difference (set  tr1)  (map #(set  %) more))))
 
 
 

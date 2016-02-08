@@ -33,4 +33,13 @@
   join]
  [more.relational.transrelational.transref
   transvar
-  assign!])
+  assign!
+  insert!
+  delete!
+  update!
+  constraint-reset!
+  add-constraint!
+  save-transvar
+  load-transvar
+  save-db
+  load-db])

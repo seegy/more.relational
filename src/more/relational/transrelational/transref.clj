@@ -1,6 +1,7 @@
 (ns more.relational.transrelational.transref
   (:use  [more.relational.transrelational.table]
          [more.relational.transrelational.operators])
+   (:require [clojure.edn    :as edn])
    (:refer-clojure :exclude [extend update max min ]))
 
 
@@ -64,81 +65,82 @@
 
 
 
-#_(defn update!
+(defn update!
   "Updates tuples in relvar, for which the tuple predicate is true. The
   value at attribute is then changed to new-value. This can be a fixed value or
   a tuple function. Use relfn for predicate."
   [tvar pred? attribute new-value]
-  (assign! tvar (rel (set (map (fn [t]
-                                 (if (pred? t)
-                                   (assoc t attribute (if (fn? new-value) (new-value t) new-value))
-                                   t))
-                            (seq @rvar))))))
+  (let [to-update (set (restriction @tvar pred?))
+        changed (set (map (fn[t] (assoc t attribute (if (fn? new-value) (new-value t) new-value))) to-update))]
+    (assign! tvar (union (difference @tvar to-update) changed))))
 
-#_(defn constraint-reset!
+
+
+(defn constraint-reset!
   "If the new constraints are valid for relvar, it sets them permanently for it."
-  [rvar constraints]
+  [tvar constraints]
   (dosync
-    (let [constraints (if (or (map? constraints) (fn? constraints))
-                        [constraints]
-                        constraints)
-          old-constraints (:constraints (meta rvar))]
-      (alter-meta! rvar assoc :constraints constraints)
+    (let [constraints (cond
+                       (or (map? constraints) (fn? constraints)) #{constraints}
+                       coll? (set constraints)
+                       :else nil)
+          old-constraints (:constraints (meta tvar))]
+      (alter-meta! tvar assoc :constraints constraints)
       (try
-        (check-constraints rvar)
+        (check-constraints tvar)
         (catch Exception e
-          (do (alter-meta! rvar assoc :constraints old-constraints)
-              (throw e))))
+          (do (alter-meta! tvar assoc :constraints old-constraints)
+              (throw e)))))))
 
-      ; constraints ok, take care of references
-      (let [find-references (fn [cs] (set (remove nil? (map #(when (and (map? %)
-                                                                   (= :foreign-key (first (keys %))))
-                                                          (-> % vals first :referenced-relvar))
-                                                       cs))))
-            old-refs (find-references old-constraints)
-            new-refs (find-references constraints)]
-        (doseq [r (clj-set/difference old-refs new-refs)]
-          (remove-reference! rvar r))
-        (doseq [r (clj-set/difference new-refs old-refs)]
-          (add-reference! rvar r))))))
 
-#_(defn add-constraint!
+
+
+(defn add-constraint!
   "Adds the constraint (see relvar) to a relvar. If the new constraint cannot
   be satisfied by the relvar's value, an exception is thrown and the contraint
   is not added."
-  [rvar new-constraint]
-  (let [old-cons (:constraints (meta rvar))]
-    (constraint-reset! rvar (conj old-cons new-constraint))))
+  [tvar new-constraint]
+  (let [old-cons (:constraints (meta tvar))]
+    (constraint-reset! tvar (conj old-cons new-constraint))))
 
-#_(defn save-relvar
+
+
+
+(defn save-transvar
   "Saves the relvar in the specified file."
-  [relv file]
-  (spit file (str "#relvar #rel " (prn-str (set @relv)))))
+  [tvar file]
+  (spit file (str "#transvar #tr " (prn-str (set @tvar)))))
 
-#_(defn load-relvar
+
+
+(defn load-transvar
   "Loads a relvar from the specified file."
   [file]
-  (edn/read-string {:readers {'relvar core.relational/relvar
-                              'rel    core.relational/rel}}
+  (edn/read-string {:readers {'transvar more.relational.transrelational.transref/transvar
+                              'tr    more.relational.transrelational.table/tr}}
                    (slurp file)))
 
-#_(defn save-db
+
+
+(defn save-db
   "Saves the database in the specified file. A database is an arbitrary Clojure
   collection, preferrably a hash map."
   [db file]
   (spit file (prn-str (if (map? db)
                         (apply merge (map (fn [[k v]]
-                                            {k (list 'relvar (list 'rel (set @v)))})
+                                            {k (list 'transvar (list 'tr (set @v)))})
                                        db))
                         (vec (map (fn [rv]
-                                    (list 'relvar (list 'rel (set @rv))))
+                                    (list 'transvar (list 'tr (set @rv))))
                                db))))))
 
-#_(defn load-db
+
+
+(defn load-db
   "Loads a database from the specified file."
   [file]
-  (eval (edn/read-string {:readers {'relvar core.relational/relvar
-                                    'rel    core.relational/rel}}
+  (eval (edn/read-string {:readers {'transvar more.relational.transrelational.transref/transvar
+                                    'tr    more.relational.transrelational.table/tr}}
           (slurp file))))
 
 

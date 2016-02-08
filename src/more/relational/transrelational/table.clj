@@ -182,14 +182,16 @@
   "Creates a transrelational table by a collection of hash-maps with the same keys or by a
   prebuildes structure of keyorder, field value table and record reconstrution table."
   ([table]
-   (let [table (distinct (vec table))
+   (let [table (if (map? table) [table] table)
+         table (distinct (vec table))
           keyorder   (keyorder-of-table table)
           permutation (create-raw-permutation table keyorder)
           fvt (create-fvt-by-raw-perm permutation)
           rrt (create-rrt permutation keyorder fvt)]
      (Transrelation. keyorder fvt rrt)))
   ([keyorder table]
-    (let [table (distinct (vec (format-table keyorder table)))
+    (let [table (if (map? table) [table] table)
+          table (distinct (vec (format-table keyorder table)))
           permutation (create-raw-permutation table keyorder)
           fvt (create-fvt-by-raw-perm permutation)
           rrt (create-rrt permutation keyorder fvt)]

@@ -260,7 +260,7 @@
 
 
 
-(deftest reftest
+(deftest createRef
   (testing "creating tvar"
     (let [ relation (tr people)
            tvar (transvar relation)]
@@ -273,7 +273,7 @@
       (is (thrown? IllegalArgumentException (transvar (insert relation {:id "S1" :name nil :status nil :city nil}) constraints)))
       (is (thrown? IllegalArgumentException (transvar (insert relation {:id "S10" :name nil :status 31 :city nil}) constraints))))))
 
-(deftest bla
+(deftest assignRef
   (testing "assign!"
     (let [relation (tr people)
           tvar (transvar relation)
@@ -283,7 +283,7 @@
       (is (= @tvar rel2))
       (is (thrown? IllegalArgumentException (assign! tvar (tr [:id :name] {})))))))
 
- (deftest blubb
+ (deftest insertRef
   (testing "insert!"
     (let [relation (tr people)
           tvar (transvar relation)
@@ -300,7 +300,7 @@
       (is (every? #(contains? (set @tvar) %) tuples))
       (is (every? #(contains? (set @tvar) %) people)))))
 
-(deftest raaa
+(deftest deleteRef
   (testing "delete!"
     (let [relation (tr people)
           tvar (transvar relation)]
@@ -308,7 +308,7 @@
       (is (= (count @tvar) 3))
       (is (every? #(not (= "London" (:city %))) (seq @tvar))))))
 
-(deftest lululu
+(deftest updateRef
   (testing "update!"
     (let [relation (tr people)
           tvar (transvar relation)]
@@ -317,7 +317,7 @@
       (is (every? #(not (= "London" (:city %))) (set @tvar)))
       (is (= 2 (count (restriction @tvar (tr-fn [t] (= "Manchester" (:city t))))))))))
 
-(deftest hhihi
+(deftest resetConst
   (testing "reset constraints"
     (let [relation (tr people)
           constraints #{{:key :id}
@@ -328,7 +328,7 @@
       (insert! tvar {:id "S10" :name nil :status 31 :city nil})
       (is (thrown? IllegalArgumentException (constraint-reset! tvar constraints))))))
 
-(deftest nanana
+(deftest addConst
   (testing "add constraint"
     (let [relation (insert (tr people) {:id "S1" :name nil :status nil :city nil})
           tvar (transvar relation)]

@@ -105,7 +105,7 @@
 
 
 
-
+;TODO saving constraints?
 (defn save-transvar
   "Saves the relvar in the specified file."
   [tvar file]
@@ -144,32 +144,3 @@
           (slurp file))))
 
 
-
-#_(
-
-;; ##################################################################
-(def people #{{:id "S1" :name "Smith" :status 20 :city "London"}
-      {:id "S2" :name "Jones" :status 10 :city "Paris"}
-      {:id "S3" :name "Blake" :status 30 :city "Paris"}
-      {:id "S4" :name "Clark" :status 20 :city "London"}
-      {:id "S5" :name "Adams" :status 30 :city "Athens"}})
-
-(def relation (tr people))
-
-
-(def tvar (transvar relation  {:key :id}))
-(transvar relation  {:key #{:status :city}})
-
-(transvar relation [{:key :id}
-                    (tr-fn [rel] (<= 10 (max rel :status) 30))])
-
-(transvar relation [(tr-fn [rel] (<= 40 (max rel :status) ))])
-
-(restriction relation (tr-fn [t] (< 10 (:status t))))
-
-(assign! tvar (restriction relation (tr-fn [t] (< 10 (:status t)))))
-
-
-tvar
-
-)

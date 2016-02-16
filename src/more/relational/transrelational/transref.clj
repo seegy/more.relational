@@ -10,23 +10,50 @@
   [tvar]
   (doseq [c (:constraints (meta tvar))]
     (if (map? c)
-      (let [[ctype attr] (first c)
-            attrs (if (set? attr) attr #{attr})]
+      (let [[ctype attr] (first c)]
         (case ctype
-              :key (when-not (= (count @tvar) (count (project @tvar attrs)))
-                     (throw (IllegalArgumentException. (str "The key attribute " attrs " is not unique in " @tvar))))))
+              :key (when-not (= (count @tvar) (count (project @tvar (if (set? attr) attr #{attr}))))
+                     (throw (IllegalArgumentException. (str "The key attribute " attr " is not unique in " @tvar))))
+              :foreign-key (when-not (let [self-keys (set (project @tvar (if (set? (:key attr)) (:key attr) #{(:key attr)})))
+                                           origin-keys (set (project @(:referenced-relvar attr) (if (set? (:referenced-key attr))
+                                                                                                   (:referenced-key attr)
+                                                                                                   #{(:referenced-key attr)})))]
+                                       (every? #(contains? origin-keys %) self-keys))
+                             (throw (IllegalArgumentException.
+                                     (str "The key given for "
+                                        (:key attr)
+                                        " does not appear in the referenced relvar at "
+                                        (:referenced-key attr)))))))
       (when-not (c @tvar)
          (throw (IllegalArgumentException. (str  "The new value does not satisfy the constraint " (:body (meta c)))))))))
 
 
 
+
+(defn- add-reference!
+  "Tell tvar it is referenced by referencer."
+  [tvar referencer]
+  (alter-meta! tvar assoc :referenced-by (conj (:referenced-by (meta tvar)) referencer)))
+
+(defn- remove-reference!
+  "Tell rvar it is no longer referenced by referencer."
+  [tvar referencer]
+  (alter-meta! tvar assoc :referenced-by (disj (:referenced-by (meta tvar)) referencer)))
+
+
 (defn transvar
   ([trans-table]
-    (ref trans-table :meta {:constraints nil}))
+    (ref trans-table :meta {:constraints nil, :referenced-by #{}}))
   ([trans-table constraints]
    (let [ constraints (if (and (coll? constraints) (not (map? constraints))) (set constraints) #{constraints})
-          tvar (ref trans-table :meta {:constraints constraints})]
+          references (remove nil? (map #(when (and (map? %) (= :foreign-key (first (keys %))))
+                                         (-> % vals first :referenced-relvar))
+                                       constraints))
+          tvar (ref trans-table :meta {:constraints constraints, :referenced-by #{}})]
      (check-constraints tvar)
+     ; every relvar this one references to, is "notified"
+      (doseq [r references]
+        (add-reference! r tvar))
      tvar)))
 
 

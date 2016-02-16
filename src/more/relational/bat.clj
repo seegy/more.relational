@@ -49,6 +49,8 @@
   delete!
   update!
   makeTable!
+  constraint-reset!
+  add-constraint!
   save-batvar
   load-batvar
   save-db

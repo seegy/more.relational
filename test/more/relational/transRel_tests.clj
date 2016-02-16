@@ -340,7 +340,14 @@
 
 
 
-
-
-
+(deftest foreigntest
+  (testing "foreign-keys"
+    (let [people-tvar (transvar (tr people))
+          foreign-key {:foreign-key {:key :id, :referenced-relvar people-tvar, :referenced-key :id}}
+          fail-sp #{{:id "S1" :pno "P1" :qty 300}
+                    {:id "S100" :pno "P1" :qty 200}
+                    {:id "S1" :pno "P3" :qty 200}
+                    {:id "S2" :pno "P2" :qty 200}}]
+      (transvar (tr sp) foreign-key)
+      (is (thrown? IllegalArgumentException (transvar (tr fail-sp) foreign-key))))))
 

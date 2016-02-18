@@ -11,7 +11,7 @@
   [rvar]
   (doseq [r (:referenced-by (meta rvar))]
     (check-constraints r))
-  (doseq [c (:constraints (meta rvar))]
+  (time (doseq [c (:constraints (meta rvar))]
    (if (map? c)
      ; c is a hash map
      (let [[ctype attr] (first c)
@@ -19,12 +19,12 @@
        (if (not= (count c) 1)
          (throw (IllegalArgumentException. (str "Only one element may be in a constraint hash map: " c)))
          (case ctype
-           :key (when-not (= (count @rvar) (count (project @rvar attr-set)))
+           :key (when-not  (= (count @rvar) (count (project @rvar attr-set)))
                   (throw (IllegalArgumentException. (str "The key attribute " attr " is not unique in " @rvar))))
 
-           :foreign-key (when-not (every? #(in? (project @(:referenced-relvar attr) #{(:referenced-key attr)})
-                                                {(:referenced-key attr) %})
-                                          (map (comp first vals) (project @rvar #{(:key attr)})))
+           :foreign-key (when-not (let[source-column  (set (map #(get % (:referenced-key attr)) @(:referenced-relvar attr)))
+                                       foreign-column (set (map #(get % (:referenced-key attr)) @rvar))]
+                                     (clojure.set/subset? foreign-column source-column))
                           (throw (IllegalArgumentException.
                                    (str "The key given for "
                                         (:key attr)
@@ -36,7 +36,7 @@
      ; c is predicate, just invoke
      (when-not (c @rvar)
       (throw (IllegalArgumentException.
-               (str "The new value does not satisfy the constraint " (:body (meta c)))))))))
+               (str "The new value does not satisfy the constraint " (:body (meta c))))))))))
 
 (defn- add-reference!
   "Tell rvar it is referenced by referencer."

@@ -11,7 +11,7 @@
   [rvar]
   (doseq [r (:referenced-by (meta rvar))]
     (check-constraints r))
-  (time (doseq [c (:constraints (meta rvar))]
+  (doseq [c (:constraints (meta rvar))]
    (if (map? c)
      ; c is a hash map
      (let [[ctype attr] (first c)
@@ -36,7 +36,7 @@
      ; c is predicate, just invoke
      (when-not (c @rvar)
       (throw (IllegalArgumentException.
-               (str "The new value does not satisfy the constraint " (:body (meta c))))))))))
+               (str "The new value does not satisfy the constraint " (:body (meta c)))))))))
 
 (defn- add-reference!
   "Tell rvar it is referenced by referencer."
@@ -55,18 +55,18 @@
   ([relation]
     (ref relation :meta {:constraints nil, :referenced-by #{}}))
   ([relation constraints]
-    (let [constraints (if (or (map? constraints) (fn? constraints))
+    (let [constraints  (if (or (map? constraints) (fn? constraints))
                         [constraints]
                         constraints)
-          references (remove nil? (map #(when (and (map? %) (= :foreign-key (first (keys %))))
+          references  (remove nil? (map #(when (and (map? %) (= :foreign-key (first (keys %))))
                                          (-> % vals first :referenced-relvar))
                                        constraints))
-          rvar (ref relation :meta {:constraints constraints, :referenced-by #{}})]
+          rvar  (ref relation :meta {:constraints constraints, :referenced-by #{}})]
 
 
-      (check-constraints rvar)
+       (check-constraints rvar)
       ; every relvar this one references to, is "notified"
-      (doseq [r references]
+       (doseq [r references]
         (add-reference! r rvar))
       rvar)))
 

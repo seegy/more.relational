@@ -53,7 +53,9 @@
 
 
     (convert [this]
-     (map (fn[row] (retrieve this row 0)) (range (count this))))
+     (sequence (comp  (map (fn[row] (retrieve this row 0)))
+                      (filter #(not (nil? %))))
+               (range (count this))))
 
     (convert [this order]
      (if (empty? order)
@@ -62,7 +64,9 @@
          (throw (IllegalArgumentException. "Order attribute not part of relation"))
          (let [attrs (.keyorder this)
                row-of-last (.indexOf attrs (last order))
-               preorderd-tr (map (fn[row] (retrieve this  row row-of-last)) (range (count this)))]
+               preorderd-tr (sequence (comp (map (fn[row] (retrieve this row row-of-last)))
+                                            (filter #(not (nil? %))))
+                                       (range (count this)))]
            (if (empty? (drop-last 1 order))
              preorderd-tr
              (sort-by (apply juxt (drop-last 1 order) ) preorderd-tr ))))))

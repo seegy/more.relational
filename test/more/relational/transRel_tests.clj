@@ -104,7 +104,13 @@
       (let [pred (tr-fn [t] (#(= (last %1 ) (last %2)) (:name t) (:city t)))
             result (restriction relation pred)]
         (is (= 2 (count result)))
-        (is (= (keyorder relation) (keyorder result)))))))
+        (is (= (keyorder relation) (keyorder result))))
+      (let [pred (tr-fn[t] true)
+            result (restriction relation pred)]
+        (is (= (set relation) (set result))))
+      (let [pred (tr-fn[t] false)
+            result (restriction relation pred)]
+        (is (= '() (seq result)))))))
 
 
 

@@ -496,6 +496,10 @@
 
                :else '()))), ;TODO compare without tuple
 
+      (true? ast)
+          (seq ['convert  (first arg)])
+      (false? ast)
+          #{}
        :else ast))) ;TODO const
 
 

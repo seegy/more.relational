@@ -110,7 +110,14 @@
         (is (= (set relation) (set result))))
       (let [pred (tr-fn[t] false)
             result (restriction relation pred)]
-        (is (= '() (seq result)))))))
+        (is (= '() (seq result))))
+      #_(let [tupel {:value 30}
+            pred (tr-fn [t] (<= (:value tupel) (:status t)))
+            result (restriction relation pred)
+            converted-result (convert result)]
+        (is (= 2 (count result)))
+        (is (= 2 (count converted-result)))
+        (is (every? pred converted-result))))))
 
 
 

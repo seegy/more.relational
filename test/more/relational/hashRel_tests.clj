@@ -142,9 +142,25 @@
 
 
 
-(deftest devide-test
-  (testing "devide"
-    (let [])))
+(deftest relvartest
+  (testing "insert"
+    (let [rvar (relvar (rel people))]
+      (insert! rvar {:sno "S6" :sname "XXX" :status 10 :scity "Paris"})
+      (is (contains? (set @rvar)  {:sno "S6" :sname "XXX" :status 10 :scity "Paris"}))
+      (is (= @rvar (rel [{:sno "S1" :sname "Smith" :status 20 :scity "London"}
+                          {:sno "S2" :sname "Jones" :status 10 :scity "Paris"}
+                          {:sno "S3" :sname "Blake" :status 30 :scity "Paris"}
+                          {:sno "S4" :sname "Clark" :status 10 :scity "London"}
+                          {:sno "S5" :sname "Adams" :status 30 :scity "Athen"}
+                         {:sno "S6" :sname "XXX" :status 10 :scity "Paris"}])))))
+  (testing "delete"
+    (let [rvar (relvar (rel people))]
+      (delete! rvar (relfn [t](=  (:scity t) "London")))
+      (is (= (set @rvar) #{{:sno "S2" :sname "Jones" :status 10 :scity "Paris"}
+                           {:sno "S3" :sname "Blake" :status 30 :scity "Paris"}
+                           {:sno "S5" :sname "Adams" :status 30 :scity "Athen"}}))
+      (is (set? (body @rvar))))))
+
 
 #_(
 

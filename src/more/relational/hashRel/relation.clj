@@ -108,9 +108,9 @@
                   (map vector (first data)))
           rows (cond
                  (map? dat)
-                   [dat]
+                   #{dat}
                  (map? (first dat))
-                   dat
+                   (set dat)
                  :else
                    (into #{} (comp
                               (map (fn [t] (zipmap column-names t)))

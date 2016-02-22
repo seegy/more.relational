@@ -14,11 +14,9 @@
         (case ctype
               :key (when-not (= (count @tvar) (count (project @tvar (if (set? attr) attr #{attr}))))
                      (throw (IllegalArgumentException. (str "The key attribute " attr " is not unique in " @tvar))))
-              :foreign-key (when-not (let [self-keys (set (project @tvar (if (set? (:key attr)) (:key attr) #{(:key attr)})))
-                                           origin-keys (set (project @(:referenced-relvar attr) (if (set? (:referenced-key attr))
-                                                                                                   (:referenced-key attr)
-                                                                                                   #{(:referenced-key attr)})))]
-                                       (every? #(contains? origin-keys %) self-keys))
+              :foreign-key (when-not (let [self-keys (set (map #(:value %) (get (fieldValues @tvar) (:key attr))))
+                                           origin-keys (set (map #(:value %) (get (fieldValues @(:referenced-relvar attr)) (:referenced-key attr))))]
+                                       (clojure.set/subset? self-keys origin-keys))
                              (throw (IllegalArgumentException.
                                      (str "The key given for "
                                         (:key attr)
@@ -26,6 +24,7 @@
                                         (:referenced-key attr)))))))
       (when-not (c @tvar)
          (throw (IllegalArgumentException. (str  "The new value does not satisfy the constraint " (:body (meta c)))))))))
+
 
 
 

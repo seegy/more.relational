@@ -28,7 +28,6 @@
 
 
 
-
 ;; #######################################################################################################################################
 ;; Basic operations
 ;; #######################################################################################################################################
@@ -454,7 +453,7 @@
 
 
 
-(defn- optimize
+(defn optimize
   ""
   [arg ast]
   (let []
@@ -473,7 +472,7 @@
            (let [key-map (map #(key-of-tr (first arg) %) (rest ast))]
              (cond
                (every? #(not (nil? %)) key-map)
-                  (seq [ 'inner-compare (first arg) (first ast) (first key-map) (second key-map)])
+                  (seq [ `inner-compare (first arg) (first ast) (first key-map) (second key-map)])
 
                (not-every? nil? key-map)
                 (let [ f (if (last key-map)
@@ -481,36 +480,50 @@
                             (first ast))
                       [left right] (if (last key-map)
                                      [(last key-map) (second ast)]
-                                     [(first key-map) (last ast)])]
+                                     [(first key-map) (last ast)])
+                       right (if (list? right)
+                               (eval right) ; => (:value foreign-context-map) -> value
+                               right)]
                               (cond
                                 (contains? #{'< '> '<= '>=} f)
-                                   (seq ['area-search (first arg) left f right])
+                                   (seq [`area-search (first arg) left f right])
 
                                 (= '= f)
-                                   (seq [ 'point-search (first arg) left right])
+                                   (seq [ `point-search (first arg) left right])
 
                                 (= 'not= f)
-                                   (apply conj right left (first arg) 'not=-scan)
+                                   (apply conj right left (first arg) `not=-scan)
 
                                :else (f left right)))
 
                :else '()))), ;TODO compare without tuple
 
       (true? ast)
-          (seq ['convert  (first arg)])
+          (seq [`convert  (first arg)])
       (false? ast)
           #{}
        :else ast))) ;TODO const
 
 
+#_(defmacro tr-fn
+  "Behaves like fn, but stores the source code in the metadata to allow
+  optimisation."
+  [args body]
+  `(let [args# '~args
+         body# '~body
+         opti# (optimize args# body#)]
+      (with-meta (eval (list 'fn args# body#))
+                  {:args args#
+                   :body  body#
+                   :optimized opti# })))
+
 
 (defmacro restrict-fn-analytic
   ""
-  [arg body]
-  (let [optimized (optimize arg body)]
+  [args body]
+  `~(let [optimized (optimize args body)]
     (with-meta (list 'quote optimized)
                 {:body (list 'quote optimized)})))
-
 
 
 
@@ -601,81 +614,4 @@
 
 
 
-#_(
 
-; ############################################################################################################################
-
-
-(def employees-data (take 10000 (set (read-string  (str "[" (slurp  "resources/employees.clj" ) "]" )))))
-(def xrel (map #(zipmap [:emp_no :birth_date :first_name :last_name :gender :hire_date] %) employees-data))
-(def tr-employees (tr xrel))
-(def t tr-employees)
-
-
-
-
-
-
-(defn down-to-up-scan
-  ""
-  [column f right-value]
-  (println "down-to-up")
-  (time (loop [c column
-         result []]
-    (if (and (not-empty c) (f (:value (last c)) right-value))
-      (recur (drop-last c) (conj result (last c)))
-      result))))
-
-
-
-
-(defn up-to-down-scan
-  ""
-  [column f right-value]
-  (println "up-to-down")
-  (time (loop [c column
-         result []]
-    (if (and (not-empty c) (f (:value (first c)) right-value))
-      (recur (rest c) (conj result (first c)))
-      result))))
-
-
-
-
-(defn not=-scan
-  ""
-  [column value]
-  (time (let [ops (if (string? value)
-              [#(neg? (compare %1 %2)) #(pos? (compare %1 %2))]
-              [< >])]
-  (apply conj (up-to-down-scan column (first ops) value) (down-to-up-scan column (second ops) value)))))
-
-
-
-(defn area-search
-  ""
-  [trans-table attr f right-value]
-  (time (let [up-to-down #{<= <}
-        down-to-up #{>= >}
-        column (get (fieldValues trans-table) attr)]
-     (set (map #(retrieve trans-table % (.indexOf (keyorder trans-table) attr))
-      (flatten (map (fn [n] (range (:from n) (inc (:to n))))
-         (cond
-           (contains? up-to-down f) (up-to-down-scan column f right-value)
-           (contains? down-to-up f) (down-to-up-scan column f right-value)
-           (= not= f) (not=-scan column right-value)
-           :else []))))))))
-
-
-
-
-(time (down-to-up-scan+ (:emp_no (fieldValues t)) > 35000))
-(time (up-to-down-scan (:emp_no (fieldValues t)) < 35000))
-
-(time (area-search t :emp_no > 35000))
-
-
-
-
-
-)

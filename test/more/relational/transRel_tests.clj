@@ -111,7 +111,7 @@
       (let [pred (tr-fn[t] false)
             result (restriction relation pred)]
         (is (= '() (seq result))))
-      #_(let [tupel {:value 30}
+      (let [tupel {:value 30}
             pred (tr-fn [t] (<= (:value tupel) (:status t)))
             result (restriction relation pred)
             converted-result (convert result)]
@@ -320,6 +320,8 @@
       (delete! tvar (tr-fn [t] (= "London" (:city t))))
       (is (= (count @tvar) 3))
       (is (every? #(not (= "London" (:city %))) (seq @tvar))))))
+
+
 
 (deftest updateRef
   (testing "update!"

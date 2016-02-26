@@ -15,16 +15,56 @@
   (filter identity (map-indexed #(if (not= %1 idx) %2) col)))
 
 
+(defmacro get-env
+  []
+  (into {} (for [k (keys &env)]
+             [(name k) k])))
+
+#_(defmacro tr-fn
+  "Behaves like fn, but stores the source code in the metadata to allow
+  optimisation."
+  [args body]
+      (with-meta  (list 'fn args body)
+                  {:args (list 'quote args)
+                   :body (list 'quote body)
+                   :env (into {}
+                              (for [k (keys &env)]
+                                [(name k) k]))}))
 
 (defmacro tr-fn
   "Behaves like fn, but stores the source code in the metadata to allow
   optimisation."
   [args body]
-  (with-meta (list 'fn args body)
-              {:args (list 'quote args)
-               :body (list 'quote body)}))
+      (with-meta  (list 'fn args body)
+                  {:args (list 'quote args)
+                   :body (list 'quote body)
+                   :env (let [symbols (loop [l body s #{}]
+                                        (do
+                                          (if (coll? l)
+                                            (if (empty? l)
+                                              s
+                                              (cond
+                                               (symbol? (first l)) (recur (rest l) (conj s (name (first l))))
+                                               (coll? (first l)) (recur (apply conj (rest l) (first l)) s)
+                                               :else (recur (rest l) s)))
+                                            (recur (list l) s))))]
+                          (into {}
+                              (for [k (keys &env)]
+                                (if (contains? symbols (name k))
+                                  [(name k) k]))))}))
 
 
+
+#_(let [asd 20
+      r (ref asd :meta {})
+       people (tr #{{:id "S1" :name "Smith" :status 20 :city "London"}
+      {:id "S2" :name "Jones" :status 10 :city "Paris"}
+      {:id "S3" :name "Blake" :status 30 :city "Paris"}
+      {:id "S4" :name "Clark" :status 20 :city "London"}
+      {:id "S5" :name "Adams" :status 30 :city "Athens"}})
+      trfn (tr-fn [t] (< asd (:status t)))]
+ (restriction people trfn)
+  (meta trfn))
 
 
 
@@ -481,9 +521,7 @@
                       [left right] (if (last key-map)
                                      [(last key-map) (second ast)]
                                      [(first key-map) (last ast)])
-                       right (if (list? right)
-                               (eval right) ; => (:value foreign-context-map) -> value
-                               right)]
+                       ]
                               (cond
                                 (contains? #{'< '> '<= '>=} f)
                                    (seq [`area-search (first arg) left f right])
@@ -505,17 +543,57 @@
        :else ast))) ;TODO const
 
 
-#_(defmacro tr-fn
-  "Behaves like fn, but stores the source code in the metadata to allow
-  optimisation."
-  [args body]
-  `(let [args# '~args
-         body# '~body
-         opti# (optimize args# body#)]
-      (with-meta (eval (list 'fn args# body#))
-                  {:args args#
-                   :body  body#
-                   :optimized opti# })))
+
+#_(defmacro optimize
+  ""
+  [arg ast]
+  `(let [arg# '~arg
+         ast# '~ast]
+   (cond
+     (and (seq? ast#) (contains? #{ "and" "or" } (str (first ast#))))
+            (do
+              (reverse (into
+              (case (str (first ast#))
+                "and" '(clojure.set/intersection)
+                "or" '(clojure.set/union))
+              (map #(eval (list `optimize arg# %)) (rest ast#)))))
+
+     (and (seq? ast#))
+      (if (< 2 (count (rest ast#)))
+        (let [unflated# (unflat ast#)]
+          (eval (list `optimize arg# unflated#)))
+
+        (let [key-map# (map #(key-of-tr (first arg#) %) (rest ast#))]
+
+           (cond
+               (every? #(not (nil? %)) key-map#)
+                  (seq [ `inner-compare (first arg#) (first ast#) (first key-map#) (second key-map#)])
+
+                (not-every? nil? key-map#)
+                (let [ [ f# left# right# ] (if (last key-map#)
+                            [(get flip-compare-map (first ast#)) (last key-map#) (second ast#)]
+                            [(first ast#) (first key-map#) (last ast#)])
+                       right#  right#]
+                              (cond
+                                (contains? #{< > <= >= not=} (eval f#))
+                                   (list `area-search (first arg#) left# f# right# )
+
+                                (= = (eval f#))
+                                   (list `point-search (first arg#) left# right#)
+
+                                (= not= (eval f#))
+                                   (list  `not=-scan (first arg#) left# right#)
+
+                               :else (f# left# right#)))
+
+               :else '()))), ;TODO compare without tuple
+
+      (true? ast#)
+          (seq [`convert  (first arg#)])
+      (false? ast#)
+          #{}
+       :else ast#))) ;TODO const
+
 
 
 (defmacro restrict-fn-analytic
@@ -541,13 +619,26 @@
 
 
 
-(defn restriction
+#_(defn restriction
   ""
   [trans-table rfn]
   (let[tuples (pred-search trans-table rfn)]
       (tr (keyorder trans-table) tuples)))
 
 
+(defn restriction
+  ""
+  [trans-table rfn]
+  (let[meta-stuff (meta rfn)
+       pred   (eval (list 'fn
+                  (:args meta-stuff)
+                  (list 'let
+                               (reduce (fn[v [x y]] (conj v (read-string x) y)) [] (:env meta-stuff))
+                    (optimize
+                        (:args meta-stuff)
+                        (:body meta-stuff)))))
+        ]
+       (tr (keyorder trans-table) (pred trans-table))))
 
 
 
@@ -612,6 +703,184 @@
     (tr merged)))
 
 
+; ########################################################################################################################################################################
+; ########################################################################################################################################################################
+
+#_(
+(defmacro optimize
+  ""
+  [arg ast]
+  `(let [arg# '~arg
+         ast# '~ast]
+   (cond
+     (and (seq? ast#) (contains? #{ "and" "or" } (str (first ast#))))
+            (do
+              (reverse (into
+              (case (str (first ast#))
+                "and" '(clojure.set/intersection)
+                "or" '(clojure.set/union))
+              (map #(eval (list `optimize arg# %)) (rest ast#)))))
+
+     (and (seq? ast#))
+      (if (< 2 (count (rest ast#)))
+        (let [unflated# (unflat ast#)]
+          (eval (list `optimize arg# unflated#)))
+
+        (let [key-map# (map #(key-of-tr (first arg#) %) (rest ast#))]
+
+           (cond
+               (every? #(not (nil? %)) key-map#)
+                  (seq [ `inner-compare (first arg#) (first ast#) (first key-map#) (second key-map#)])
+
+                (not-every? nil? key-map#)
+                (let [ [ f# left# right# ] (if (last key-map#)
+                            [(get flip-compare-map (first ast#)) (last key-map#) (second ast#)]
+                            [(first ast#) (first key-map#) (last ast#)])
+                       right#  right#]
+                              (cond
+                                (contains? #{< > <= >= not=} (eval f#))
+                                   (list `area-search (first arg#) left# f# right# )
+
+                                (= = (eval f#))
+                                   (list `point-search (first arg#) left# right#)
+
+                                (= not= (eval f#))
+                                   (list  `not=-scan (first arg#) left# right#)
+
+                               :else (f# left# right#)))
+
+               :else '()))), ;TODO compare without tuple
+
+      (true? ast#)
+          (seq [`convert  (first arg#)])
+      (false? ast#)
+          #{}
+       :else ast#))) ;TODO const
 
 
 
+(defmacro tr-fn
+  "Behaves like fn, but stores the source code in the metadata to allow
+  optimisation."
+  [args body]
+      (with-meta  (list 'fn args body)
+                  {:args (list 'quote args)
+                   :body (list 'quote body)
+                   :env (list 'get-env)}))
+
+(def people (tr #{{:id "S1" :name "Smith" :status 20 :city "London"}
+      {:id "S2" :name "Jones" :status 10 :city "Paris"}
+      {:id "S3" :name "Blake" :status 30 :city "Paris"}
+      {:id "S4" :name "Clark" :status 20 :city "London"}
+      {:id "S5" :name "Adams" :status 30 :city "Athens"}}))
+
+(let [asd 20]
+   (meta (tr-fn [t] (<= asd (:status t)))))
+
+
+
+(let [asd 20]
+  (macroexpand-1 '(optimize [t] (= asd (:status t)))))
+
+(let [asd 20]
+  (optimize [t] (and true (= asd (:status t)))))
+
+
+
+
+
+
+
+(defn restriction
+  ""
+  [trans-table rfn]
+  (let[meta-stuff (meta rfn)
+       pred (eval (list 'fn
+                  (:args meta-stuff)
+                  (list 'let
+                               (reduce (fn[v [x y]] (conj v (read-string x) y)) [] (:env meta-stuff))
+                  (eval (list `optimize
+                        (:args meta-stuff)
+                        (:body meta-stuff))))))
+        ]
+       (tr (keyorder trans-table) (pred trans-table))))
+
+
+
+(let [asd 20
+      trfn (tr-fn [t] (< asd (:status t)))]
+  (restriction people trfn))
+
+(let [asd 20
+      trfn (tr-fn [t] (< asd (:status t)))]
+ (let [trans-table people
+       meta-stuff (meta trfn)
+       pred (list 'fn
+                  (:args meta-stuff)
+                  (list 'optimize
+                        (:args meta-stuff)
+                        (:body meta-stuff)))]
+   pred))
+
+
+; ############################################
+; StackOverflow
+
+
+
+
+; Should work like fn, but save the code of args and body
+(defmacro my-fn
+  [args body]
+      (with-meta  (list 'fn args body)
+                  {:args (list 'quote args)
+                   :body (list 'quote body)
+                   :env (list 'get-env)}))
+
+
+; in this macro, the predicate should be morphed later. Both args and body will be needed.
+; to show my problem, i will skip this morphing and return just the body
+(defmacro morph
+  [args body]
+  body)
+
+
+; example data für this case
+(def people  #{{:id "S1" :name "Smith" :status 20 }
+               {:id "S2" :name "Jones" :status 10 }
+               {:id "S3" :name "Blake" :status 30 }})
+
+
+
+ (let[a 20
+      f (fn [t] (<= a (:status t)))]
+   (filter f people))
+
+
+ (defmacro get-env
+  []
+  (into {} (for [k (keys &env)]
+             [(name k) k])))
+
+
+
+
+(let [a 20
+      b 123
+      f (my-fn [t] (<= a (:status t)))] ; pred should be used like fn
+  (let [a 1
+        d 5
+        env (get-env)
+        pred (eval (list 'fn    ; later this second let code for comes into a macro or somehting
+                         (:args (meta f))
+                         (list 'let
+                               (reduce (fn[v [x y]] (conj v (read-string x) y)) [] (:env (meta f)))
+                               (list 'morph
+                                     (:args (meta f))
+                                     (:body (meta f))))))]
+   (filter pred people)))
+
+(read-string "a")
+
+(reduce (fn[v [x y]] (conj v (read-string x) y)) []  {"a" 20, "b" 123})
+   )

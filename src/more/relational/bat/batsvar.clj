@@ -15,9 +15,9 @@
     (if (map? c)
       (let [[ctype attr] (first c)]
         (case ctype
-              :key (when-not (let [attrs (if (set? attr) attr #{attr})
+              :key (when-not  (let [attrs (if (set? attr) attr #{attr})
                                    columns (select-keys @bvar attrs)
-                                   with-oid (assoc columns :oid (mirror (get columns (first attrs))))
+                                   with-oid (assoc columns (keyword (gensym "G_")) (mirror (get columns (first attrs))))
                                    table (set (makeTable [] (keys columns) (vals columns)))
                                    table-with-oid (set (makeTable [] (keys with-oid) (vals with-oid)))]
                                (= (count table) (count table-with-oid)))

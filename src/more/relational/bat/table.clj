@@ -92,13 +92,14 @@
 
 (defn convertToBats
   ""
-  [table]
-  (let [heads (reduce (fn [heads entry](apply conj heads (keys entry))) #{} table)
-        table (vec table)]
+  ([table]
+  (let [heads (reduce (fn [heads entry](apply conj heads (keys entry))) #{} table)]
+     (convertToBats heads table)))
+  ([heads table]
+   (let [table (vec table)]
      (reduce (fn [m attr]
                (assoc m attr (bat
                                (filter #(not (nil? (:tail %)))
                                       (map-indexed (fn [i entry] {:head i,
-                                                                  :tail (get entry attr)}) table))))) {} heads)))
-
+                                                                  :tail (get entry attr)}) table))))) {} heads))))
 

@@ -40,7 +40,11 @@
   (testing "convert to bats"
     (let [converted (convertToBats people)]
       (is (= (count converted) 4))
-      (is (= (set (keys converted)) #{:id :name :status :city})))))
+      (is (= (set (keys converted)) #{:id :name :status :city})))
+    (let [converted (convertToBats [:id :name] #{})]
+      (is (= (count converted) 2))
+      (is (= (count (:id converted)) 0))
+      (is (= (count (:name converted)) 0)))))
 
 
 

@@ -15,17 +15,17 @@
     (if (map? c)
       (let [[ctype attr] (first c)]
         (case ctype
-              :key (when-not  (let [attrs (if (set? attr) attr #{attr})
+              :key (when-not   (let [attrs (if (set? attr) attr #{attr})
                                    columns (select-keys @bvar attrs)
                                    with-oid (assoc columns (keyword (gensym "G_")) (mirror (get columns (first attrs))))
-                                   table (set (makeTable [] (keys columns) (vals columns)))
-                                   table-with-oid (set (makeTable [] (keys with-oid) (vals with-oid)))]
+                                   table-with-oid (set (makeTable [] (keys with-oid) (vals with-oid)))
+                                          table (into #{} (map #(select-keys  % attrs) table-with-oid))]
                                (= (count table) (count table-with-oid)))
                      (throw (IllegalArgumentException. (str "The key attribute " attr " is not unique in " @bvar))))
 
-              :foreign-key (when-not (let [self-keys (set (map #(:tail %) (seq (get @bvar (:key attr)))))
-                                           origin-keys (reverse (get @(:referenced-relvar attr) (:referenced-key attr)))]
-                                       (every? #(not (nil? (find origin-keys %))) self-keys))
+              :foreign-key (when-not  (let [self-key-bat-mirror (OP/mirror (OP/reverse (get @bvar (:key attr))))
+                                           origin-key-bat-mirror (OP/mirror (OP/reverse (get @(:referenced-relvar attr) (:referenced-key attr))))]
+                                       (= (count self-key-bat-mirror) (count (OP/join self-key-bat-mirror origin-key-bat-mirror =))))
                              (throw (IllegalArgumentException.
                                      (str "The key given for "
                                         (:key attr)

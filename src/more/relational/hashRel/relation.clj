@@ -128,13 +128,7 @@
          tuples)))))
 
 
-;(def r (rel #{ {:id 1, :name "Arthur"} {:id 2, :name "Betty"} }))
-;(rel [:id :name] #{ [1 "Arthur"] [2 "Betty"]})
 
-
-;  (1) Given as a set of hash maps: #{ {:id 1, :name \"Arthur\"} {:id 2, :name \"Betty\"} }
-;  (2) Given as a single hash map: {:id 1, :name \"Arthur\"}
-;  (3) Given as head and body: [:id :name] #{ [1 \"Arthur\"] [2 \"Betty\"} }
 
 
 (defn in?
@@ -181,9 +175,4 @@
                    (compare (t2 attr) (t1 attr)))))))
          (seq rel)))
 
-;(seq r)
-;(order r []) ;TODO?
-;(order r {:id :asc})
-;(order r [{:id :desc}, {:name :asc}])
-;(order r [ {:name :desc}])
 

@@ -523,14 +523,13 @@
                                      [(first key-map) (last ast)])
                        ]
                               (cond
-                                (contains? #{'< '> '<= '>=} f)
+                                (contains? #{'< '> '<= '>= 'not=} f)
                                    (seq [`area-search (first arg) left f right])
 
                                 (= '= f)
                                    (seq [ `point-search (first arg) left right])
 
-                                (= 'not= f)
-                                   (apply conj right left (first arg) `not=-scan)
+
 
                                :else (f left right)))
 

@@ -163,7 +163,7 @@
 (defn save-batvar
   ""
   [batVar file]
-  (spit file (str "#batvar "(prn-str @batVar))))
+   (spit file (str "#batvar{" (reduce  (fn [s [k v]](str s  k " #BAT " (buns v)  )) "" @batVar) "}")))
 
 
 (defn load-batvar
@@ -178,17 +178,13 @@
   "Saves the database in the specified file. A database is an arbitrary Clojure
   collection, preferrably a hash map."
   [db file]
-  (spit file (prn-str (if (map? db)
-                        (apply merge (map (fn [[k v]]
-                                            {k (list 'batvar (list 'bat (set @v)))})
-                                       db))
-                        (vec (map (fn [rv]
-                                    (list 'batvar (list 'bat (set @rv))))
-                               db))))))
+  (spit file (str (reduce (fn[outer-s [outer-k batVar]]  (str outer-s outer-k (reduce  (fn [s [k v]](str s  k " #BAT " (buns v)  )) " #batvar{" @batVar) "}")) "{" db) "}")))
+
+
 
 (defn load-db
   "Loads a database from the specified file."
   [file]
-  (eval (edn/read-string {:readers {'batvar more.relational.bat.batsvar/batvar
+  (edn/read-string {:readers {'batvar more.relational.bat.batsvar/batvar
                                'BAT   more.relational.bat.table/bat}}
-                    (slurp file))))
+                    (slurp file)))

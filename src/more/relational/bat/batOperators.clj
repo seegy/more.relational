@@ -274,7 +274,7 @@
 (defn save
   ""
   [AB file]
-  (spit file (prn-str AB)))
+  (spit file (str "#BAT "  (buns AB))))
 
 (defn load
   ""

@@ -89,7 +89,10 @@
   ([batVar tuple]
    (when-not (= (set (keys @batVar)) (set (keys tuple)))
       (throw (IllegalArgumentException. "Schema of tuple and schema of BATs are not equal.")))
-   (let[ newId (inc (apply clojure.core/max(map (fn[[_ bat]] (max (reverse bat))) @batVar)))
+   (let[ newId (if (every? empty? (vals @batVar))
+                 1
+                 (inc (apply clojure.core/max (map (fn[[_ bat]] (max (reverse bat)))
+                                                   (filter (fn [[_ bat]] (not (empty? bat))) @batVar)))))
          newBatMap (into {} (map (fn[[attr value]] [attr (OP/insert (get @batVar attr) newId value)]) tuple))]
       (assign! batVar newBatMap))))
 

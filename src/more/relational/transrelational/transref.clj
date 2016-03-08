@@ -130,12 +130,18 @@
     (constraint-reset! tvar (conj old-cons constraint))))
 
 
+(defn- transvar-to-string
+  [tvar]
+  (str  "#tr " (str [(keyorder @tvar)
+                     (fieldValues @tvar)
+                     (recordReconst @tvar)])))
+
 
 ;TODO saving constraints?
 (defn save-transvar
   "Saves the relvar in the specified file."
   [tvar file]
-  (spit file (str "#transvar #tr " (prn-str (set @tvar)))))
+  (spit file (str "#transvar " (transvar-to-string tvar))))
 
 
 
@@ -143,7 +149,7 @@
   "Loads a relvar from the specified file."
   [file]
   (edn/read-string {:readers {'transvar more.relational.transrelational.transref/transvar
-                              'tr    more.relational.transrelational.table/tr}}
+                              'tr    (fn [[ko fvt rrt]] (tr ko fvt rrt))}}
                    (slurp file)))
 
 
@@ -152,21 +158,14 @@
   "Saves the database in the specified file. A database is an arbitrary Clojure
   collection, preferrably a hash map."
   [db file]
-  (spit file (prn-str (if (map? db)
-                        (apply merge (map (fn [[k v]]
-                                            {k (list 'transvar (list 'tr (set @v)))})
-                                       db))
-                        (vec (map (fn [rv]
-                                    (list 'transvar (list 'tr (set @rv))))
-                               db))))))
+  (spit file (str "{" (reduce  (fn [s [k v]](str s  k " #transvar " (transvar-to-string v)  )) "" db) "}")))
 
 
 
 (defn load-db
   "Loads a database from the specified file."
   [file]
-  (eval (edn/read-string {:readers {'transvar more.relational.transrelational.transref/transvar
-                                    'tr    more.relational.transrelational.table/tr}}
-          (slurp file))))
-
+  (edn/read-string {:readers {'transvar more.relational.transrelational.transref/transvar
+                                    'tr    (fn [[ko fvt rrt]] (tr ko fvt rrt))}}
+          (slurp file)))
 

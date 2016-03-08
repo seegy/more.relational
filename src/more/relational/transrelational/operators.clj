@@ -306,10 +306,15 @@
 
 
 (defn union
-  ""
-  [tr1 & more]
-   (tr (keyorder tr1) (flatten (apply conj  (seq tr1) (map seq more)))))
-
+  ([transrel]
+    transrel)
+  ([tr1 tr2]
+   (if (< (count tr1) (count tr2))
+     (reduce #(insert %1 %2) tr2 (seq tr1))
+     (reduce #(insert %1 %2) tr1 (seq tr2))))
+  ([tr1 tr2 & more]
+   (let [all-trs (reverse (sort-by count (conj more tr1 tr2)))]
+     (apply union (union (first all-trs) (second all-trs)) (drop 2 all-trs)))))
 
 
 

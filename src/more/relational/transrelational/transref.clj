@@ -85,8 +85,8 @@
   "Deletes tuples from relvar, for which the tuple predicate returns true. Use
   relfn to produce the predicate to enable optimization. It takes a single tuple
   as its argument."
-  [tvar pred?]
-  (let [dif-rel (restriction @tvar pred?)]
+  [tvar pred]
+  (let [dif-rel (restriction @tvar pred)]
     (assign! tvar (difference @tvar dif-rel))))
 
 
@@ -95,8 +95,8 @@
   "Updates tuples in relvar, for which the tuple predicate is true. The
   value at attribute is then changed to new-value. This can be a fixed value or
   a tuple function. Use relfn for predicate."
-  [tvar pred? attribute new-value]
-  (let [to-update (set (restriction @tvar pred?))
+  [tvar pred attribute new-value]
+  (let [to-update (set (restriction @tvar pred))
         changed (set (map (fn[t] (assoc t attribute (if (fn? new-value) (new-value t) new-value))) to-update))]
     (assign! tvar (union (difference @tvar to-update) changed))))
 
@@ -125,9 +125,9 @@
   "Adds the constraint (see relvar) to a relvar. If the new constraint cannot
   be satisfied by the relvar's value, an exception is thrown and the contraint
   is not added."
-  [tvar new-constraint]
+  [tvar constraint]
   (let [old-cons (:constraints (meta tvar))]
-    (constraint-reset! tvar (conj old-cons new-constraint))))
+    (constraint-reset! tvar (conj old-cons constraint))))
 
 
 

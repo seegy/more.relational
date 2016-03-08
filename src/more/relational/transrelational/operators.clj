@@ -20,16 +20,7 @@
   (into {} (for [k (keys &env)]
              [(name k) k])))
 
-#_(defmacro tr-fn
-  "Behaves like fn, but stores the source code in the metadata to allow
-  optimisation."
-  [args body]
-      (with-meta  (list 'fn args body)
-                  {:args (list 'quote args)
-                   :body (list 'quote body)
-                   :env (into {}
-                              (for [k (keys &env)]
-                                [(name k) k]))}))
+
 
 (defmacro tr-fn
   "Behaves like fn, but stores the source code in the metadata to allow
@@ -55,16 +46,7 @@
 
 
 
-#_(let [asd 20
-      r (ref asd :meta {})
-       people (tr #{{:id "S1" :name "Smith" :status 20 :city "London"}
-      {:id "S2" :name "Jones" :status 10 :city "Paris"}
-      {:id "S3" :name "Blake" :status 30 :city "Paris"}
-      {:id "S4" :name "Clark" :status 20 :city "London"}
-      {:id "S5" :name "Adams" :status 30 :city "Athens"}})
-      trfn (tr-fn [t] (< asd (:status t)))]
- (restriction people trfn)
-  (meta trfn))
+
 
 
 
@@ -189,7 +171,7 @@
   (let [counts (map #(first (last %)) (recordReconst tr))]
     (get (keyorder tr) (.indexOf counts (apply clojure.core/max counts)))))
 
-(defn- tupel-in-tr
+(defn- tuple-in-tr
   [trans-table tupel]
   (let [mpa (get-most-present-attr trans-table)
         x (point-search trans-table mpa (get tupel mpa))]
@@ -203,7 +185,7 @@
   [trans-table data-row]
   (when-not (= (set (keys data-row)) (set (keyorder trans-table)))
     (throw (IllegalArgumentException. "DataRow has not the same schema as the table")))
-  (if (tupel-in-tr trans-table data-row)
+  (if (tuple-in-tr trans-table data-row)
     trans-table
     (let [fvt-manipulation (reduce (fn [m [k v]](assoc m k
                                          (let[old-column (get  (fieldValues trans-table) k)

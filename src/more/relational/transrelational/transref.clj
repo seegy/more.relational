@@ -41,14 +41,14 @@
 
 
 (defn transvar
-  ([trans-table]
-    (ref trans-table :meta {:constraints nil, :referenced-by #{}}))
-  ([trans-table constraints]
+  ([transrel]
+    (ref transrel :meta {:constraints nil, :referenced-by #{}}))
+  ([transrel constraints]
    (let [ constraints (if (and (coll? constraints) (not (map? constraints))) (set constraints) #{constraints})
           references (remove nil? (map #(when (and (map? %) (= :foreign-key (first (keys %))))
                                          (-> % vals first :referenced-relvar))
                                        constraints))
-          tvar (ref trans-table :meta {:constraints constraints, :referenced-by #{}})]
+          tvar (ref transrel :meta {:constraints constraints, :referenced-by #{}})]
      (check-constraints tvar)
      ; every relvar this one references to, is "notified"
       (doseq [r references]

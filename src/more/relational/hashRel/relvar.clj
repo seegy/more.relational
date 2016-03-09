@@ -159,17 +159,13 @@
   "Saves the database in the specified file. A database is an arbitrary Clojure
   collection, preferrably a hash map."
   [db file]
-  (spit file (prn-str (if (map? db)
-                        (apply merge (map (fn [[k v]]
-                                            {k (list 'relvar (list 'rel (set @v)))})
-                                       db))
-                        (vec (map (fn [rv]
-                                    (list 'relvar (list 'rel (set @rv))))
-                               db))))))
+  (spit file (str "{" (reduce  (fn [s [k v]](str s  k " #relvar #rel  " (prn-str (set @v))  )) "" db) "}")))
+
+
 
 (defn load-db
   "Loads a database from the specified file."
   [file]
-  (eval (edn/read-string {:readers {'relvar more.relational.hashRel.relvar/relvar
+  (edn/read-string {:readers {'relvar more.relational.hashRel.relvar/relvar
                                     'rel    more.relational.hashRel.relation/rel}}
-          (slurp file))))
+          (slurp file)))

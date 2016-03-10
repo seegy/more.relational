@@ -75,9 +75,8 @@
 (defn insert!
   "Inserts the tuple (or set of tuples) into relvar."
   [tvar tuple]
-  (let [new-rel (tr tuple)]
-    (assign! tvar (union @tvar new-rel))))
-
+  (let [tuples (if (and (coll? tuple) (not (map? tuple))) tuple [tuple])]
+    (assign! tvar (reduce insert @tvar tuples))))
 
 
 

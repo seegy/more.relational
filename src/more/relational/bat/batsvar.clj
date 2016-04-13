@@ -9,7 +9,6 @@
 
 
 (defn- check-constraints
-  ""
   [bvar]
   (doseq [c (:constraints (meta bvar))]
     (if (map? c)
@@ -38,19 +37,21 @@
 
 
 (defn- add-reference!
-  "Tell tvar it is referenced by referencer."
   [bvar referencer]
   (alter-meta! bvar assoc :referenced-by (conj (:referenced-by (meta bvar)) referencer)))
 
 (defn- remove-reference!
-  "Tell rvar it is no longer referenced by referencer."
   [bvar referencer]
   (alter-meta! bvar assoc :referenced-by (disj (:referenced-by (meta bvar)) referencer)))
 
 
 
 (defn batvar
-  ""
+  "Creates BATVar by a map of BATS.
+  Optionally constraints.
+  Key constraint format: {:key <attribute name or set of attribute names>}
+  Foreign key constraint format: {:foreign-key {:key <attribute name>, :referenced-relvar <foreign relvar>, :referenced-key <attribute in foreign relvar>}}
+  Custom predicat: unary function with boolean result."
   ([batMap]
     (ref batMap :meta  {:constraints nil, :referenced-by #{}}))
   ([batMap constraints]
@@ -69,7 +70,7 @@
 
 
 (defn assign!
-  ""
+  "Assigns a new map of BATS batMap to batvar. Constraints do not change."
   [batVar batMap]
   (dosync
     (when-not (= (set (keys @batVar)) (set (keys batMap)))
@@ -81,7 +82,7 @@
 
 
 (defn insert!
-  ""
+  "Insert a n-ary tuple to the whole relvar or a BUN {:head head :tail tail} to attribute attr. Afterwards, constraints will be checked."
   ([batVar attr head tail]
     (let [temp (OP/insert (get @batVar attr) head tail)
           newBatMap (assoc @batVar attr temp)]
@@ -98,7 +99,7 @@
 
 
 (defn update!
-  ""
+  "Updates tails of BUNS in given BAT attr. Afterwards, constraints will be checked."
   ([batVar attr head oldTail newTail]
    (let [ temp (OP/update (get @batVar attr) head oldTail newTail)
           newBatMap (assoc @batVar attr temp)]
@@ -111,7 +112,7 @@
 
 
 (defn delete!
-  ""
+  "Deletes BUNS in given BAT attr, or optional whole n-ary tuple from all BATS. Afterwards, constraints will be checked."
   ([batVar attr head tail]
    (let [ temp (OP/delete (get @batVar attr) head tail)
           newBatMap (assoc  @batVar attr temp)]
@@ -152,6 +153,7 @@
 
 
 (defn makeTable!
+  "Makes xrel table from batvar. Optionally sequence of attributes can given as ordering."
   ([orderseq bvar]
    (let [keySeq (vec (keys @bvar))
          batSeq (mapv (fn[k] (get @bvar k)) keySeq)]
@@ -161,13 +163,13 @@
 
 
 (defn save-batvar
-  ""
+  "Saves batVar to file."
   [batVar file]
    (spit file (str "#batvar{" (reduce  (fn [s [k v]](str s  k " #BAT " (buns v)  )) "" @batVar) "}")))
 
 
 (defn load-batvar
-  ""
+  "Loads a relVar form specified file."
   [file]
    (edn/read-string {:readers {'batvar more.relational.bat.batsvar/batvar
                                'BAT   more.relational.bat.table/bat}}

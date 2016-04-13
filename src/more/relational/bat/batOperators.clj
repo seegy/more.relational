@@ -73,7 +73,7 @@
 
 
 (defn mark
-  ""
+  "Returns a BAT with same tails as batObj and new, growing ids in heads starting with o."
   [batObj o]
   (let [os (drop o (range (+ o (count batObj))))
         recurMark (fn[table buns os]
@@ -90,69 +90,49 @@
 
 
 (defn slice
-  ""
   [batObj lo hi]
   (bat (into [] (comp (take (+ lo hi))
                       (drop lo ))(buns batObj))))
 
 
 (defn sum
-  ""
+  "Returns the sum of all tails in batObj."
   [batObj]
   (reduce #(+ %1 (:tail %2)) 0 (buns batObj)))
 
 
 (defn max
-  ""
+  "Returns the highest numeric value of all tails in batObj."
   [batObj]
   (apply clojure.core/max (map #(:tail %) (buns batObj))))
 
 
 
 (defn min
-  ""
+  "Returns the lowest numeric value of all tails in batObj."
   [batObj]
   (apply clojure.core/min (map #(:tail %) (buns batObj))))
 
 
 (defn diff
-  ""
+  "Returns the set difference of batObjAB and batObjCD."
   [batObjAB batObjCD]
   (bat (clojure.set/difference (set (buns batObjAB)) (set (buns batObjCD)))))
 
 
 (defn union
-  ""
+  "Returns the union of batObjAB and batObjCD."
   [batObjAB batObjCD]
   (bat (clojure.set/union (buns batObjAB) (buns batObjCD))))
 
 (defn intersect
-  ""
+  "Returns the intersection of batObjAB and batObjCD."
   [batObjAB batObjCD]
   (bat (clojure.set/intersection (set (buns batObjAB)) (set (buns batObjCD)))))
 
-#_(defn group
-  ""
-  ([batObj]
-   (let [id (fn [tail] (:head (first (filter #(= ( :tail %) tail) batObj))))]
-     (bat (map (fn[bun](assoc bun :tail (id (:tail bun)))) batObj))))
-  ([batObjAB batObjCD]
-   (let [joined (map (fn [bunAB]
-                       (first (filter not-empty (map (fn [bunCD]
-                                        (if (= (:head bunAB) (:head bunCD))
-                                          {:a (:head bunAB)
-                                           :b (:tail bunAB)
-                                           :d (:tail bunCD)}
-                                          ()
-                                          )) batObjCD)))) batObjAB)
-         id (fn [b d] (:a (first (filter #(and (= (:b %) b) (= (:d %) d)) joined))))]
-     (bat (map (fn[tuple]{:head (:a tuple) :tail (id (:b tuple) (:d tuple))}) joined)))))
-
-
-
 
 (defn group
-  ""
+  "Returns a recursive BAT with sub-BATS grouped by the tail values of batObj. Optionally the returning group BAT by a group BAT AB  and the tails of CD."
   ([batObj]
    (let [tails (distinct (map (fn[tuple](:tail tuple)) batObj))
          tails' (map (fn[tail] (bat (filter #(= (:tail %) tail) batObj))) tails)]
@@ -178,7 +158,7 @@
 
 
 (defn fragment
-  ""
+  "Returns a recursive BAT with fragments of batAB. Upper and downer borders of fragments are tails and heads of batCD."
   [batAB batCD]
   (let [AA (mirror batAB)]
     (bat (map (fn[bun]{:head (:tail bun)
@@ -188,7 +168,7 @@
 
 
 (defn split
-  ""
+  "Returns a BAT with oid borders of batObj in nearly n-sized fragments."
   [batObj n]
     (let [m (count batObj)
           boundarySize (int (Math/ceil (/ m n)))
@@ -208,7 +188,7 @@
 
 
 (defn multijoin
-  ""
+  "Joins AB and more BATS by its head and applies f on each permutation of joined tails. Returns a BAT with heads and results of f operation."
   [f AB & more] ;; ---> TODO Original hatte zwei Bats vorgegeben, aufgrund vom group ist es hier nur noch 1
   (let [moreList more
        betterAB (map #(assoc % :tail [(:tail %)]) AB)
@@ -235,7 +215,7 @@
 
 
 (defn pump
-  ""
+  "Groups AB by heads of CD and applies f on each group BAT. Returns a BAT with heads and results of f operation."
   [f AB CD]
   (let [joined (join (mirror CD) AB =)
         groups (reduce (fn [m bun]
@@ -272,12 +252,12 @@
 
 
 (defn save
-  ""
+  "Saves BAT AB as file. "
   [AB file]
   (spit file (str "#BAT "  (buns AB))))
 
 (defn load
-  ""
+  "Reads file and returns value as BAT"
   [file]
    (edn/read-string {:readers {'BAT   more.relational.bat.table/bat}}
                     (slurp file)))

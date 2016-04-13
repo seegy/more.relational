@@ -27,6 +27,7 @@
 
 
 (defn bat
+  "Creates a BAT by a collections or a bunch of BUNS "
   ([tuple-vec]
    (if (coll? tuple-vec)
      (let [data (into #{} (comp
@@ -56,6 +57,7 @@
 
 
 (defn bat?
+  "Returns true, if x is a BAT."
   [x]
   (= (type x) more.relational.bat.table.BAT))
 
@@ -63,6 +65,7 @@
 
 
 (defn makeTable
+  "Returns a xrel format by a sequence of attributes and collection or a bunch of BATs. Tuples are orderd by orderseq."
   ([orderseq keySeq columns]
    (let [colums (vec columns)
          idsOfFirst (vec (map (fn [bun] (dissoc bun :tail)) (first columns)))
@@ -91,7 +94,7 @@
 
 
 (defn convertToBats
-  ""
+  "Creates a map of BATs by a given xrel table."
   ([table]
    (let [heads (reduce (fn [heads entry](apply conj heads (keys entry))) #{} table)]
      (convertToBats heads table)))

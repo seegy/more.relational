@@ -530,58 +530,6 @@
 
 
 
-#_(defmacro optimize
-  ""
-  [arg ast]
-  `(let [arg# '~arg
-         ast# '~ast]
-   (cond
-     (and (seq? ast#) (contains? #{ "and" "or" } (str (first ast#))))
-            (do
-              (reverse (into
-              (case (str (first ast#))
-                "and" '(clojure.set/intersection)
-                "or" '(clojure.set/union))
-              (map #(eval (list `optimize arg# %)) (rest ast#)))))
-
-     (and (seq? ast#))
-      (if (< 2 (count (rest ast#)))
-        (let [unflated# (unflat ast#)]
-          (eval (list `optimize arg# unflated#)))
-
-        (let [key-map# (map #(key-of-tr (first arg#) %) (rest ast#))]
-
-           (cond
-               (every? #(not (nil? %)) key-map#)
-                  (seq [ `inner-compare (first arg#) (first ast#) (first key-map#) (second key-map#)])
-
-                (not-every? nil? key-map#)
-                (let [ [ f# left# right# ] (if (last key-map#)
-                            [(get flip-compare-map (first ast#)) (last key-map#) (second ast#)]
-                            [(first ast#) (first key-map#) (last ast#)])
-                       right#  right#]
-                              (cond
-                                (contains? #{< > <= >= not=} (eval f#))
-                                   (list `area-search (first arg#) left# f# right# )
-
-                                (= = (eval f#))
-                                   (list `point-search (first arg#) left# right#)
-
-                                (= not= (eval f#))
-                                   (list  `not=-scan (first arg#) left# right#)
-
-                               :else (f# left# right#)))
-
-               :else '()))), ;TODO compare without tuple
-
-      (true? ast#)
-          (seq [`convert  (first arg#)])
-      (false? ast#)
-          #{}
-       :else ast#))) ;TODO const
-
-
-
 (defmacro restrict-fn-analytic
   ""
   [args body]
@@ -605,11 +553,6 @@
 
 
 
-#_(defn restriction
-  ""
-  [trans-table rfn]
-  (let[tuples (pred-search trans-table rfn)]
-      (tr (keyorder trans-table) tuples)))
 
 
 (defn restriction

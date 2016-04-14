@@ -8,57 +8,57 @@
 (deftype HashRelation [head body]
   Object
   (equals [this obj]
-    (cond
-      (identical? this obj)
-      true
+          (cond
+           (identical? this obj)
+           true
 
-      (not (instance? HashRelation obj))
-      false
+           (not (instance? HashRelation obj))
+           false
 
-      (not= (count (.head this)) (count (.head obj)))
-      false
+           (not= (count (.head this)) (count (.head obj)))
+           false
 
-      (not= (count (.body this)) (count (.body obj)))
-      false
+           (not= (count (.body this)) (count (.body obj)))
+           false
 
-      (and (= (.hashCode this) (.hashCode obj))
-           (same-type? this obj)
-           (or (and (nil? (.body this)))
-               (= (.body this) (.body (sort-rel this obj)))))
-      true
+           (and (= (.hashCode this) (.hashCode obj))
+                (same-type? this obj)
+                (or (and (nil? (.body this)))
+                    (= (.body this) (.body (sort-rel this obj)))))
+           true
 
-      :else false))
+           :else false))
   (hashCode [this]
-    (let [shead (sort (.head this))
-          sbody (sort (map hash (.body (sort-rel (HashRelation. shead #{}) this))))]
-      (+ (* 31 (+ (* 17 31)
-                  (hash shead)))
-         (hash sbody))))
+            (let [shead (sort (.head this))
+                  sbody (sort (map hash (.body (sort-rel (HashRelation. shead #{}) this))))]
+              (+ (* 31 (+ (* 17 31)
+                          (hash shead)))
+                 (hash sbody))))
 
   clojure.lang.Seqable
   (seq [this]
-    (if (= #{[]} (.body this))
-      ; table dee
-      (seq #{{}})
+       (if (= #{[]} (.body this))
+         ; table dee
+         (seq #{{}})
 
-      ; just make a sequence
-      (seq (.body this))))
+         ; just make a sequence
+         (seq (.body this))))
 
   clojure.lang.Counted
   (count [this]
-    (count (.body this)))
+         (count (.body this)))
 
   clojure.lang.IKeywordLookup ; in Masterarbeit nachgucken: evtl. projektion auf ein attribute
   (getLookupThunk [this key]
-    (reify clojure.lang.ILookupThunk
-      (get [_ target]
-           (set (map (fn [t] (get t key)) (.body target)))))))
+                  (reify clojure.lang.ILookupThunk
+                    (get [_ target]
+                         (set (map (fn [t] (get t key)) (.body target)))))))
 
 
 (defn scheme
   "Returns the scheme (= vector of attributes) of the relation."
   [relation]
-    (.head relation))
+  (.head relation))
 
 (defn body
   "Returns the set of value tuples of the relation. Each tuple is a vector with
@@ -82,8 +82,8 @@
       rel2
       (let [sorter (sort-vec rel1 rel2)]
         (HashRelation.
-          (vec (map (fn [a] (get (.head rel2) a)) sorter))
-          (.body rel2)))
+         (vec (map (fn [a] (get (.head rel2) a)) sorter))
+         (.body rel2)))
       )))
 
 
@@ -99,33 +99,37 @@
   data. The data is either a sequence of sequences or a sequence of hash-maps.
   "
   ([column-names & data]
-    (let [dat (cond
-                (or (map? (ffirst data)) (coll? (ffirst data)))
-                  (first data)
-                (map? (first data))
-                  data
-                :else
-                  (map vector (first data)))
-          rows (cond
-                 (map? dat)
-                   #{dat}
-                 (map? (first dat))
-                   (set dat)
-                 :else
-                   (into #{} (comp
-                              (map (fn [t] (zipmap column-names t)))
-                              (filter not-empty))
-                             dat))]
-      (HashRelation. (into [] column-names)  rows)))
+   (let [dat (cond
+              (or (map? (ffirst data)) (coll? (ffirst data)))
+              (first data)
+              (map? (first data))
+              data
+              :else
+              (map vector (first data)))
+
+         dat  (if (map? dat)
+                #{dat}
+                dat)
+
+         rows (into #{} (comp
+                         (map (fn [t]
+                                (if (map? t)
+                                  (select-keys t column-names)
+                                  (zipmap column-names t))))
+                         (filter #(not (empty? %)))
+                         (filter coll?)
+                         )
+                    dat)]
+     (HashRelation. (into [] column-names)  rows)))
 
   ([tuple-set]
-    (let [tuples (if (or (empty? tuple-set) (nil? tuple-set))
-                   #{}
-                   (if (map? tuple-set) #{tuple-set} (set tuple-set)))]
-      (let [head (vec (keys (first tuples)))]
+   (let [tuples (if (or (empty? tuple-set) (nil? tuple-set))
+                  #{}
+                  (if (map? tuple-set) #{tuple-set} (set tuple-set)))]
+     (let [head (vec (keys (first tuples)))]
        (HashRelation.
-         head
-         tuples)))))
+        head
+        tuples)))))
 
 
 
